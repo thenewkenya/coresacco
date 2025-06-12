@@ -1,8 +1,8 @@
-# SACCO Core - Savings and Credit Cooperative Management System
+# Savings and Credit Cooperative Management System
 
-A comprehensive Laravel-based management system for Savings and Credit Cooperative Organizations (SACCOs). Built with Laravel 12, Livewire, and Tailwind CSS, featuring role-based access control, member management, account operations, loan processing, and reporting capabilities.
+A comprehensive management system for Savings and Credit Cooperative Organizations (SACCOs) built using Laravel
 
-## 🚀 Features
+## Features
 
 ### Core Functionality
 - **Member Management**: Complete member registration, profile management, and member directory
@@ -38,7 +38,7 @@ A comprehensive Laravel-based management system for Savings and Credit Cooperati
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/thenewkenya/saccocore.git
    cd saccocore
    ```
 
@@ -60,12 +60,12 @@ A comprehensive Laravel-based management system for Savings and Credit Cooperati
 
 5. **Configure your database in `.env`**
    ```env
-   DB_CONNECTION=mysql
+   DB_CONNECTION=mysql,sqlite,pgsql
    DB_HOST=127.0.0.1
-   DB_PORT=3306
+   DB_PORT=3306,5432
    DB_DATABASE=sacco_core
-   DB_USERNAME=your_username
-   DB_PASSWORD=your_password
+   DB_USERNAME=username
+   DB_PASSWORD=password
    ```
 
 6. **Run database migrations**
@@ -75,17 +75,19 @@ A comprehensive Laravel-based management system for Savings and Credit Cooperati
 
 7. **Set up roles and create admin user**
    ```bash
+   # Remember to use a strong password for the admin user
    php artisan sacco:setup-roles --admin-email=admin@sacco.com --admin-password=secure123
    ```
 
-8. **Build frontend assets**
+8. **Build frontend assets (if any)**
    ```bash
    npm run build
    ```
 
 9. **Start the development server**
    ```bash
-   php artisan serve
+   # php artisan serve
+   composer run dev
    ```
 
 ## 🚀 Quick Start with Laravel Sail
@@ -228,24 +230,24 @@ Key environment variables to configure:
 
 ```env
 APP_NAME="SACCO Core"
-APP_ENV=production
+APP_ENV=debug
 APP_DEBUG=false
-APP_URL=https://your-domain.com
+APP_URL=https://saccocore.com
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=sacco_core
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
+DB_USERNAME=username
+DB_PASSWORD=password
 
 MAIL_MAILER=smtp
 MAIL_HOST=your-smtp-host
 MAIL_PORT=587
-MAIL_USERNAME=your-email
-MAIL_PASSWORD=your-password
+MAIL_USERNAME=user-email
+MAIL_PASSWORD=password
 MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=noreply@your-domain.com
+MAIL_FROM_ADDRESS=noreply@saccocore.com
 ```
 
 ## 📚 Documentation
@@ -259,10 +261,6 @@ For detailed information about the role and permission system, see [ROLE_SYSTEM.
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
@@ -283,5 +281,3 @@ For support and questions:
 - [ ] Document management system
 
 ---
-
-**Built with ❤️ using Laravel, Livewire, and Tailwind CSS** 
