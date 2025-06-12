@@ -29,6 +29,12 @@ new #[Layout('components.layouts.auth')] class extends Component {
 
         event(new Registered(($user = User::create($validated))));
 
+        // Assign default member role
+        $memberRole = \App\Models\Role::where('slug', 'member')->first();
+        if ($memberRole) {
+            $user->roles()->attach($memberRole);
+        }
+
         Auth::login($user);
 
         $this->redirectIntended(route('dashboard', absolute: false), navigate: true);

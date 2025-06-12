@@ -33,11 +33,14 @@ class Role extends Model
         'view-accounts',
         'create-accounts',
         'edit-accounts',
+        'delete-accounts',
         'process-transactions',
         
         // Loan management
         'view-loans',
         'create-loans',
+        'edit-loans',
+        'delete-loans',
         'approve-loans',
         'disburse-loans',
         
