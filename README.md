@@ -26,7 +26,7 @@ A comprehensive management system for Savings and Credit Cooperative Organizatio
 - **Database Migrations**: Complete database schema
 - **Testing Ready**: Pest PHP testing framework configured
 
-## 📋 Prerequisites
+## Prerequisites
 
 - PHP 8.2 or higher
 - Composer
@@ -34,7 +34,7 @@ A comprehensive management system for Savings and Credit Cooperative Organizatio
 - MySQL/PostgreSQL/SQLite
 - Laravel Sail (optional, for Docker development)
 
-## 🛠️ Installation
+## Installation
 
 1. **Clone the repository**
    ```bash
