@@ -90,7 +90,7 @@ A comprehensive management system for Savings and Credit Cooperative Organizatio
    composer run dev
    ```
 
-## 🚀 Quick Start with Laravel Sail
+## Quick Start with Laravel Sail
 
 If you prefer using Docker:
 
@@ -106,7 +106,7 @@ composer require laravel/sail --dev
 ./vendor/bin/sail artisan sacco:setup-roles --admin-email=admin@sacco.com --admin-password=secure123
 ```
 
-## 📊 Database Schema
+## Database Schema
 
 ### Core Models
 - **Users**: Authentication and user management
@@ -126,7 +126,7 @@ composer require laravel/sail --dev
 - Loans are associated with members and loan types
 - Transactions are linked to accounts
 
-## 🔐 Authentication & Authorization
+## Authentication & Authorization
 
 ### API Authentication
 The system uses Laravel Sanctum for API authentication:
@@ -149,7 +149,7 @@ The role-based permission system includes:
 - **Branch Management**: `view-branches`, `manage-branches`
 - **Reports & Settings**: `view-reports`, `export-reports`, `manage-settings`, `manage-roles`
 
-## 🌐 API Endpoints
+## API Endpoints
 
 ### Members
 - `GET /api/members` - List all members
@@ -175,7 +175,7 @@ The role-based permission system includes:
 
 All endpoints require authentication and appropriate permissions.
 
-## 🎨 Frontend
+## Frontend
 
 ### Technologies
 - **Livewire**: Real-time components and interactions
@@ -189,7 +189,7 @@ All endpoints require authentication and appropriate permissions.
 - **Dashboard**: Role-based dashboard with key metrics
 - **Settings**: System configuration and user management
 
-## 🧪 Testing
+## Testing
 
 The project is configured with Pest PHP for testing:
 
@@ -201,7 +201,7 @@ php artisan test
 php artisan test --coverage
 ```
 
-## 📝 Available Commands
+## Available Commands
 
 ### Custom Artisan Commands
 - `php artisan sacco:setup-roles` - Set up roles and create admin user
@@ -223,7 +223,7 @@ npm run build
 php artisan queue:work
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 Key environment variables to configure:
@@ -250,11 +250,11 @@ MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=noreply@saccocore.com
 ```
 
-## 📚 Documentation
+## Documentation
 
 For detailed information about the role and permission system, see [ROLE_SYSTEM.md](ROLE_SYSTEM.md).
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -262,14 +262,14 @@ For detailed information about the role and permission system, see [ROLE_SYSTEM.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 🆘 Support
+## Support
 
 For support and questions:
 - Create an issue in the repository
 - Check the [ROLE_SYSTEM.md](ROLE_SYSTEM.md) for detailed permission system documentation
 - Review the Laravel and Livewire documentation for framework-specific questions
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [ ] Advanced reporting and analytics
 - [ ] Mobile application
