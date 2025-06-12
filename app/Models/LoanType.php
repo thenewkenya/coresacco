@@ -1,5 +1,10 @@
 <?php
 
+/* LoanType defines different loan producs,
+specifies terms, interest rates, and requirements
+has eligibility checking methods
+*/
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;

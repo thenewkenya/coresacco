@@ -1,5 +1,10 @@
 <?php
 
+/* Account handles different types of accounts,
+manages account balances and transactions 
+has helper methods for deposits and withdrawals
+*/
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;

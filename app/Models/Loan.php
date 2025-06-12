@@ -1,5 +1,10 @@
 <?php
 
+/* Loan manages loan applications and disbursements,
+tracks loan status, terms and repayments,
+includes methods for interest and payment calculations
+*/
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;

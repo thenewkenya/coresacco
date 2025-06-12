@@ -1,5 +1,10 @@
 <?php
 
+/* Transaction records all financial transactions,
+supports multiple types of transactions,
+maintains audit trail with before/after balances
+*/
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;

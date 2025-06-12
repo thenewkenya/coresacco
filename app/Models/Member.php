@@ -1,5 +1,9 @@
 <?php
 
+/* Member (extends User) manages member info and r/ships,
+tracks membership status and links accts,
+loans and insurances policies */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;

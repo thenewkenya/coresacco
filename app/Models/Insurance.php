@@ -1,5 +1,10 @@
 <?php
 
+/* Insurance manages insurance policies, 
+tracks coverage, premiums, and claims
+and includes policy status and renewal methods
+*/
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;

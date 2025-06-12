@@ -1,5 +1,10 @@
 <?php
 
+/* Branch manages sacco branch info,
+tracks branch staff, members and 
+has reporting methods
+*/
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
