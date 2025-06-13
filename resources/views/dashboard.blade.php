@@ -1,399 +1,419 @@
-<x-layouts.app.header :title="__('Dashboard')">
-    <div class="flex h-full w-full flex-1 flex-col gap-6 p-6">
-        <!-- Welcome Section -->
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ __('Dashboard') }}</h1>
-                <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Welcome back,') }} {{ auth()->user()->name }}</p>
-            </div>
-            <div class="text-right">
-                <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Today') }}</p>
-                <p class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ now()->format('M d, Y') }}</p>
+<x-layouts.app :title="__('Dashboard')">
+    <div class="min-h-screen bg-zinc-50 dark:bg-zinc-900">
+        <!-- Enhanced Header -->
+        <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+            <div class="px-4 sm:px-6 lg:px-8 py-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                            {{ __('Welcome Back,') }} {{ auth()->user()->name }} 👋
+                        </h1>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ now()->format('l, M d, Y') }}</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative hidden sm:block">
+                            <input type="text" placeholder="{{ __('Search Anything') }}" 
+                                   class="w-80 px-4 py-2 bg-zinc-100 dark:bg-zinc-700 border-0 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:text-white dark:placeholder-zinc-400">
+                            <flux:icon.magnifying-glass class="absolute right-3 top-2.5 w-4 h-4 text-zinc-400" />
+                        </div>
+                        <button class="p-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
+                            <flux:icon.bell class="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Admin Dashboard -->
-        @role('admin')
-        <div class="space-y-6">
-            <!-- Admin Key Metrics -->
-            <div class="grid auto-rows-min gap-6 md:grid-cols-4">
-                <!-- Total Members Card -->
-                <div class="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">{{ __('Total Members') }}</p>
-                            <p class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">1,247</p>
-                            <p class="text-sm text-emerald-600 dark:text-emerald-400">
-                                <span class="inline-flex items-center">
-                                    <flux:icon.arrow-trending-up class="h-4 w-4 mr-1" />
-                                    +12 {{ __('this month') }}
-                                </span>
-                            </p>
+        <!-- Dashboard Content -->
+        <div class="px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Key Metrics -->
+            @role('admin')
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Total Members -->
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                            <flux:icon.users class="w-6 h-6 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <div class="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
-                            <flux:icon.users class="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                        </div>
+                        <span class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">+6.5%</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Total Members') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">1,456</p>
+                        <p class="text-xs text-emerald-600 dark:text-emerald-400">{{ __('Since last week') }}</p>
                     </div>
                 </div>
 
                 <!-- Total Assets -->
-                <div class="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">{{ __('Total Assets') }}</p>
-                            <p class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">KSh 45.2M</p>
-                            <p class="text-sm text-emerald-600 dark:text-emerald-400">
-                                <span class="inline-flex items-center">
-                                    <flux:icon.arrow-trending-up class="h-4 w-4 mr-1" />
-                                    +15.3% {{ __('YTD') }}
-                                </span>
-                            </p>
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                            <flux:icon.banknotes class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                         </div>
-                        <div class="rounded-full bg-emerald-100 p-3 dark:bg-emerald-900/30">
-                            <flux:icon.banknotes class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
-                        </div>
+                        <span class="text-sm text-red-600 dark:text-red-400 font-medium">-0.10%</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Total Assets') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KSh 45.2M</p>
+                        <p class="text-xs text-red-600 dark:text-red-400">{{ __('Since last week') }}</p>
                     </div>
                 </div>
 
-                <!-- Outstanding Loans -->
-                <div class="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">{{ __('Outstanding Loans') }}</p>
-                            <p class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">KSh 18.4M</p>
-                            <p class="text-sm text-amber-600 dark:text-amber-400">
-                                <span class="inline-flex items-center">
-                                    <flux:icon.clock class="h-4 w-4 mr-1" />
-                                    234 {{ __('active') }}
-                                </span>
-                            </p>
+                <!-- Loan Portfolio -->
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                            <flux:icon.credit-card class="w-6 h-6 text-purple-600 dark:text-purple-400" />
                         </div>
-                        <div class="rounded-full bg-amber-100 p-3 dark:bg-amber-900/30">
-                            <flux:icon.credit-card class="h-8 w-8 text-amber-600 dark:text-amber-400" />
-                        </div>
+                        <span class="text-sm text-red-600 dark:text-red-400 font-medium">-0.2%</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Loan Portfolio') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">78%</p>
+                        <p class="text-xs text-red-600 dark:text-red-400">{{ __('Since last week') }}</p>
                     </div>
                 </div>
 
-                <!-- System Health -->
-                <div class="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">{{ __('System Health') }}</p>
-                            <p class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">98.5%</p>
-                            <p class="text-sm text-emerald-600 dark:text-emerald-400">
-                                <span class="inline-flex items-center">
-                                    <flux:icon.check-circle class="h-4 w-4 mr-1" />
-                                    {{ __('All systems operational') }}
-                                </span>
-                            </p>
+                <!-- Active Loans -->
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                            <flux:icon.document-text class="w-6 h-6 text-amber-600 dark:text-amber-400" />
                         </div>
-                        <div class="rounded-full bg-emerald-100 p-3 dark:bg-emerald-900/30">
-                            <flux:icon.cpu-chip class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
-                        </div>
+                        <span class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">+11.5%</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Active Loans') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">234</p>
+                        <p class="text-xs text-emerald-600 dark:text-emerald-400">{{ __('Since last week') }}</p>
                     </div>
                 </div>
             </div>
+            @endrole
 
-            <!-- Admin Panel -->
-            <div class="border-t border-red-200 dark:border-red-700 pt-6">
-                <h4 class="text-lg font-medium text-red-600 dark:text-red-400 mb-4">
-                    Administrator Panel
-                </h4>
-                <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
-                    <p class="text-sm text-red-800 dark:text-red-200 mb-4">
-                        You have administrative privileges. Handle with care!
-                    </p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        @can('manage-roles')
-                        <flux:button variant="primary" class="w-full justify-center bg-red-600 hover:bg-red-700" href="#" wire:navigate>
-                            <flux:icon.users class="h-4 w-4 mr-2" />
-                            {{ __('Manage Roles') }}
-                        </flux:button>
-                        @endcan
-                        
-                        @can('manage-settings')
-                        <flux:button variant="primary" class="w-full justify-center bg-red-600 hover:bg-red-700" href="#" wire:navigate>
-                            <flux:icon.cog-6-tooth class="h-4 w-4 mr-2" />
-                            {{ __('System Settings') }}
-                        </flux:button>
-                        @endcan
-
-                        <flux:button variant="primary" class="w-full justify-center bg-red-600 hover:bg-red-700" href="#" wire:navigate>
-                            <flux:icon.chart-bar class="h-4 w-4 mr-2" />
-                            {{ __('System Reports') }}
-                        </flux:button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @endrole
-
-        <!-- Staff/Manager Dashboard -->
-        @roleany('staff', 'manager')
-        <div class="space-y-6">
-            <!-- Staff Key Metrics -->
-            <div class="grid auto-rows-min gap-6 md:grid-cols-3">
+            @roleany('staff', 'manager')
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <!-- Today's Transactions -->
-                <div class="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">{{ __('Today\'s Transactions') }}</p>
-                            <p class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">47</p>
-                            <p class="text-sm text-blue-600 dark:text-blue-400">
-                                <span class="inline-flex items-center">
-                                    <flux:icon.arrow-trending-up class="h-4 w-4 mr-1" />
-                                    KSh 234,500 {{ __('processed') }}
-                                </span>
-                            </p>
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                            <flux:icon.arrows-right-left class="w-6 h-6 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <div class="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
-                            <flux:icon.arrows-right-left class="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                        </div>
+                        <span class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">+8.2%</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Today\'s Transactions') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">47</p>
+                        <p class="text-xs text-emerald-600 dark:text-emerald-400">{{ __('Since yesterday') }}</p>
                     </div>
                 </div>
 
                 <!-- Pending Approvals -->
-                <div class="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">{{ __('Pending Approvals') }}</p>
-                            <p class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">12</p>
-                            <p class="text-sm text-amber-600 dark:text-amber-400">
-                                <span class="inline-flex items-center">
-                                    <flux:icon.clock class="h-4 w-4 mr-1" />
-                                    {{ __('Requires attention') }}
-                                </span>
-                            </p>
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                            <flux:icon.clock class="w-6 h-6 text-amber-600 dark:text-amber-400" />
                         </div>
-                        <div class="rounded-full bg-amber-100 p-3 dark:bg-amber-900/30">
-                            <flux:icon.clipboard-document-check class="h-8 w-8 text-amber-600 dark:text-amber-400" />
-                        </div>
+                        <span class="text-sm text-amber-600 dark:text-amber-400 font-medium">Urgent</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Pending Approvals') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">12</p>
+                        <p class="text-xs text-amber-600 dark:text-amber-400">{{ __('Requires attention') }}</p>
                     </div>
                 </div>
 
-                <!-- Active Members -->
-                <div class="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">{{ __('Active Members') }}</p>
-                            <p class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">1,247</p>
-                            <p class="text-sm text-emerald-600 dark:text-emerald-400">
-                                <span class="inline-flex items-center">
-                                    <flux:icon.user-plus class="h-4 w-4 mr-1" />
-                                    +5 {{ __('this week') }}
-                                </span>
-                            </p>
+                <!-- Processed Amount -->
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                            <flux:icon.banknotes class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                         </div>
-                        <div class="rounded-full bg-emerald-100 p-3 dark:bg-emerald-900/30">
-                            <flux:icon.users class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
-                        </div>
+                        <span class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">+15.3%</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Processed Today') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KSh 234K</p>
+                        <p class="text-xs text-emerald-600 dark:text-emerald-400">{{ __('Since yesterday') }}</p>
                     </div>
                 </div>
             </div>
+            @endroleany
 
-            <!-- Staff Operations -->
-            <div class="border-t border-blue-200 dark:border-blue-700 pt-6">
-                <h4 class="text-lg font-medium text-blue-600 dark:text-blue-400 mb-4">
-                    Staff Operations
-                </h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    @can('process-transactions')
-                    <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors cursor-pointer">
-                        <div class="text-blue-600 dark:text-blue-400 font-medium">{{ __('Process Transactions') }}</div>
-                        <div class="text-sm text-blue-500 dark:text-blue-300">{{ __('Handle deposits & withdrawals') }}</div>
-                        <div class="mt-2">
-                            <flux:button variant="ghost" size="sm" class="text-blue-600" href="#" wire:navigate>
-                                {{ __('Open') }} →
-                            </flux:button>
-                        </div>
-                    </div>
-                    @endcan
-
-                    @can('approve-loans') 
-                    <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors cursor-pointer">
-                        <div class="text-green-600 dark:text-green-400 font-medium">{{ __('Approve Loans') }}</div>
-                        <div class="text-sm text-green-500 dark:text-green-300">{{ __('Review loan applications') }}</div>
-                        <div class="mt-2">
-                            <flux:button variant="ghost" size="sm" class="text-green-600" href="#" wire:navigate>
-                                {{ __('Open') }} →
-                            </flux:button>
-                        </div>
-                    </div>
-                    @endcan
-
-                    @can('disburse-loans')
-                    <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors cursor-pointer">
-                        <div class="text-yellow-600 dark:text-yellow-400 font-medium">{{ __('Disburse Loans') }}</div>
-                        <div class="text-sm text-yellow-500 dark:text-yellow-300">{{ __('Release approved funds') }}</div>
-                        <div class="mt-2">
-                            <flux:button variant="ghost" size="sm" class="text-yellow-600" href="#" wire:navigate>
-                                {{ __('Open') }} →
-                            </flux:button>
-                        </div>
-                    </div>
-                    @endcan
-                </div>
-            </div>
-        </div>
-        @endroleany
-
-        <!-- Member Dashboard -->
-        @role('member')
-        <div class="space-y-6">
-            <!-- Member Account Overview -->
-            <div class="grid auto-rows-min gap-6 md:grid-cols-3">
+            @role('member')
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <!-- Savings Balance -->
-                <div class="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">{{ __('Savings Balance') }}</p>
-                            <p class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">KSh 45,750</p>
-                            <p class="text-sm text-emerald-600 dark:text-emerald-400">
-                                <span class="inline-flex items-center">
-                                    <flux:icon.arrow-trending-up class="h-4 w-4 mr-1" />
-                                    +KSh 2,500 {{ __('this month') }}
-                                </span>
-                            </p>
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                            <flux:icon.banknotes class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                         </div>
-                        <div class="rounded-full bg-emerald-100 p-3 dark:bg-emerald-900/30">
-                            <flux:icon.banknotes class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
-                        </div>
+                        <span class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">+5.8%</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Savings Balance') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KSh 45,750</p>
+                        <p class="text-xs text-emerald-600 dark:text-emerald-400">{{ __('Since last month') }}</p>
                     </div>
                 </div>
 
                 <!-- Current Loan -->
-                <div class="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">{{ __('Current Loan') }}</p>
-                            <p class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">KSh 25,000</p>
-                            <p class="text-sm text-blue-600 dark:text-blue-400">
-                                <span class="inline-flex items-center">
-                                    <flux:icon.calendar class="h-4 w-4 mr-1" />
-                                    {{ __('Next payment: 15th Jan') }}
-                                </span>
-                            </p>
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                            <flux:icon.credit-card class="w-6 h-6 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <div class="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
-                            <flux:icon.credit-card class="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                        </div>
+                        <span class="text-sm text-blue-600 dark:text-blue-400 font-medium">Due 15th</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Current Loan') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KSh 25,000</p>
+                        <p class="text-xs text-blue-600 dark:text-blue-400">{{ __('Next payment due') }}</p>
                     </div>
                 </div>
 
-                <!-- Dividends Earned -->
-                <div class="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">{{ __('Dividends (2024)') }}</p>
-                            <p class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">KSh 3,450</p>
-                            <p class="text-sm text-emerald-600 dark:text-emerald-400">
-                                <span class="inline-flex items-center">
-                                    <flux:icon.gift class="h-4 w-4 mr-1" />
-                                    12% {{ __('return') }}
-                                </span>
-                            </p>
+                <!-- Dividends -->
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                            <flux:icon.sparkles class="w-6 h-6 text-purple-600 dark:text-purple-400" />
                         </div>
-                        <div class="rounded-full bg-purple-100 p-3 dark:bg-purple-900/30">
-                            <flux:icon.sparkles class="h-8 w-8 text-purple-600 dark:text-purple-400" />
-                        </div>
+                        <span class="text-sm text-purple-600 dark:text-purple-400 font-medium">12% ROI</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Dividends (2024)') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KSh 3,450</p>
+                        <p class="text-xs text-purple-600 dark:text-purple-400">{{ __('Annual return') }}</p>
                     </div>
                 </div>
             </div>
+            @endrole
 
-            <!-- Member Services -->
-            <div class="border-t border-green-200 dark:border-green-700 pt-6">
-                <h4 class="text-lg font-medium text-green-600 dark:text-green-400 mb-4">
-                    My SACCO Services
-                </h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors cursor-pointer">
-                        <div class="flex items-center space-x-3 mb-2">
-                            <flux:icon.building-library class="h-6 w-6 text-green-600 dark:text-green-400" />
-                            <h5 class="font-medium text-green-800 dark:text-green-200">{{ __('My Accounts') }}</h5>
-                        </div>
-                        <p class="text-sm text-green-600 dark:text-green-300">{{ __('View your savings and current accounts') }}</p>
+            <!-- Charts and Analytics Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Loan Portfolio Analytics -->
+                @roleany('admin', 'manager')
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ __('Loan Portfolio') }}</h3>
+                        <button class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+                            <flux:icon.ellipsis-horizontal class="w-5 h-5" />
+                        </button>
                     </div>
                     
-                    <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors cursor-pointer">
-                        <div class="flex items-center space-x-3 mb-2">
-                            <flux:icon.credit-card class="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                            <h5 class="font-medium text-blue-800 dark:text-blue-200">{{ __('My Loans') }}</h5>
+                    <div class="flex items-center justify-center mb-6">
+                        <!-- Donut Chart Placeholder -->
+                        <div class="relative w-40 h-40">
+                            <div class="w-40 h-40 rounded-full bg-gradient-to-r from-blue-500 to-blue-600" style="clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 70%, 50% 50%);"></div>
+                            <div class="absolute inset-8 bg-white dark:bg-zinc-800 rounded-full flex items-center justify-center">
+                                <div class="text-center">
+                                    <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">234</p>
+                                    <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Active Loans') }}</p>
+                                </div>
+                            </div>
                         </div>
-                        <p class="text-sm text-blue-600 dark:text-blue-300">{{ __('View your loan status and history') }}</p>
                     </div>
 
-                    <div class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors cursor-pointer">
-                        <div class="flex items-center space-x-3 mb-2">
-                            <flux:icon.document-text class="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                            <h5 class="font-medium text-purple-800 dark:text-purple-200">{{ __('Apply for Loan') }}</h5>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-blue-600 rounded-full"></div>
+                                <span class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Performing') }}</span>
+                            </div>
+                            <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">187 (80%)</span>
                         </div>
-                        <p class="text-sm text-purple-600 dark:text-purple-300">{{ __('Submit a new loan application') }}</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-amber-500 rounded-full"></div>
+                                <span class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Watch List') }}</span>
+                            </div>
+                            <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">32 (14%)</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <span class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Non-Performing') }}</span>
+                            </div>
+                            <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">15 (6%)</span>
+                        </div>
                     </div>
+                </div>
+                @endroleany
 
-                    <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors cursor-pointer">
-                        <div class="flex items-center space-x-3 mb-2">
-                            <flux:icon.chart-bar class="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                            <h5 class="font-medium text-amber-800 dark:text-amber-200">{{ __('Statements') }}</h5>
+                <!-- Monthly Growth -->
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                            @role('admin'){{ __('Asset Growth') }}@endrole
+                            @roleany('staff', 'manager'){{ __('Transaction Trends') }}@endrole
+                            @role('member'){{ __('My Savings Growth') }}@endrole
+                        </h3>
+                        <button class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+                            <flux:icon.ellipsis-horizontal class="w-5 h-5" />
+                        </button>
+                    </div>
+                    
+                    <!-- Chart Placeholder -->
+                    <div class="h-64 flex items-end justify-between space-x-2 mb-4">
+                        @foreach(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as $month)
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="w-full bg-blue-100 dark:bg-blue-900/30 rounded-t-sm" style="height: {{ rand(30, 100) }}%;"></div>
+                            <span class="text-xs text-zinc-500 mt-2">{{ substr($month, 0, 3) }}</span>
                         </div>
-                        <p class="text-sm text-amber-600 dark:text-amber-300">{{ __('Download account statements') }}</p>
+                        @endforeach
+                    </div>
+                    
+                    <div class="flex items-center justify-between pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                        <div class="text-center">
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('This Month') }}</p>
+                            <p class="text-lg font-semibold text-emerald-600 dark:text-emerald-400">+KSh 1.2M</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Growth Rate') }}</p>
+                            <p class="text-lg font-semibold text-blue-600 dark:text-blue-400">+8.5%</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Recent Activity -->
-            <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">{{ __('Recent Activity') }}</h3>
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between border-b border-zinc-200 pb-3 dark:border-zinc-700">
-                        <div class="flex items-center space-x-3">
-                            <div class="rounded-full bg-emerald-100 p-2 dark:bg-emerald-900/30">
-                                <flux:icon.arrow-down class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                            </div>
-                            <div>
-                                <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Monthly Contribution') }}</p>
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Savings deposit') }}</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-semibold text-emerald-600 dark:text-emerald-400">+KSh 2,500</p>
-                            <p class="text-sm text-zinc-500">{{ __('3 days ago') }}</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between border-b border-zinc-200 pb-3 dark:border-zinc-700">
-                        <div class="flex items-center space-x-3">
-                            <div class="rounded-full bg-blue-100 p-2 dark:bg-blue-900/30">
-                                <flux:icon.arrow-up class="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                                <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Loan Repayment') }}</p>
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Monthly installment') }}</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-semibold text-blue-600 dark:text-blue-400">KSh 1,875</p>
-                            <p class="text-sm text-zinc-500">{{ __('1 week ago') }}</p>
-                        </div>
-                    </div>
-
+            <!-- Recent Activity Table -->
+            <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                <div class="p-6 border-b border-zinc-200 dark:border-zinc-700">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="rounded-full bg-purple-100 p-2 dark:bg-purple-900/30">
-                                <flux:icon.sparkles class="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                            </div>
-                            <div>
-                                <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Dividend Payment') }}</p>
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Annual dividend') }}</p>
-                            </div>
+                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                            @role('admin'){{ __('Recent Transactions') }}@endrole
+                            @roleany('staff', 'manager'){{ __('Today\'s Activities') }}@endrole
+                            @role('member'){{ __('My Recent Activity') }}@endrole
+                        </h3>
+                        <div class="flex items-center space-x-2">
+                            <flux:button variant="ghost" size="sm" icon="funnel">
+                                {{ __('Filter') }}
+                            </flux:button>
+                            <button class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+                                <flux:icon.ellipsis-horizontal class="w-5 h-5" />
+                            </button>
                         </div>
-                        <div class="text-right">
-                            <p class="font-semibold text-purple-600 dark:text-purple-400">+KSh 3,450</p>
-                            <p class="text-sm text-zinc-500">{{ __('2 weeks ago') }}</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-zinc-50 dark:bg-zinc-700">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider w-16">#</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{{ __('Member') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{{ __('Transaction') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{{ __('Date') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{{ __('Status') }}</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{{ __('Amount') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white dark:bg-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-700">
+                            <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">1</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                            <span class="text-xs font-medium text-blue-600 dark:text-blue-400">JD</span>
+                                        </div>
+                                        <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">John Doe</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <flux:icon.arrow-down class="w-4 h-4 text-emerald-500 mr-2" />
+                                        <span class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Savings Deposit') }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-400">{{ now()->subHours(2)->format('M d, Y H:i') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full">{{ __('Completed') }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-emerald-600 dark:text-emerald-400 text-right">+KSh 5,000</td>
+                            </tr>
+
+                            <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">2</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                                            <span class="text-xs font-medium text-purple-600 dark:text-purple-400">SM</span>
+                                        </div>
+                                        <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">Sarah Mwangi</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <flux:icon.arrow-up class="w-4 h-4 text-blue-500 mr-2" />
+                                        <span class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Loan Repayment') }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-400">{{ now()->subHours(4)->format('M d, Y H:i') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded-full">{{ __('Processing') }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600 dark:text-blue-400 text-right">KSh 2,500</td>
+                            </tr>
+
+                            <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">3</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
+                                            <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400">PK</span>
+                                        </div>
+                                        <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">Peter Kamau</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <flux:icon.document-text class="w-4 h-4 text-amber-500 mr-2" />
+                                        <span class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Loan Application') }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-400">{{ now()->subHours(6)->format('M d, Y H:i') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 rounded-full">{{ __('Pending') }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-zinc-600 dark:text-zinc-400 text-right">KSh 50,000</td>
+                            </tr>
+
+                            <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">4</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                                            <span class="text-xs font-medium text-red-600 dark:text-red-400">MN</span>
+                                        </div>
+                                        <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">Mary Njeri</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <flux:icon.arrow-up class="w-4 h-4 text-red-500 mr-2" />
+                                        <span class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Withdrawal') }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-400">{{ now()->subHours(8)->format('M d, Y H:i') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 rounded-full">{{ __('Failed') }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-600 dark:text-red-400 text-right">KSh 10,000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Showing 1 to 4 of 47 transactions') }}</p>
+                        <div class="flex items-center space-x-2">
+                            <flux:button variant="ghost" size="sm">{{ __('Previous') }}</flux:button>
+                            <flux:button variant="primary" size="sm">{{ __('Next') }}</flux:button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        @endrole
     </div>
 </x-layouts.app>
