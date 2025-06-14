@@ -12,9 +12,146 @@
             </a>
 
             <flux:navlist variant="outline">
-                <flux:navlist.group :heading="__('Platform')" class="grid">
-                    <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>{{ __('Dashboard') }}</flux:navlist.item>
+                <!-- Core Operations -->
+                <flux:navlist.group :heading="__('Core Operations')" class="grid">
+                    <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                        {{ __('Dashboard') }}
+                    </flux:navlist.item>
+                    
+                    @roleany('admin', 'manager', 'staff')
+                    <flux:navlist.item icon="arrows-right-left" :href="route('transactions.index')" :current="request()->routeIs('transactions.*')" wire:navigate>
+                        {{ __('Transactions') }}
+                    </flux:navlist.item>
+                    @endroleany
+
+                    @role('member')
+                    <flux:navlist.item icon="arrows-right-left" :href="route('transactions.my')" :current="request()->routeIs('transactions.*')" wire:navigate>
+                        {{ __('My Transactions') }}
+                    </flux:navlist.item>
+                    @endrole
                 </flux:navlist.group>
+
+                <!-- Financial Services -->
+                <flux:navlist.group :heading="__('Financial Services')" class="grid">
+                    @roleany('admin', 'manager', 'staff')
+                    <flux:navlist.item icon="banknotes" :href="route('savings.index')" :current="request()->routeIs('savings.*')" wire:navigate>
+                        {{ __('Savings Accounts') }}
+                    </flux:navlist.item>
+                    @endroleany
+
+                    @role('member')
+                    <flux:navlist.item icon="banknotes" :href="route('savings.my')" :current="request()->routeIs('savings.*')" wire:navigate>
+                        {{ __('My Savings') }}
+                    </flux:navlist.item>
+                    @endrole
+
+                    @roleany('admin', 'manager', 'staff')
+                    <flux:navlist.item icon="credit-card" :href="route('loans.index')" :current="request()->routeIs('loans.*')" wire:navigate>
+                        {{ __('Loan Management') }}
+                    </flux:navlist.item>
+                    @endroleany
+
+                    @role('member')
+                    <flux:navlist.item icon="credit-card" :href="route('loans.my')" :current="request()->routeIs('loans.*')" wire:navigate>
+                        {{ __('My Loans') }}
+                    </flux:navlist.item>
+                    @endrole
+
+                    @roleany('admin', 'manager', 'staff')
+                    <flux:navlist.item icon="currency-dollar" :href="route('payments.index')" :current="request()->routeIs('payments.*')" wire:navigate>
+                        {{ __('Payment Processing') }}
+                    </flux:navlist.item>
+                    @endroleany
+
+                    @role('member')
+                    <flux:navlist.item icon="currency-dollar" :href="route('payments.my')" :current="request()->routeIs('payments.*')" wire:navigate>
+                        {{ __('My Payments') }}
+                    </flux:navlist.item>
+                    @endrole
+                </flux:navlist.group>
+
+                <!-- Member Services -->
+                <flux:navlist.group :heading="__('Member Services')" class="grid">
+                    @roleany('admin', 'manager', 'staff')
+                    <flux:navlist.item icon="users" :href="route('members.index')" :current="request()->routeIs('members.*')" wire:navigate>
+                        {{ __('Members') }}
+                    </flux:navlist.item>
+                    @endroleany
+
+                    @role('member')
+                    <flux:navlist.item icon="user" :href="route('members.profile')" :current="request()->routeIs('members.profile')" wire:navigate>
+                        {{ __('My Profile') }}
+                    </flux:navlist.item>
+                    @endrole
+
+                    @role('member')
+                    <flux:navlist.item icon="flag" :href="route('goals.index')" :current="request()->routeIs('goals.*')" wire:navigate>
+                        {{ __('My Goals') }}
+                    </flux:navlist.item>
+                    @endrole
+
+                    @role('member')
+                    <flux:navlist.item icon="currency-dollar" :href="route('budget.index')" :current="request()->routeIs('budget.*')" wire:navigate>
+                        {{ __('Budget Planner') }}
+                    </flux:navlist.item>
+                    @endrole
+
+                    @roleany('admin', 'manager', 'staff')
+                    <flux:navlist.item icon="heart" :href="route('insurance.index')" :current="request()->routeIs('insurance.*')" wire:navigate>
+                        {{ __('Insurance') }}
+                    </flux:navlist.item>
+                    @endroleany
+
+                    @role('member')
+                    <flux:navlist.item icon="heart" :href="route('insurance.my')" :current="request()->routeIs('insurance.*')" wire:navigate>
+                        {{ __('My Insurance') }}
+                    </flux:navlist.item>
+                    @endrole
+                </flux:navlist.group>
+
+                <!-- Management & Analytics -->
+                @roleany('admin', 'manager')
+                <flux:navlist.group :heading="__('Management')" class="grid">
+                    <flux:navlist.item icon="chart-bar" :href="route('analytics.index')" :current="request()->routeIs('analytics.*')" wire:navigate>
+                        {{ __('Analytics') }}
+                    </flux:navlist.item>
+
+                    <flux:navlist.item icon="document-text" :href="route('reports.index')" :current="request()->routeIs('reports.*')" wire:navigate>
+                        {{ __('Reports') }}
+                    </flux:navlist.item>
+
+                    @role('admin')
+                    <flux:navlist.item icon="building-office-2" :href="route('branches.index')" :current="request()->routeIs('branches.*')" wire:navigate>
+                        {{ __('Branches') }}
+                    </flux:navlist.item>
+                    @endrole
+
+                    @role('admin')
+                    <flux:navlist.item icon="user-group" :href="route('roles.index')" :current="request()->routeIs('roles.*')" wire:navigate>
+                        {{ __('User Roles') }}
+                    </flux:navlist.item>
+                    @endrole
+
+                    @role('admin')
+                    <flux:navlist.item icon="cog" :href="route('system.settings')" :current="request()->routeIs('system.*')" wire:navigate>
+                        {{ __('System Settings') }}
+                    </flux:navlist.item>
+                    @endrole
+                </flux:navlist.group>
+                @endroleany
+
+                <!-- Staff Tools -->
+                @role('staff')
+                <flux:navlist.group :heading="__('Staff Tools')" class="grid">
+                    <flux:navlist.item icon="check-circle" :href="route('approvals.index')" :current="request()->routeIs('approvals.*')" wire:navigate>
+                        {{ __('Pending Approvals') }}
+                    </flux:navlist.item>
+
+                    <flux:navlist.item icon="calendar" :href="route('schedule.index')" :current="request()->routeIs('schedule.*')" wire:navigate>
+                        {{ __('Appointments') }}
+                    </flux:navlist.item>
+                </flux:navlist.group>
+                @endrole
             </flux:navlist>
 
             <flux:spacer />
