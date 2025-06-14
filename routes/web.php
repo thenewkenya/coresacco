@@ -67,8 +67,14 @@ Route::middleware(['auth'])->group(function () {
 
     // Member Services
     Route::prefix('members')->name('members.')->group(function () {
-        Route::get('/', function () { return view('members.index'); })->name('index');
-        Route::get('/profile', function () { return view('members.profile'); })->name('profile');
+        Route::get('/', [App\Http\Controllers\MemberController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\MemberController::class, 'create'])->name('create');
+        Route::get('/profile', [App\Http\Controllers\MemberController::class, 'profile'])->name('profile');
+        Route::post('/', [App\Http\Controllers\MemberController::class, 'store'])->name('store');
+        Route::get('/{member}', [App\Http\Controllers\MemberController::class, 'show'])->name('show');
+        Route::get('/{member}/edit', [App\Http\Controllers\MemberController::class, 'edit'])->name('edit');
+        Route::put('/{member}', [App\Http\Controllers\MemberController::class, 'update'])->name('update');
+        Route::delete('/{member}', [App\Http\Controllers\MemberController::class, 'destroy'])->name('destroy');
     });
 
     Route::prefix('goals')->name('goals.')->group(function () {

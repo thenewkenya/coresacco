@@ -9,11 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-
 class TransactionController extends Controller
 {
-    use AuthorizesRequests;
     protected TransactionService $transactionService;
 
     public function __construct(TransactionService $transactionService)
