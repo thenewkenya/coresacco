@@ -60,7 +60,7 @@ class Transaction extends Model
 
     public function member(): BelongsTo
     {
-        return $this->belongsTo(Member::class);
+        return $this->belongsTo(User::class, 'member_id');
     }
 
     public function loan(): BelongsTo
