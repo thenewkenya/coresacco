@@ -7,25 +7,28 @@
         <!-- Header -->
         <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
             <div class="px-4 sm:px-6 lg:px-8 py-6">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                     <div>
-                        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                        <h1 class="text-xl lg:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
                             {{ __('Transaction Management') }}
                         </h1>
                         <p class="text-sm text-zinc-600 dark:text-zinc-400">Monitor and approve transactions</p>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <a href="{{ route('transactions.deposit.create') }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                        <a href="{{ route('transactions.deposit.create') }}" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-center">
                             <flux:icon.plus class="w-4 h-4 inline mr-2" />
-                            New Deposit
+                            <span class="hidden sm:inline">New Deposit</span>
+                            <span class="sm:hidden">Deposit</span>
                         </a>
-                        <a href="{{ route('transactions.withdrawal.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        <a href="{{ route('transactions.withdrawal.create') }}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-center">
                             <flux:icon.arrow-up class="w-4 h-4 inline mr-2" />
-                            Process Withdrawal
+                            <span class="hidden sm:inline">Process Withdrawal</span>
+                            <span class="sm:hidden">Withdrawal</span>
                         </a>
-                        <a href="{{ route('transactions.transfer.create') }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        <a href="{{ route('transactions.transfer.create') }}" class="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-center">
                             <flux:icon.arrows-right-left class="w-4 h-4 inline mr-2" />
-                            Transfer Funds
+                            <span class="hidden sm:inline">Transfer Funds</span>
+                            <span class="sm:hidden">Transfer</span>
                         </a>
                     </div>
                 </div>
@@ -36,69 +39,69 @@
             <!-- Daily Statistics -->
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Today's Statistics</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6">
+                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-4 lg:p-6 border border-zinc-200 dark:border-zinc-700">
                         <div class="flex items-center">
-                            <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                <flux:icon.document-text class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                            <div class="p-2 lg:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex-shrink-0">
+                                <flux:icon.document-text class="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400">Total Transactions</p>
-                                <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ $todayStats['total_transactions'] }}</p>
+                            <div class="ml-3 lg:ml-4 min-w-0 flex-1">
+                                <p class="text-xs lg:text-sm text-zinc-600 dark:text-zinc-400 truncate">Total Transactions</p>
+                                <p class="text-lg lg:text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ $todayStats['total_transactions'] }}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-4 lg:p-6 border border-zinc-200 dark:border-zinc-700">
                         <div class="flex items-center">
-                            <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                                <flux:icon.banknotes class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                            <div class="p-2 lg:p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex-shrink-0">
+                                <flux:icon.banknotes class="w-5 h-5 lg:w-6 lg:h-6 text-emerald-600 dark:text-emerald-400" />
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400">Total Volume</p>
-                                <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                            <div class="ml-3 lg:ml-4 min-w-0 flex-1">
+                                <p class="text-xs lg:text-sm text-zinc-600 dark:text-zinc-400 truncate">Total Volume</p>
+                                <p class="text-lg lg:text-2xl font-bold text-zinc-900 dark:text-zinc-100 truncate">
                                     KES {{ number_format($todayStats['total_amount'], 0) }}
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-4 lg:p-6 border border-zinc-200 dark:border-zinc-700">
                         <div class="flex items-center">
-                            <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                                <flux:icon.arrow-down class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                            <div class="p-2 lg:p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex-shrink-0">
+                                <flux:icon.arrow-down class="w-5 h-5 lg:w-6 lg:h-6 text-emerald-600 dark:text-emerald-400" />
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400">Deposits</p>
-                                <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                            <div class="ml-3 lg:ml-4 min-w-0 flex-1">
+                                <p class="text-xs lg:text-sm text-zinc-600 dark:text-zinc-400 truncate">Deposits</p>
+                                <p class="text-lg lg:text-2xl font-bold text-zinc-900 dark:text-zinc-100 truncate">
                                     KES {{ number_format($todayStats['deposits'], 0) }}
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-4 lg:p-6 border border-zinc-200 dark:border-zinc-700">
                         <div class="flex items-center">
-                            <div class="p-3 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                                <flux:icon.arrow-up class="w-6 h-6 text-red-600 dark:text-red-400" />
+                            <div class="p-2 lg:p-3 bg-red-100 dark:bg-red-900/30 rounded-lg flex-shrink-0">
+                                <flux:icon.arrow-up class="w-5 h-5 lg:w-6 lg:h-6 text-red-600 dark:text-red-400" />
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400">Withdrawals</p>
-                                <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                            <div class="ml-3 lg:ml-4 min-w-0 flex-1">
+                                <p class="text-xs lg:text-sm text-zinc-600 dark:text-zinc-400 truncate">Withdrawals</p>
+                                <p class="text-lg lg:text-2xl font-bold text-zinc-900 dark:text-zinc-100 truncate">
                                     KES {{ number_format($todayStats['withdrawals'], 0) }}
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-4 lg:p-6 border border-zinc-200 dark:border-zinc-700">
                         <div class="flex items-center">
-                            <div class="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                                <flux:icon.clock class="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                            <div class="p-2 lg:p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex-shrink-0">
+                                <flux:icon.clock class="w-5 h-5 lg:w-6 lg:h-6 text-amber-600 dark:text-amber-400" />
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400">Pending Approvals</p>
-                                <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ $todayStats['pending_approvals'] }}</p>
+                            <div class="ml-3 lg:ml-4 min-w-0 flex-1">
+                                <p class="text-xs lg:text-sm text-zinc-600 dark:text-zinc-400 truncate">Pending Approvals</p>
+                                <p class="text-lg lg:text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ $todayStats['pending_approvals'] }}</p>
                             </div>
                         </div>
                     </div>

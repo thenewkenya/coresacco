@@ -29,8 +29,11 @@ class TransactionController extends Controller
         $user = Auth::user();
         
         if ($user->role === 'member') {
-            // Member view - show their accounts and transactions
-            $accounts = $user->accounts()->with('transactions')->get();
+            // Member view - show only their own accounts and transactions
+            $accounts = $user->accounts()->with(['transactions' => function($query) {
+                $query->where('member_id', auth()->id())->latest();
+            }])->get();
+            
             $recentTransactions = Transaction::where('member_id', $user->id)
                 ->where(function($query) {
                     $query->whereNotNull('account_id')
@@ -549,7 +552,7 @@ class TransactionController extends Controller
      */
     public function show(Transaction $transaction)
     {
-        $this->authorize('viewAny', Transaction::class);
+        $this->authorize('view', $transaction);
 
         $transaction->load(['account.member', 'member']);
         

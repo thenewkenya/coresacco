@@ -31,10 +31,18 @@ class TransactionService
 
             // Record balance before transaction
             $balanceBefore = $account->balance;
+            $requiresApproval = $amount >= self::LARGE_TRANSACTION_THRESHOLD;
+            $status = $requiresApproval ? Transaction::STATUS_PENDING : Transaction::STATUS_COMPLETED;
 
-            // Update account balance
-            $account->balance += $amount;
-            $account->save();
+            // Only update account balance if transaction doesn't require approval
+            if (!$requiresApproval) {
+                $account->balance += $amount;
+                $account->save();
+                $balanceAfter = $account->balance;
+            } else {
+                // For pending transactions, balance_after shows what it would be
+                $balanceAfter = $balanceBefore + $amount;
+            }
 
             // Create transaction record
             $transaction = Transaction::create([
@@ -44,13 +52,13 @@ class TransactionService
                 'amount' => $amount,
                 'description' => $description ?? "Deposit to {$account->account_type} account",
                 'reference_number' => $this->generateReferenceNumber(),
-                'status' => $amount >= self::LARGE_TRANSACTION_THRESHOLD ? Transaction::STATUS_PENDING : Transaction::STATUS_COMPLETED,
+                'status' => $status,
                 'balance_before' => $balanceBefore,
-                'balance_after' => $account->balance,
+                'balance_after' => $balanceAfter,
                 'metadata' => array_merge($metadata, [
                     'processed_by' => auth()->id(),
                     'processing_time' => now()->toISOString(),
-                    'requires_approval' => $amount >= self::LARGE_TRANSACTION_THRESHOLD,
+                    'requires_approval' => $requiresApproval,
                 ]),
             ]);
 
@@ -88,10 +96,18 @@ class TransactionService
 
             // Record balance before transaction
             $balanceBefore = $account->balance;
+            $requiresApproval = $amount >= self::LARGE_TRANSACTION_THRESHOLD;
+            $status = $requiresApproval ? Transaction::STATUS_PENDING : Transaction::STATUS_COMPLETED;
 
-            // Update account balance
-            $account->balance -= $amount;
-            $account->save();
+            // Only update account balance if transaction doesn't require approval
+            if (!$requiresApproval) {
+                $account->balance -= $amount;
+                $account->save();
+                $balanceAfter = $account->balance;
+            } else {
+                // For pending transactions, balance_after shows what it would be
+                $balanceAfter = $balanceBefore - $amount;
+            }
 
             // Create transaction record
             $transaction = Transaction::create([
@@ -101,13 +117,13 @@ class TransactionService
                 'amount' => $amount,
                 'description' => $description ?? "Withdrawal from {$account->account_type} account",
                 'reference_number' => $this->generateReferenceNumber(),
-                'status' => $amount >= self::LARGE_TRANSACTION_THRESHOLD ? Transaction::STATUS_PENDING : Transaction::STATUS_COMPLETED,
+                'status' => $status,
                 'balance_before' => $balanceBefore,
-                'balance_after' => $account->balance,
+                'balance_after' => $balanceAfter,
                 'metadata' => array_merge($metadata, [
                     'processed_by' => auth()->id(),
                     'processing_time' => now()->toISOString(),
-                    'requires_approval' => $amount >= self::LARGE_TRANSACTION_THRESHOLD,
+                    'requires_approval' => $requiresApproval,
                 ]),
             ]);
 
@@ -147,22 +163,31 @@ class TransactionService
             $transferReference = $this->generateReferenceNumber();
             $debitReference = $this->generateReferenceNumber();
             $creditReference = $this->generateReferenceNumber();
-            $status = $amount >= self::LARGE_TRANSACTION_THRESHOLD ? Transaction::STATUS_PENDING : Transaction::STATUS_COMPLETED;
+            $requiresApproval = $amount >= self::LARGE_TRANSACTION_THRESHOLD;
+            $status = $requiresApproval ? Transaction::STATUS_PENDING : Transaction::STATUS_COMPLETED;
 
             // Record balances before transactions
             $fromBalanceBefore = $fromAccount->balance;
             $toBalanceBefore = $toAccount->balance;
 
-            // Update account balances
-            $fromAccount->balance -= $amount;
-            $toAccount->balance += $amount;
-            $fromAccount->save();
-            $toAccount->save();
+            // Only update account balances if transaction doesn't require approval
+            if (!$requiresApproval) {
+                $fromAccount->balance -= $amount;
+                $toAccount->balance += $amount;
+                $fromAccount->save();
+                $toAccount->save();
+                $fromBalanceAfter = $fromAccount->balance;
+                $toBalanceAfter = $toAccount->balance;
+            } else {
+                // For pending transactions, balance_after shows what it would be
+                $fromBalanceAfter = $fromBalanceBefore - $amount;
+                $toBalanceAfter = $toBalanceBefore + $amount;
+            }
 
             $transferMetadata = array_merge($metadata, [
                 'processed_by' => auth()->id(),
                 'processing_time' => now()->toISOString(),
-                'requires_approval' => $amount >= self::LARGE_TRANSACTION_THRESHOLD,
+                'requires_approval' => $requiresApproval,
                 'transfer_reference' => $transferReference,
             ]);
 
@@ -176,7 +201,7 @@ class TransactionService
                 'reference_number' => $debitReference,
                 'status' => $status,
                 'balance_before' => $fromBalanceBefore,
-                'balance_after' => $fromAccount->balance,
+                'balance_after' => $fromBalanceAfter,
                 'metadata' => array_merge($transferMetadata, [
                     'transfer_type' => 'debit',
                     'destination_account' => $toAccount->account_number,
@@ -194,7 +219,7 @@ class TransactionService
                 'reference_number' => $creditReference,
                 'status' => $status,
                 'balance_before' => $toBalanceBefore,
-                'balance_after' => $toAccount->balance,
+                'balance_after' => $toBalanceAfter,
                 'metadata' => array_merge($transferMetadata, [
                     'transfer_type' => 'credit',
                     'source_account' => $fromAccount->account_number,
@@ -241,6 +266,27 @@ class TransactionService
         }
 
         return DB::transaction(function () use ($transaction, $approver) {
+            // Apply the balance changes now that transaction is approved
+            $account = $transaction->account;
+            
+            if ($transaction->type === Transaction::TYPE_DEPOSIT) {
+                $account->balance += $transaction->amount;
+            } elseif ($transaction->type === Transaction::TYPE_WITHDRAWAL) {
+                $account->balance -= $transaction->amount;
+            } elseif ($transaction->type === Transaction::TYPE_TRANSFER) {
+                // Handle transfer transactions
+                if ($transaction->amount > 0) {
+                    // Credit transaction
+                    $account->balance += $transaction->amount;
+                } else {
+                    // Debit transaction
+                    $account->balance += $transaction->amount; // amount is negative for debits
+                }
+            }
+            
+            $account->save();
+            
+            // Update transaction status and metadata
             $transaction->update([
                 'status' => Transaction::STATUS_COMPLETED,
                 'metadata' => array_merge($transaction->metadata ?? [], [
@@ -254,6 +300,7 @@ class TransactionService
                 'transaction_id' => $transaction->id,
                 'approved_by' => $approver->id,
                 'amount' => $transaction->amount,
+                'account_balance_after' => $account->balance,
             ]);
 
             return true;
@@ -272,11 +319,8 @@ class TransactionService
         }
 
         return DB::transaction(function () use ($transaction, $approver, $reason) {
-            // Reverse the balance changes
-            $account = $transaction->account;
-            $account->balance = $transaction->balance_before;
-            $account->save();
-
+            // No need to reverse balance changes since they were never applied for pending transactions
+            
             $transaction->update([
                 'status' => Transaction::STATUS_FAILED,
                 'metadata' => array_merge($transaction->metadata ?? [], [
