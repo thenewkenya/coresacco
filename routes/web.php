@@ -18,10 +18,35 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 
-    // Core Operations
+    // Transaction Processing System
     Route::prefix('transactions')->name('transactions.')->group(function () {
-        Route::get('/', function () { return view('transactions.index'); })->name('index');
-        Route::get('/my', function () { return view('transactions.my'); })->name('my');
+        Route::get('/', [App\Http\Controllers\TransactionController::class, 'index'])->name('index');
+        Route::get('/{transaction}', [App\Http\Controllers\TransactionController::class, 'show'])->name('show');
+        
+        // Deposit routes
+        Route::get('/create/deposit', [App\Http\Controllers\TransactionController::class, 'createDeposit'])->name('deposit.create');
+        Route::post('/create/deposit', [App\Http\Controllers\TransactionController::class, 'storeDeposit'])->name('deposit.store');
+        
+        // Withdrawal routes
+        Route::get('/create/withdrawal', [App\Http\Controllers\TransactionController::class, 'createWithdrawal'])->name('withdrawal.create');
+        Route::post('/create/withdrawal', [App\Http\Controllers\TransactionController::class, 'storeWithdrawal'])->name('withdrawal.store');
+        
+        // Transfer routes
+        Route::get('/create/transfer', [App\Http\Controllers\TransactionController::class, 'createTransfer'])->name('transfer.create');
+        Route::post('/create/transfer', [App\Http\Controllers\TransactionController::class, 'storeTransfer'])->name('transfer.store');
+        
+        // Receipt routes
+        Route::get('/receipt/{transaction}', [App\Http\Controllers\TransactionController::class, 'receipt'])->name('receipt');
+        Route::get('/receipt/{transaction}/download', [App\Http\Controllers\TransactionController::class, 'downloadReceipt'])->name('receipt.download');
+        
+        // Approval routes
+        Route::post('/approve/{transaction}', [App\Http\Controllers\TransactionController::class, 'approve'])->name('approve')->middleware('can:approve,transaction');
+        Route::post('/reject/{transaction}', [App\Http\Controllers\TransactionController::class, 'reject'])->name('reject')->middleware('can:approve,transaction');
+        Route::post('/bulk/approve', [App\Http\Controllers\TransactionController::class, 'bulkApprove'])->name('bulk.approve');
+        Route::post('/bulk/reject', [App\Http\Controllers\TransactionController::class, 'bulkReject'])->name('bulk.reject');
+        
+        // AJAX routes
+        Route::get('/account/{account}/details', [App\Http\Controllers\TransactionController::class, 'getAccountDetails'])->name('account.details');
     });
 
     // Financial Services
@@ -80,10 +105,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings', function () { return view('system.settings'); })->name('settings');
     });
 
-    // Staff Tools
-    Route::prefix('approvals')->name('approvals.')->group(function () {
-        Route::get('/', function () { return view('approvals.index'); })->name('index');
-    });
+
 
     Route::prefix('schedule')->name('schedule.')->group(function () {
         Route::get('/', function () { return view('schedule.index'); })->name('index');
