@@ -9,6 +9,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
@@ -24,6 +26,14 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'member_number',
+        'id_number',
+        'phone_number',
+        'address',
+        'membership_status',
+        'joining_date',
+        'branch_id',
+        'role',
     ];
 
     /**
@@ -46,6 +56,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'joining_date' => 'date',
         ];
     }
 
@@ -103,5 +114,26 @@ class User extends Authenticatable
     public function isStaff(): bool
     {
         return $this->hasRole('staff');
+    }
+
+    // SACCO-specific relationships
+    public function accounts(): HasMany
+    {
+        return $this->hasMany(Account::class, 'member_id');
+    }
+
+    public function loans(): HasMany
+    {
+        return $this->hasMany(Loan::class, 'member_id');
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'member_id');
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

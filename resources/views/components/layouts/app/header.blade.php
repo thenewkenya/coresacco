@@ -110,7 +110,7 @@
                     @endroleany
 
                     @role('member')
-                    <flux:navlist.item icon="arrows-right-left" :href="route('transactions.my')" :current="request()->routeIs('transactions.*')" wire:navigate>
+                    <flux:navlist.item icon="arrows-right-left" :href="route('transactions.index')" :current="request()->routeIs('transactions.*')" wire:navigate>
                         {{ __('My Transactions') }}
                     </flux:navlist.item>
                     @endrole
@@ -228,9 +228,9 @@
                 <!-- Staff Tools -->
                 @role('staff')
                 <flux:navlist.group :heading="__('Staff Tools')">
-                    <flux:navlist.item icon="check-circle" :href="route('approvals.index')" :current="request()->routeIs('approvals.*')" wire:navigate>
-                        {{ __('Pending Approvals') }}
-                    </flux:navlist.item>
+                                                    <flux:navlist.item icon="check-circle" :href="route('transactions.index', ['status' => 'pending'])" :current="request()->routeIs('transactions.*') && request('status') === 'pending'" wire:navigate>
+                                    {{ __('Pending Approvals') }}
+                                </flux:navlist.item>
 
                     <flux:navlist.item icon="calendar" :href="route('schedule.index')" :current="request()->routeIs('schedule.*')" wire:navigate>
                         {{ __('Appointments') }}

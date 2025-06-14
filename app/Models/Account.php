@@ -46,7 +46,7 @@ class Account extends Model
     // Relationships
     public function member(): BelongsTo
     {
-        return $this->belongsTo(Member::class);
+        return $this->belongsTo(User::class, 'member_id');
     }
 
     public function transactions(): HasMany
