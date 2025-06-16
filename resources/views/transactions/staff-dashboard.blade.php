@@ -15,21 +15,15 @@
                         <p class="text-sm text-zinc-600 dark:text-zinc-400">Monitor and approve transactions</p>
                     </div>
                     <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                        <a href="{{ route('transactions.deposit.create') }}" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-center">
-                            <flux:icon.plus class="w-4 h-4 inline mr-2" />
-                            <span class="hidden sm:inline">New Deposit</span>
-                            <span class="sm:hidden">Deposit</span>
-                        </a>
-                        <a href="{{ route('transactions.withdrawal.create') }}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-center">
-                            <flux:icon.arrow-up class="w-4 h-4 inline mr-2" />
-                            <span class="hidden sm:inline">Process Withdrawal</span>
-                            <span class="sm:hidden">Withdrawal</span>
-                        </a>
-                        <a href="{{ route('transactions.transfer.create') }}" class="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-center">
-                            <flux:icon.arrows-right-left class="w-4 h-4 inline mr-2" />
-                            <span class="hidden sm:inline">Transfer Funds</span>
-                            <span class="sm:hidden">Transfer</span>
-                        </a>
+                        <flux:button :href="route('transactions.deposit.create')" variant="outline" icon="plus">
+                            {{ __('Deposit') }}
+                        </flux:button>
+                        <flux:button :href="route('transactions.withdrawal.create')" variant="outline" icon="minus">
+                            {{ __('Withdrawal') }}
+                        </flux:button>
+                        <flux:button :href="route('transactions.transfer.create')" variant="primary" icon="arrows-right-left">
+                            {{ __('Transfer') }}
+                        </flux:button>
                     </div>
                 </div>
             </div>
@@ -273,9 +267,9 @@
                     </div>
                     <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">No transactions found</h3>
                     <p class="text-zinc-600 dark:text-zinc-400 text-lg mb-6">No transactions match your current filters.</p>
-                    <a href="{{ route('transactions.index') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
-                        Clear Filters
-                    </a>
+                    <flux:button :href="route('transactions.index')" variant="outline" icon="arrow-path">
+                        {{ __('Clear Filters') }}
+                    </flux:button>
                 </div>
             @endif
         </div>

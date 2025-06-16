@@ -11,18 +11,15 @@
                         <p class="text-sm text-zinc-600 dark:text-zinc-400">Manage deposits, withdrawals, and transfers</p>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <a href="{{ route('transactions.deposit.create') }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                            <flux:icon.plus class="w-4 h-4 inline mr-2" />
-                            New Deposit
-                        </a>
-                        <a href="{{ route('transactions.withdrawal.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                            <flux:icon.arrow-up class="w-4 h-4 inline mr-2" />
-                            Withdraw
-                        </a>
-                        <a href="{{ route('transactions.transfer.create') }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                            <flux:icon.arrows-right-left class="w-4 h-4 inline mr-2" />
-                            Transfer
-                        </a>
+                        <flux:button :href="route('transactions.deposit.create')" variant="outline" icon="plus">
+                            {{ __('Deposit') }}
+                        </flux:button>
+                        <flux:button :href="route('transactions.withdrawal.create')" variant="outline" icon="minus">
+                            {{ __('Withdrawal') }}
+                        </flux:button>
+                        <flux:button :href="route('transactions.transfer.create')" variant="primary" icon="arrows-right-left">
+                            {{ __('Transfer') }}
+                        </flux:button>
                     </div>
                 </div>
             </div>
@@ -235,9 +232,9 @@
                             <flux:icon.document-text class="w-12 h-12 text-zinc-400 mx-auto mb-4" />
                             <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">No transactions yet</h3>
                             <p class="text-zinc-500 dark:text-zinc-400 mb-6">Start by making your first deposit or transfer.</p>
-                            <a href="{{ route('transactions.deposit.create') }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
-                                Make First Deposit
-                            </a>
+                            <flux:button :href="route('transactions.deposit.create')" variant="primary" icon="plus">
+                                {{ __('Make First Deposit') }}
+                            </flux:button>
                         </div>
                     @endif
                 </div>

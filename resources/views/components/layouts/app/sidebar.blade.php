@@ -10,8 +10,8 @@
         <!-- Mobile close toggle -->
         <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
-        <!-- Mobile logo - only visible on small screens when sidebar is open -->
-        <a href="{{ route('dashboard') }}" class="me-5 flex items-center space-x-2 rtl:space-x-reverse lg:hidden" wire:navigate>
+        <!-- Logo - Desktop in sidebar, Mobile in header -->
+        <a href="{{ route('dashboard') }}" class="me-5 flex items-center space-x-2 rtl:space-x-reverse" wire:navigate>
             <x-app-logo />
         </a>
 
@@ -216,131 +216,246 @@
         </flux:dropdown>
     </flux:sidebar>
 
-        <flux:header sticky container class="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
-            <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
+        <flux:header sticky class="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+            <!-- First Row: Main Header -->
+            <div class="flex items-center justify-between w-full px-4 sm:px-6 lg:px-8">
+                <!-- Left Section: Page Context & Navigation -->
+                <div class="flex items-center space-x-4 min-w-0 flex-1">
+                    <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
+                    
+                    <!-- Logo (Mobile Only - Desktop logo is in sidebar) -->
+                    <a href="{{ route('dashboard') }}" class="lg:hidden flex items-center space-x-2 flex-shrink-0" wire:navigate>
+                        <x-app-logo />
+                    </a>
 
-            <a href="{{ route('dashboard') }}" class="ms-2 me-5 flex items-center space-x-2 rtl:space-x-reverse lg:ms-0" wire:navigate>
-                <x-app-logo />
-            </a>
+                    <!-- Page Context -->
+                    <div class="hidden lg:flex items-center space-x-4 min-w-0">
+                        @php
+                            $currentRoute = request()->route()->getName();
+                            $pageContext = [
+                                'dashboard' => [
+                                    'icon' => 'home',
+                                    'title' => __('Dashboard'),
+                                    'breadcrumbs' => [
+                                        ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => true]
+                                    ],
+                                    'actions' => []
+                                ],
+                                'transactions.index' => [
+                                    'icon' => 'arrows-right-left',
+                                    'title' => __('Transactions'),
+                                    'breadcrumbs' => [
+                                        ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => false],
+                                        ['label' => __('Transactions'), 'route' => 'transactions.index', 'current' => true]
+                                    ],
+                                    'actions' => []
+                                ],
+                                'transactions.deposit.create' => [
+                                    'icon' => 'plus',
+                                    'title' => __('New Deposit'),
+                                    'breadcrumbs' => [
+                                        ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => false],
+                                        ['label' => __('Transactions'), 'route' => 'transactions.index', 'current' => false],
+                                        ['label' => __('New Deposit'), 'route' => null, 'current' => true]
+                                    ],
+                                    'actions' => []
+                                ],
+                                'transactions.withdrawal.create' => [
+                                    'icon' => 'minus',
+                                    'title' => __('Withdrawal'),
+                                    'breadcrumbs' => [
+                                        ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => false],
+                                        ['label' => __('Transactions'), 'route' => 'transactions.index', 'current' => false],
+                                        ['label' => __('New Withdrawal'), 'route' => null, 'current' => true]
+                                    ],
+                                    'actions' => []
+                                ],
+                                'members.index' => [
+                                    'icon' => 'users',
+                                    'title' => __('Members'),
+                                    'breadcrumbs' => [
+                                        ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => false],
+                                        ['label' => __('Members'), 'route' => 'members.index', 'current' => true]
+                                    ],
+                                    'actions' => [
+                                        ['label' => __('Add'), 'route' => 'members.create', 'icon' => 'user-plus']
+                                    ]
+                                ],
+                                'members.create' => [
+                                    'icon' => 'user-plus',
+                                    'title' => __('Add Member'),
+                                    'breadcrumbs' => [
+                                        ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => false],
+                                        ['label' => __('Members'), 'route' => 'members.index', 'current' => false],
+                                        ['label' => __('Add Member'), 'route' => null, 'current' => true]
+                                    ],
+                                    'actions' => []
+                                ],
+                                'savings.index' => [
+                                    'icon' => 'banknotes',
+                                    'title' => __('Savings'),
+                                    'breadcrumbs' => [
+                                        ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => false],
+                                        ['label' => __('Savings'), 'route' => 'savings.index', 'current' => true]
+                                    ],
+                                    'actions' => []
+                                ],
+                                'loans.index' => [
+                                    'icon' => 'credit-card',
+                                    'title' => __('Loans'),
+                                    'breadcrumbs' => [
+                                        ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => false],
+                                        ['label' => __('Loans'), 'route' => 'loans.index', 'current' => true]
+                                    ],
+                                    'actions' => []
+                                ],
+                                'analytics.index' => [
+                                    'icon' => 'chart-bar',
+                                    'title' => __('Analytics'),
+                                    'breadcrumbs' => [
+                                        ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => false],
+                                        ['label' => __('Analytics'), 'route' => 'analytics.index', 'current' => true]
+                                    ],
+                                    'actions' => []
+                                ],
+                            ];
 
-            <flux:navbar class="-mb-px max-lg:hidden">
-                <flux:navbar.item icon="layout-grid" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                    {{ __('Dashboard') }}
-                </flux:navbar.item>
-            </flux:navbar>
+                            $context = $pageContext[$currentRoute] ?? [
+                                'icon' => 'home',
+                                'title' => __('Dashboard'),
+                                'breadcrumbs' => [
+                                    ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => true]
+                                ],
+                                'actions' => []
+                            ];
+                        @endphp
 
-            <flux:spacer />
-
-            <!-- Search bar and utility navigation -->
-            <div class="flex items-center space-x-4">
-                <!-- Search bar -->
-                <div class="relative max-md:hidden">
-                    <flux:input 
-                        type="search" 
-                        placeholder="Search members, accounts, transactions..." 
-                        class="w-80 pl-10 pr-4 py-2" 
-                    />
-                    <flux:icon.magnifying-glass class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                        <!-- Breadcrumbs -->
+                        <div class="flex items-center space-x-1 text-sm text-zinc-500 dark:text-zinc-400 min-w-0">
+                            @foreach($context['breadcrumbs'] as $index => $breadcrumb)
+                                @if($index > 0)
+                                    <flux:icon.chevron-right class="h-3 w-3 flex-shrink-0" />
+                                @endif
+                                
+                                @if($breadcrumb['current'] || !$breadcrumb['route'])
+                                    <span class="whitespace-nowrap text-zinc-900 dark:text-zinc-100 font-medium">{{ $breadcrumb['label'] }}</span>
+                                @else
+                                    <a href="{{ route($breadcrumb['route']) }}" 
+                                       wire:navigate 
+                                       class="whitespace-nowrap hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
+                                        {{ $breadcrumb['label'] }}
+                                    </a>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Utility icons -->
-                <flux:navbar class="space-x-0.5 rtl:space-x-reverse py-0!">
-                    <!-- Mobile search toggle -->
-                    <flux:tooltip :content="__('Search')" position="bottom">
-                        <flux:navbar.item class="!h-10 [&>div>svg]:size-5 md:hidden" icon="magnifying-glass" href="#" :label="__('Search')" />
-                    </flux:tooltip>
+                <!-- Right Section: Search & Utilities -->
+                <div class="flex items-center space-x-3 flex-shrink-0">
+                    <!-- Search Bar (Desktop) -->
+                    <div class="relative hidden md:block">
+                        @php
+                            $searchPlaceholders = [
+                                'dashboard' => __('Search anything...'),
+                                'transactions.index' => __('Search transactions, amounts, members...'),
+                                'members.index' => __('Search members by name, ID, phone...'),
+                                'savings.index' => __('Search accounts, balances...'),
+                                'loans.index' => __('Search loans, applications...'),
+                            ];
+                            $currentPlaceholder = $searchPlaceholders[$currentRoute] ?? __('Search...');
+                        @endphp
+                        
+                        <flux:input 
+                            type="search" 
+                            placeholder="{{ $currentPlaceholder }}" 
+                            class="w-64 xl:w-80 pl-10 pr-4 py-2" 
+                        />
+                        <flux:icon.magnifying-glass class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                    </div>
 
-                    <!-- Notifications -->
-                    <flux:tooltip :content="__('Notifications')" position="bottom">
-                        <flux:dropdown position="bottom" align="end">
-                            <flux:navbar.item class="!h-10 [&>div>svg]:size-5 relative" icon="bell" :label="__('Notifications')">
-                                <!-- Notification badge -->
-                                <span class="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full">3</span>
-                            </flux:navbar.item>
-                            
-                            <flux:menu class="w-80">
-                                <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
-                                    <div class="flex items-center justify-between">
-                                        <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{{ __('Notifications') }}</h3>
-                                        <a href="#" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">{{ __('Mark all read') }}</a>
-                                    </div>
-                                </div>
+                    <!-- Action Buttons (based on context) -->
+                    @if(!empty($context['actions']))
+                        <div class="hidden lg:flex items-center space-x-2">
+                            @foreach($context['actions'] as $action)
+                                <flux:button size="sm" :href="$action['route'] !== '#' ? route($action['route']) : '#'" wire:navigate variant="primary" icon="{{ $action['icon'] }}">
+                                    <span class="hidden lg:inline">{{ $action['label'] }}</span>
+                                </flux:button>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <!-- Utility Icons -->
+                    <div class="flex items-center space-x-1">
+                        <!-- Mobile search -->
+                        <flux:tooltip :content="__('Search')" position="bottom">
+                            <flux:navbar.item class="md:hidden" icon="magnifying-glass" href="#" />
+                        </flux:tooltip>
+
+                        <!-- Notifications -->
+                        <flux:tooltip :content="__('Notifications')" position="bottom">
+                            <flux:dropdown position="bottom" align="end">
+                                <flux:navbar.item class="relative" icon="bell">
+                                    <span class="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full">3</span>
+                                </flux:navbar.item>
                                 
-                                <div class="max-h-64 overflow-y-auto">
-                                    <!-- Sample notifications -->
-                                    <flux:menu.item class="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                                        <div class="flex items-start space-x-3">
-                                            <div class="flex-shrink-0">
-                                                <flux:icon.credit-card class="h-5 w-5 text-blue-500" />
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <p class="text-sm text-zinc-900 dark:text-zinc-100 font-medium">{{ __('New loan application') }}</p>
-                                                <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('John Doe submitted a loan application for KES 50,000') }}</p>
-                                                <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{{ __('2 minutes ago') }}</p>
-                                            </div>
-                                            <div class="flex-shrink-0">
+                                <flux:menu class="w-80">
+                                    <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
+                                        <div class="flex items-center justify-between">
+                                            <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{{ __('Notifications') }}</h3>
+                                            <a href="#" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">{{ __('Mark all read') }}</a>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="max-h-64 overflow-y-auto">
+                                        <!-- Sample notifications -->
+                                        <flux:menu.item class="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                                            <div class="flex items-start space-x-3">
+                                                <div class="flex-shrink-0">
+                                                    <flux:icon.credit-card class="h-5 w-5 text-blue-500" />
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm text-zinc-900 dark:text-zinc-100 font-medium">{{ __('New loan application') }}</p>
+                                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('John Doe - KES 50,000') }}</p>
+                                                    <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{{ __('2 min ago') }}</p>
+                                                </div>
                                                 <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
                                             </div>
-                                        </div>
-                                    </flux:menu.item>
+                                        </flux:menu.item>
 
-                                    <flux:menu.item class="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                                        <div class="flex items-start space-x-3">
-                                            <div class="flex-shrink-0">
-                                                <flux:icon.banknotes class="h-5 w-5 text-green-500" />
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <p class="text-sm text-zinc-900 dark:text-zinc-100 font-medium">{{ __('Large deposit received') }}</p>
-                                                <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('KES 75,000 deposit requires approval') }}</p>
-                                                <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{{ __('5 minutes ago') }}</p>
-                                            </div>
-                                            <div class="flex-shrink-0">
+                                        <flux:menu.item class="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                                            <div class="flex items-start space-x-3">
+                                                <div class="flex-shrink-0">
+                                                    <flux:icon.banknotes class="h-5 w-5 text-green-500" />
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm text-zinc-900 dark:text-zinc-100 font-medium">{{ __('Large deposit') }}</p>
+                                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('KES 75,000 needs approval') }}</p>
+                                                    <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{{ __('5 min ago') }}</p>
+                                                </div>
                                                 <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                                             </div>
-                                        </div>
-                                    </flux:menu.item>
+                                        </flux:menu.item>
+                                    </div>
+                                    
+                                    <div class="px-4 py-2 border-t border-zinc-200 dark:border-zinc-700">
+                                        <a href="#" class="block text-center text-sm text-blue-600 dark:text-blue-400 hover:underline">{{ __('View all') }}</a>
+                                    </div>
+                                </flux:menu>
+                            </flux:dropdown>
+                        </flux:tooltip>
 
-                                    <flux:menu.item class="px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                                        <div class="flex items-start space-x-3">
-                                            <div class="flex-shrink-0">
-                                                <flux:icon.exclamation-triangle class="h-5 w-5 text-amber-500" />
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <p class="text-sm text-zinc-900 dark:text-zinc-100 font-medium">{{ __('System backup completed') }}</p>
-                                                <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Daily backup finished successfully') }}</p>
-                                                <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{{ __('1 hour ago') }}</p>
-                                            </div>
-                                        </div>
-                                    </flux:menu.item>
-                                </div>
-                                
-                                <div class="px-4 py-2 border-t border-zinc-200 dark:border-zinc-700">
-                                    <a href="#" class="block text-center text-sm text-blue-600 dark:text-blue-400 hover:underline">{{ __('View all notifications') }}</a>
-                                </div>
-                            </flux:menu>
-                        </flux:dropdown>
-                    </flux:tooltip>
-
-                    <!-- External links -->
-                    <flux:tooltip :content="__('Repository')" position="bottom">
-                        <flux:navbar.item
-                            class="h-10 max-lg:hidden [&>div>svg]:size-5"
-                            icon="folder-git-2"
-                            href="https://github.com/thenewkenya/saccocore.git"
-                            target="_blank"
-                            :label="__('Repository')"
-                        />
-                    </flux:tooltip>
-                    <flux:tooltip :content="__('Documentation')" position="bottom">
-                        <flux:navbar.item
-                            class="h-10 max-lg:hidden [&>div>svg]:size-5"
-                            icon="book-open-text"
-                            href="https://laravel.com/docs/starter-kits#livewire"
-                            target="_blank"
-                            label="Documentation"
-                        />
-                    </flux:tooltip>
-                </flux:navbar>
+                        <!-- External links (Desktop only) -->
+                        <flux:tooltip :content="__('Repository')" position="bottom">
+                            <flux:navbar.item
+                                class="hidden xl:block"
+                                icon="folder-git-2"
+                                href="https://github.com/thenewkenya/saccocore.git"
+                                target="_blank"
+                            />
+                        </flux:tooltip>
+                    </div>
+                </div>
             </div>
 
             <!-- Mobile User Menu - only visible on mobile -->
