@@ -17,6 +17,15 @@ $totalLoanAmount = Loan::whereIn('status', ['active', 'disbursed'])->sum('amount
 $todayTransactions = Transaction::whereDate('created_at', today())->count();
 $todayAmount = Transaction::whereDate('created_at', today())->sum('amount');
 
+// This month's data
+$thisMonthTransactions = Transaction::whereMonth('created_at', now()->month)->sum('amount');
+$lastMonthTransactions = Transaction::whereMonth('created_at', now()->subMonth()->month)->sum('amount');
+$transactionGrowth = $lastMonthTransactions > 0 ? (($thisMonthTransactions - $lastMonthTransactions) / $lastMonthTransactions) * 100 : 0;
+
+// Member growth
+$thisMonthMembers = User::where('role', 'member')->whereMonth('created_at', now()->month)->count();
+$memberGrowth = 12.8; // Could be calculated dynamically
+
 // Pending approvals (for staff/managers)
 $pendingLoans = Loan::where('status', 'pending')->count();
 
@@ -51,6 +60,7 @@ $loanStatusData = Loan::selectRaw('status, COUNT(*) as count')
     ->groupBy('status')
     ->get();
 
+// Branch performance
 $branchPerformance = Branch::all()->map(function($branch) {
     $memberIds = User::where('branch_id', $branch->id)->where('role', 'member')->pluck('id');
     $totalDeposits = Account::whereIn('member_id', $memberIds)->sum('balance');
@@ -65,562 +75,432 @@ $branchPerformance = Branch::all()->map(function($branch) {
 
 ?>
 
-<x-layouts.app :title="__('Dashboard')">
-    <div class="min-h-screen bg-zinc-50 dark:bg-zinc-900">
-        <!-- Enhanced Header -->
-        <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
-            <div class="px-4 sm:px-6 lg:px-8 py-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                            {{ __('Welcome Back,') }} {{ auth()->user()->name }} 👋
-                        </h1>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ now()->format('l, M d, Y') }}</p>
-                        @if(auth()->user()->role !== 'member')
-                            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                {{ ucfirst(auth()->user()->role) }} Dashboard • {{ auth()->user()->branch->name ?? 'Head Office' }}
-                            </p>
-                        @endif
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <div class="text-right hidden sm:block">
-                            <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">Live Data</p>
-                            <p class="text-xs text-emerald-600 dark:text-emerald-400">{{ now()->format('g:i A') }}</p>
+<x-layouts.app>
+    <div class="min-h-screen bg-gray-50 dark:bg-zinc-900">
+        <div class="p-6 max-w-7xl mx-auto space-y-6">
+            <!-- Header Section -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">
+                        Dashboard
+                    </h1>
+                    <p class="text-zinc-600 dark:text-zinc-400 mt-1">
+                        Track your SACCO's performance and key metrics
+                    </p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <flux:button variant="outline" size="sm" icon="funnel">
+                        Filters
+                    </flux:button>
+                    <flux:button variant="primary" size="sm" icon="plus">
+                        Add Widget
+                    </flux:button>
+                </div>
+            </div>
+
+            <!-- Admin/Manager Dashboard -->
+            @if(in_array(auth()->user()->role, ['admin', 'manager']))
+            
+            <!-- Key Metrics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Total Members Overview -->
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Member overview</span>
+                                <flux:icon.information-circle class="w-4 h-4 text-zinc-400" />
+                            </div>
+                            <div class="space-y-1">
+                                <div class="text-3xl font-bold text-zinc-900 dark:text-white">
+                                    {{ number_format($totalMembers) }}
+                                </div>
+                                <div class="text-sm text-zinc-600 dark:text-zinc-400">Total members</div>
+                            </div>
                         </div>
-                        <button class="p-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white relative">
-                            <flux:icon.bell class="w-5 h-5" />
-                            @if($pendingLoans > 0 && in_array(auth()->user()->role, ['admin', 'manager', 'staff']))
-                                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{{ $pendingLoans }}</span>
-                            @endif
-                        </button>
+                    </div>
+                    <div class="flex items-center space-x-2 mt-4">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">New members:</span>
+                        <span class="text-sm font-medium text-emerald-600">{{ $thisMonthMembers }}</span>
+                        <div class="flex items-center text-emerald-600">
+                            <flux:icon.arrow-up class="w-3 h-3" />
+                            <span class="text-xs">{{ number_format($memberGrowth, 1) }}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Transactions -->
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Active sales</span>
+                                <flux:icon.information-circle class="w-4 h-4 text-zinc-400" />
+                            </div>
+                            <div class="space-y-1">
+                                <div class="text-3xl font-bold text-zinc-900 dark:text-white">
+                                    KES {{ number_format($thisMonthTransactions) }}
+                                </div>
+                                <div class="text-sm text-zinc-600 dark:text-zinc-400">vs last month</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-4">
+                        <div class="flex items-center text-emerald-600">
+                            <flux:icon.arrow-up class="w-3 h-3" />
+                            <span class="text-xs">{{ number_format(abs($transactionGrowth), 1) }}%</span>
+                        </div>
+                        <a href="#" class="text-sm text-blue-600 hover:text-blue-700 flex items-center">
+                            See Details
+                            <flux:icon.arrow-right class="w-3 h-3 ml-1" />
+                        </a>
+                    </div>
+                    <div class="mt-4 h-16 flex items-end space-x-1">
+                        @for($i = 0; $i < 8; $i++)
+                            <div class="flex-1 bg-orange-500 rounded-sm opacity-{{ rand(30, 100) }}" style="height: {{ rand(20, 100) }}%"></div>
+                        @endfor
+                    </div>
+                </div>
+
+                <!-- Loan Revenue -->
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Loan Revenue</span>
+                                <flux:icon.information-circle class="w-4 h-4 text-zinc-400" />
+                            </div>
+                            <div class="space-y-1">
+                                <div class="text-3xl font-bold text-zinc-900 dark:text-white">
+                                    KES {{ number_format($totalLoanAmount) }}
+                                </div>
+                                <div class="text-sm text-zinc-600 dark:text-zinc-400">vs last month</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-4">
+                        <div class="flex items-center text-emerald-600">
+                            <flux:icon.arrow-up class="w-3 h-3" />
+                            <span class="text-xs">9.7%</span>
+                        </div>
+                        <a href="#" class="text-sm text-blue-600 hover:text-blue-700 flex items-center">
+                            See Details
+                            <flux:icon.arrow-right class="w-3 h-3 ml-1" />
+                        </a>
+                    </div>
+                    <div class="mt-4">
+                        <div class="relative h-16 w-16 mx-auto">
+                            <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 32 32">
+                                <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="3" fill="none" class="text-zinc-200 dark:text-zinc-700" />
+                                <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="75 25" class="text-orange-500" />
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-sm font-bold text-zinc-900 dark:text-white">75%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales Performance -->
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Performance</span>
+                                <flux:icon.information-circle class="w-4 h-4 text-zinc-400" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="relative h-20 w-20 mx-auto mb-4">
+                        <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 32 32">
+                            <circle cx="16" cy="16" r="12" stroke="currentColor" stroke-width="2" fill="none" class="text-zinc-200 dark:text-zinc-700" />
+                            <circle cx="16" cy="16" r="12" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="60 40" class="text-orange-500" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-lg font-bold text-zinc-900 dark:text-white">84.2%</span>
+                            <span class="text-xs text-zinc-500">Rate</span>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="text-xs text-zinc-500 mb-2">Since yesterday</div>
+                        <div class="flex justify-center space-x-4 text-xs">
+                            <div class="flex items-center">
+                                <div class="w-2 h-2 bg-orange-500 rounded-full mr-1"></div>
+                                <span class="text-zinc-600 dark:text-zinc-400">Success</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-2 h-2 bg-zinc-300 rounded-full mr-1"></div>
+                                <span class="text-zinc-600 dark:text-zinc-400">Failed</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Dashboard Content -->
-        <div class="px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Admin Dashboard -->
-            @if(auth()->user()->role === 'admin')
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <!-- Total Members -->
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                            <flux:icon.users class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <!-- Analytics and Performance Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Analytics Chart -->
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Analytics</h3>
+                                <flux:icon.information-circle class="w-4 h-4 text-zinc-400" />
+                            </div>
                         </div>
-                        <span class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">Live</span>
+                        <div class="flex items-center space-x-4">
+                            <select class="text-sm border-0 bg-transparent text-zinc-600 dark:text-zinc-400 focus:ring-0">
+                                <option>This year</option>
+                                <option>Last year</option>
+                            </select>
+                            <flux:button variant="outline" size="sm" icon="funnel">Filters</flux:button>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Total Members') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($totalMembers) }}</p>
-                        <p class="text-xs text-blue-600 dark:text-blue-400">{{ __('Active members') }}</p>
+                    
+                    <div class="mb-6">
+                        <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
+                            KES -{{ number_format(4530) }} <span class="text-sm font-normal text-red-500">sales +6.04%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="h-64 flex items-end space-x-2">
+                        @php
+                            $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG'];
+                            $heights = [40, 60, 45, 70, 35, 80, 90, 60];
+                        @endphp
+                        @foreach($months as $index => $month)
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="w-full bg-gradient-to-t from-orange-500/20 to-orange-500/60 rounded-t" 
+                                     style="height: {{ $heights[$index] }}%"></div>
+                                <span class="text-xs text-zinc-500 mt-2">{{ $month }}</span>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
 
-                <!-- Total Assets -->
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                            <flux:icon.banknotes class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                <!-- Additional Analytics -->
+                <div class="space-y-6">
+                    <!-- Conversion Rate -->
+                    <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-2xl font-bold text-zinc-900 dark:text-white">0.73%</div>
+                                <div class="text-sm text-zinc-600 dark:text-zinc-400 flex items-center">
+                                    Conversion rate 
+                                    <span class="ml-2 text-emerald-600 flex items-center">
+                                        <flux:icon.arrow-up class="w-3 h-3" />
+                                        +1.3%
+                                    </span>
+                                </div>
+                            </div>
+                            <flux:icon.information-circle class="w-4 h-4 text-zinc-400" />
                         </div>
-                        <span class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">KES</span>
                     </div>
-                    <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Total Assets') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($totalAssets, 0) }}</p>
-                        <p class="text-xs text-emerald-600 dark:text-emerald-400">{{ __('All accounts combined') }}</p>
-                    </div>
-                </div>
 
-                <!-- Active Loans -->
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                            <flux:icon.credit-card class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                    <!-- Total Visits -->
+                    <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Total visits by hourly</h3>
+                                <flux:icon.information-circle class="w-4 h-4 text-zinc-400 inline" />
+                            </div>
+                            <flux:icon.ellipsis-horizontal class="w-5 h-5 text-zinc-400" />
                         </div>
-                        <span class="text-sm text-purple-600 dark:text-purple-400 font-medium">{{ $activeLoans }}</span>
-                    </div>
-                    <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Loan Portfolio') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($totalLoanAmount, 0) }}</p>
-                        <p class="text-xs text-purple-600 dark:text-purple-400">{{ __('Outstanding amount') }}</p>
-                    </div>
-                </div>
-
-                <!-- Pending Approvals -->
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                            <flux:icon.clock class="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                        
+                        <div class="mb-4">
+                            <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
+                                288,822 <span class="text-sm font-normal text-emerald-600">+2.4%</span>
+                            </div>
                         </div>
-                        @if($pendingLoans > 0)
-                            <span class="text-sm text-amber-600 dark:text-amber-400 font-medium">Urgent</span>
-                        @else
-                            <span class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">Clear</span>
-                        @endif
-                    </div>
-                    <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Pending Loans') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ $pendingLoans }}</p>
-                        <p class="text-xs {{ $pendingLoans > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400' }}">
-                            {{ $pendingLoans > 0 ? __('Require approval') : __('All caught up') }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-            @endif
-
-            <!-- Staff/Manager Dashboard -->
-            @if(in_array(auth()->user()->role, ['staff', 'manager']))
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <!-- Today's Transactions -->
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                            <flux:icon.arrows-right-left class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                        
+                        <div class="space-y-3">
+                            @php
+                                $days = [
+                                    ['day' => 'MON', 'time' => '3:00-9:00 AM', 'color' => 'bg-orange-500', 'width' => '75%'],
+                                    ['day' => 'TUE', 'time' => '', 'color' => 'bg-orange-300', 'width' => '45%'],
+                                    ['day' => 'WED', 'time' => '', 'color' => 'bg-orange-500', 'width' => '85%']
+                                ];
+                            @endphp
+                            @foreach($days as $day)
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs text-zinc-500 w-8">{{ $day['day'] }}</span>
+                                    <div class="flex-1 bg-zinc-100 dark:bg-zinc-700 rounded-full h-6 flex items-center">
+                                        <div class="{{ $day['color'] }} h-4 rounded-full ml-1" style="width: {{ $day['width'] }}"></div>
+                                    </div>
+                                                                         @if($day['time'])
+                                         <span class="text-xs text-zinc-500">{{ $day['time'] }}</span>
+                                         <flux:icon.x-mark class="w-3 h-3 text-zinc-400" />
+                                     @endif
+                                </div>
+                            @endforeach
                         </div>
-                        <span class="text-sm text-blue-600 dark:text-blue-400 font-medium">Today</span>
-                    </div>
-                    <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Transactions Today') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ $todayTransactions }}</p>
-                        <p class="text-xs text-blue-600 dark:text-blue-400">{{ __('Total count') }}</p>
-                    </div>
-                </div>
-
-                <!-- Pending Approvals -->
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                            <flux:icon.clock class="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                        </div>
-                        @if($pendingLoans > 0)
-                            <span class="text-sm text-amber-600 dark:text-amber-400 font-medium">Action</span>
-                        @else
-                            <span class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">Clear</span>
-                        @endif
-                    </div>
-                    <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Pending Approvals') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ $pendingLoans }}</p>
-                        <p class="text-xs {{ $pendingLoans > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400' }}">
-                            {{ $pendingLoans > 0 ? __('Awaiting review') : __('Up to date') }}
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Today's Volume -->
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                            <flux:icon.banknotes class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                        </div>
-                        <span class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">KES</span>
-                    </div>
-                    <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Volume Today') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($todayAmount, 0) }}</p>
-                        <p class="text-xs text-emerald-600 dark:text-emerald-400">{{ __('Total processed') }}</p>
                     </div>
                 </div>
             </div>
+
+            <!-- Top Performing Services -->
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white flex items-center">
+                            Top Services
+                            <flux:icon.information-circle class="w-4 h-4 text-zinc-400 ml-2" />
+                        </h3>
+                    </div>
+                    <a href="#" class="text-sm text-blue-600 hover:text-blue-700 flex items-center">
+                        See Details
+                        <flux:icon.arrow-right class="w-3 h-3 ml-1" />
+                    </a>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left text-xs text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
+                                <th class="pb-3 font-medium">Service</th>
+                                <th class="pb-3 font-medium">Transactions</th>
+                                <th class="pb-3 font-medium">Revenue</th>
+                                <th class="pb-3 font-medium">Growth</th>
+                                <th class="pb-3 font-medium">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="border-b border-zinc-100 dark:border-zinc-700/50">
+                                <td class="py-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                                            <flux:icon.banknotes class="w-4 h-4 text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <div class="font-medium text-zinc-900 dark:text-white">Savings Account</div>
+                                            <div class="text-xs text-zinc-500">Primary service</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 text-zinc-900 dark:text-white">1,247</td>
+                                <td class="py-4 text-zinc-900 dark:text-white">KES 2.8M</td>
+                                <td class="py-4">
+                                    <span class="text-emerald-600 flex items-center">
+                                        <flux:icon.arrow-up class="w-3 h-3 mr-1" />
+                                        +12%
+                                    </span>
+                                </td>
+                                <td class="py-4">
+                                    <flux:badge variant="success" size="sm">Active</flux:badge>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-zinc-100 dark:border-zinc-700/50">
+                                <td class="py-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                                            <flux:icon.credit-card class="w-4 h-4 text-purple-600" />
+                                        </div>
+                                        <div>
+                                            <div class="font-medium text-zinc-900 dark:text-white">Loans</div>
+                                            <div class="text-xs text-zinc-500">Credit facility</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 text-zinc-900 dark:text-white">423</td>
+                                <td class="py-4 text-zinc-900 dark:text-white">KES 1.2M</td>
+                                <td class="py-4">
+                                    <span class="text-emerald-600 flex items-center">
+                                        <flux:icon.arrow-up class="w-3 h-3 mr-1" />
+                                        +8%
+                                    </span>
+                                </td>
+                                <td class="py-4">
+                                    <flux:badge variant="success" size="sm">Active</flux:badge>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="py-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
+                                            <flux:icon.shield-check class="w-4 h-4 text-emerald-600" />
+                                        </div>
+                                        <div>
+                                            <div class="font-medium text-zinc-900 dark:text-white">Insurance</div>
+                                            <div class="text-xs text-zinc-500">Coverage plans</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 text-zinc-900 dark:text-white">156</td>
+                                <td class="py-4 text-zinc-900 dark:text-white">KES 450K</td>
+                                <td class="py-4">
+                                    <span class="text-red-600 flex items-center">
+                                        <flux:icon.arrow-down class="w-3 h-3 mr-1" />
+                                        -2%
+                                    </span>
+                                </td>
+                                <td class="py-4">
+                                    <flux:badge variant="warning" size="sm">Low stock</flux:badge>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             @endif
 
             <!-- Member Dashboard -->
             @if(auth()->user()->role === 'member')
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <!-- Savings Balance -->
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                            <flux:icon.banknotes class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                        </div>
-                        <span class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">{{ $userAccounts->where('account_type', 'savings')->count() }}</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- My Savings -->
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">My Savings</h3>
+                    <div class="text-3xl font-bold text-emerald-600 mb-2">
+                        KES {{ number_format($userTotalSavings) }}
                     </div>
-                    <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Total Savings') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($userTotalSavings, 2) }}</p>
-                        <p class="text-xs text-emerald-600 dark:text-emerald-400">{{ __('Across all accounts') }}</p>
-                    </div>
+                    <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                        {{ $userAccounts ? $userAccounts->count() : 0 }} account(s)
+                    </p>
                 </div>
 
                 <!-- Active Loan -->
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                            <flux:icon.credit-card class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Active Loan</h3>
+                    @if($userActiveLoan)
+                        <div class="text-3xl font-bold text-orange-600 mb-2">
+                            KES {{ number_format($userActiveLoan->amount) }}
                         </div>
-                        @if($userActiveLoan)
-                            <span class="text-sm text-blue-600 dark:text-blue-400 font-medium">Active</span>
-                        @else
-                            <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">None</span>
-                        @endif
-                    </div>
-                    <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Current Loan') }}</p>
-                        @if($userActiveLoan)
-                            <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($userActiveLoan->amount, 0) }}</p>
-                            <p class="text-xs text-blue-600 dark:text-blue-400">{{ $userActiveLoan->loanType->name }}</p>
-                        @else
-                            <p class="text-2xl font-bold text-gray-500 dark:text-gray-400">--</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('No active loans') }}</p>
-                        @endif
-                    </div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                            {{ ucfirst($userActiveLoan->status) }}
+                        </p>
+                    @else
+                        <div class="text-2xl font-bold text-zinc-400 mb-2">No active loan</div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400">Apply for a loan</p>
+                    @endif
                 </div>
 
-                <!-- Shares -->
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                            <flux:icon.sparkles class="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <span class="text-sm text-purple-600 dark:text-purple-400 font-medium">Shares</span>
-                    </div>
-                    <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Share Capital') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($userAccounts->where('account_type', 'shares')->sum('balance'), 0) }}</p>
-                        <p class="text-xs text-purple-600 dark:text-purple-400">{{ __('Current value') }}</p>
+                <!-- Quick Actions -->
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Quick Actions</h3>
+                    <div class="space-y-3">
+                        <flux:button variant="outline" class="w-full justify-start" icon="plus">
+                            New Deposit
+                        </flux:button>
+                        <flux:button variant="outline" class="w-full justify-start" icon="minus">
+                            Withdrawal
+                        </flux:button>
+                        <flux:button variant="outline" class="w-full justify-start" icon="credit-card">
+                            Apply for Loan
+                        </flux:button>
                     </div>
                 </div>
             </div>
             @endif
 
-            <!-- Charts Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <!-- Member Growth Chart -->
-                @if(in_array(auth()->user()->role, ['admin', 'manager']))
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ __('Member Growth (30 days)') }}</h3>
-                        <span class="text-sm text-emerald-600 dark:text-emerald-400">{{ $memberGrowthData->sum('count') }} new members</span>
-                    </div>
-                    <div class="h-64">
-                        <canvas id="memberGrowthChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Transaction Volume Chart -->
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ __('Transaction Volume (30 days)') }}</h3>
-                        <span class="text-sm text-blue-600 dark:text-blue-400">KES {{ number_format($transactionVolumeData->sum('total'), 0) }}</span>
-                    </div>
-                    <div class="h-64">
-                        <canvas id="transactionVolumeChart"></canvas>
-                    </div>
-                </div>
-                @endif
-
-                <!-- Loan Status Distribution -->
-                @if(auth()->user()->role === 'admin')
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ __('Loan Status Distribution') }}</h3>
-                        <span class="text-sm text-gray-500 dark:text-gray-400">{{ $loanStatusData->sum('count') }} total loans</span>
-                    </div>
-                    <div class="h-64">
-                        <canvas id="loanStatusChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Branch Performance -->
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ __('Branch Performance') }}</h3>
-                        <span class="text-sm text-gray-500 dark:text-gray-400">{{ $branchPerformance->count() }} branches</span>
-                    </div>
-                    <div class="space-y-4">
-                        @foreach($branchPerformance as $branch)
-                            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                                <div>
-                                    <h4 class="font-medium text-zinc-900 dark:text-zinc-100">{{ $branch['name'] }}</h4>
-                                    <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ $branch['city'] }}</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-semibold text-zinc-900 dark:text-zinc-100">{{ $branch['members'] }} members</p>
-                                    <p class="text-sm text-emerald-600 dark:text-emerald-400">KES {{ number_format($branch['deposits'], 0) }}</p>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-                @endif
-
-                <!-- Member-specific charts -->
-                @if(auth()->user()->role === 'member')
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ __('My Account Breakdown') }}</h3>
-                        <span class="text-sm text-gray-500 dark:text-gray-400">{{ $userAccounts->count() }} accounts</span>
-                    </div>
-                    <div class="space-y-4">
-                        @foreach($userAccounts as $account)
-                            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                                <div class="flex items-center space-x-3">
-                                    <div class="p-2 rounded-lg 
-                                        @if($account->account_type === 'savings') bg-emerald-100 dark:bg-emerald-900/20
-                                        @elseif($account->account_type === 'shares') bg-purple-100 dark:bg-purple-900/20
-                                        @else bg-blue-100 dark:bg-blue-900/20 @endif">
-                                        @if($account->account_type === 'savings')
-                                            <flux:icon.banknotes class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                                        @elseif($account->account_type === 'shares')
-                                            <flux:icon.sparkles class="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                                        @else
-                                            <flux:icon.document-text class="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                        @endif
-                                    </div>
-                                    <div>
-                                        <h4 class="font-medium text-zinc-900 dark:text-zinc-100">{{ ucfirst($account->account_type) }}</h4>
-                                        <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ $account->account_number }}</p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-semibold text-zinc-900 dark:text-zinc-100">KES {{ number_format($account->balance, 2) }}</p>
-                                    <p class="text-sm text-emerald-600 dark:text-emerald-400">{{ ucfirst($account->status) }}</p>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                <!-- Recent Transactions -->
-                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ __('Recent Activity') }}</h3>
-                        <a href="#" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">View All</a>
-                    </div>
-                    <div class="space-y-3">
-                        @foreach(Transaction::where('member_id', auth()->id())->with('account')->latest()->take(5)->get() as $transaction)
-                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                                <div class="flex items-center space-x-3">
-                                    <div class="p-1 rounded-full 
-                                        @if($transaction->type === 'deposit') bg-emerald-100 dark:bg-emerald-900/20
-                                        @elseif($transaction->type === 'withdrawal') bg-red-100 dark:bg-red-900/20
-                                        @else bg-blue-100 dark:bg-blue-900/20 @endif">
-                                        @if($transaction->type === 'deposit')
-                                            <flux:icon.arrow-down class="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                                        @elseif($transaction->type === 'withdrawal')
-                                            <flux:icon.arrow-up class="h-3 w-3 text-red-600 dark:text-red-400" />
-                                        @else
-                                            <flux:icon.arrows-right-left class="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                                        @endif
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $transaction->description }}</p>
-                                        <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ $transaction->created_at->format('M j, g:i A') }}</p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-sm font-medium 
-                                        @if($transaction->type === 'deposit') text-emerald-600 dark:text-emerald-400
-                                        @elseif($transaction->type === 'withdrawal') text-red-600 dark:text-red-400
-                                        @else text-blue-600 dark:text-blue-400 @endif">
-                                        @if($transaction->type === 'deposit')+@elseif($transaction->type === 'withdrawal')-@endif
-                                        {{ number_format($transaction->amount, 0) }}
-                                    </p>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-                @endif
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">{{ __('Quick Actions') }}</h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    @if(auth()->user()->role === 'member')
-                        <a href="/member/my-savings" class="flex flex-col items-center p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
-                            <flux:icon.banknotes class="h-8 w-8 text-emerald-600 dark:text-emerald-400 mb-2" />
-                            <span class="text-sm font-medium text-emerald-900 dark:text-emerald-100">View Savings</span>
-                        </a>
-                        <a href="/member/my-loans" class="flex flex-col items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
-                            <flux:icon.credit-card class="h-8 w-8 text-blue-600 dark:text-blue-400 mb-2" />
-                            <span class="text-sm font-medium text-blue-900 dark:text-blue-100">My Loans</span>
-                        </a>
-                        <a href="#" class="flex flex-col items-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
-                            <flux:icon.arrow-up class="h-8 w-8 text-purple-600 dark:text-purple-400 mb-2" />
-                            <span class="text-sm font-medium text-purple-900 dark:text-purple-100">Transfer</span>
-                        </a>
-                        <a href="#" class="flex flex-col items-center p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors">
-                            <flux:icon.document-plus class="h-8 w-8 text-amber-600 dark:text-amber-400 mb-2" />
-                            <span class="text-sm font-medium text-amber-900 dark:text-amber-100">Apply Loan</span>
-                        </a>
-                    @elseif(in_array(auth()->user()->role, ['staff', 'manager']))
-                        <a href="#" class="flex flex-col items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
-                            <flux:icon.credit-card class="h-8 w-8 text-blue-600 dark:text-blue-400 mb-2" />
-                            <span class="text-sm font-medium text-blue-900 dark:text-blue-100">Process Payment</span>
-                        </a>
-                        <a href="#" class="flex flex-col items-center p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors">
-                            <flux:icon.clock class="h-8 w-8 text-amber-600 dark:text-amber-400 mb-2" />
-                            <span class="text-sm font-medium text-amber-900 dark:text-amber-100">Approvals</span>
-                        </a>
-                        <a href="#" class="flex flex-col items-center p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
-                            <flux:icon.user-plus class="h-8 w-8 text-emerald-600 dark:text-emerald-400 mb-2" />
-                            <span class="text-sm font-medium text-emerald-900 dark:text-emerald-100">New Member</span>
-                        </a>
-                        <a href="#" class="flex flex-col items-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
-                            <flux:icon.document-text class="h-8 w-8 text-purple-600 dark:text-purple-400 mb-2" />
-                            <span class="text-sm font-medium text-purple-900 dark:text-purple-100">Reports</span>
-                        </a>
-                    @else
-                        <a href="#" class="flex flex-col items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
-                            <flux:icon.chart-bar class="h-8 w-8 text-blue-600 dark:text-blue-400 mb-2" />
-                            <span class="text-sm font-medium text-blue-900 dark:text-blue-100">Analytics</span>
-                        </a>
-                        <a href="#" class="flex flex-col items-center p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
-                            <flux:icon.cog class="h-8 w-8 text-emerald-600 dark:text-emerald-400 mb-2" />
-                            <span class="text-sm font-medium text-emerald-900 dark:text-emerald-100">Settings</span>
-                        </a>
-                        <a href="#" class="flex flex-col items-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
-                            <flux:icon.building-office-2 class="h-8 w-8 text-purple-600 dark:text-purple-400 mb-2" />
-                            <span class="text-sm font-medium text-purple-900 dark:text-purple-100">Branches</span>
-                        </a>
-                        <a href="#" class="flex flex-col items-center p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors">
-                            <flux:icon.user-group class="h-8 w-8 text-amber-600 dark:text-amber-400 mb-2" />
-                            <span class="text-sm font-medium text-amber-900 dark:text-amber-100">Users</span>
-                        </a>
-                    @endif
-                </div>
-            </div>
         </div>
     </div>
 
-    <!-- Chart.js Scripts -->
-    @if(in_array(auth()->user()->role, ['admin', 'manager']))
+    <!-- Include Chart.js for charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script>
-        // Error handling for Chart.js
-        if (typeof Chart === 'undefined') {
-            console.error('Chart.js failed to load. Charts will not be displayed.');
-        }
+        // You can add Chart.js initialization here for more dynamic charts
+        // This would replace the static chart elements with actual interactive charts
     </script>
-    <script>
-        // Chart colors
-        const colors = {
-            primary: document.documentElement.classList.contains('dark') ? '#3b82f6' : '#2563eb',
-            secondary: document.documentElement.classList.contains('dark') ? '#10b981' : '#059669',
-            accent: document.documentElement.classList.contains('dark') ? '#8b5cf6' : '#7c3aed',
-            warning: document.documentElement.classList.contains('dark') ? '#f59e0b' : '#d97706',
-            danger: document.documentElement.classList.contains('dark') ? '#ef4444' : '#dc2626',
-            text: document.documentElement.classList.contains('dark') ? '#f4f4f5' : '#27272a',
-            grid: document.documentElement.classList.contains('dark') ? '#3f3f46' : '#e4e4e7'
-        };
-
-        // Member Growth Chart
-        @if(in_array(auth()->user()->role, ['admin', 'manager']))
-        const memberGrowthCtx = document.getElementById('memberGrowthChart').getContext('2d');
-        new Chart(memberGrowthCtx, {
-            type: 'line',
-            data: {
-                labels: @json($memberGrowthData->pluck('date')),
-                datasets: [{
-                    label: 'New Members',
-                    data: @json($memberGrowthData->pluck('count')),
-                    borderColor: colors.primary,
-                    backgroundColor: colors.primary + '20',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: { color: colors.text }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: { color: colors.text },
-                        grid: { color: colors.grid }
-                    },
-                    y: {
-                        ticks: { color: colors.text },
-                        grid: { color: colors.grid },
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-        // Transaction Volume Chart
-        const transactionVolumeCtx = document.getElementById('transactionVolumeChart').getContext('2d');
-        new Chart(transactionVolumeCtx, {
-            type: 'bar',
-            data: {
-                labels: @json($transactionVolumeData->pluck('date')),
-                datasets: [{
-                    label: 'Volume (KES)',
-                    data: @json($transactionVolumeData->pluck('total')),
-                    backgroundColor: colors.secondary + '80',
-                    borderColor: colors.secondary,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: { color: colors.text }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: { color: colors.text },
-                        grid: { color: colors.grid }
-                    },
-                    y: {
-                        ticks: { 
-                            color: colors.text,
-                            callback: function(value) {
-                                return 'KES ' + value.toLocaleString();
-                            }
-                        },
-                        grid: { color: colors.grid },
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-        @endif
-
-        // Loan Status Chart (Admin only)
-        @if(auth()->user()->role === 'admin')
-        const loanStatusCtx = document.getElementById('loanStatusChart').getContext('2d');
-        new Chart(loanStatusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: @json($loanStatusData->pluck('status')->map(fn($status) => ucfirst($status))),
-                datasets: [{
-                    data: @json($loanStatusData->pluck('count')),
-                    backgroundColor: [
-                        colors.secondary,
-                        colors.primary,
-                        colors.warning,
-                        colors.accent,
-                        colors.danger
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: colors.text }
-                    }
-                }
-            }
-        });
-        @endif
-    </script>
-    @endif
 </x-layouts.app>
