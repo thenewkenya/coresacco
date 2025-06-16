@@ -15,10 +15,7 @@
                     <div class="flex items-center space-x-4">
                         @roleany('admin', 'manager', 'staff')
                         <flux:button variant="outline" icon="arrow-path">
-                            {{ __('Refresh') }}
-                        </flux:button>
-                        <flux:button variant="outline" icon="funnel">
-                            {{ __('Filter') }}
+                            {{ __('Refresh Queue') }}
                         </flux:button>
                         <flux:button variant="primary" icon="plus">
                             {{ __('New Transaction') }}
@@ -95,11 +92,11 @@
                 <div class="p-6 border-b border-zinc-200 dark:border-zinc-700">
                     <div class="flex items-center space-x-4">
                         <flux:button variant="primary" size="sm">{{ __('All') }}</flux:button>
-                        <flux:button variant="ghost" size="sm">{{ __('Pending') }}</flux:button>
-                        <flux:button variant="ghost" size="sm">{{ __('Approved') }}</flux:button>
-                        <flux:button variant="ghost" size="sm">{{ __('Deposits') }}</flux:button>
-                        <flux:button variant="ghost" size="sm">{{ __('Withdrawals') }}</flux:button>
-                        <flux:button variant="ghost" size="sm">{{ __('Transfers') }}</flux:button>
+                        <flux:button variant="outline" size="sm">{{ __('Pending') }}</flux:button>
+                        <flux:button variant="outline" size="sm">{{ __('Approved') }}</flux:button>
+                        <flux:button variant="outline" size="sm">{{ __('Deposits') }}</flux:button>
+                        <flux:button variant="outline" size="sm">{{ __('Withdrawals') }}</flux:button>
+                        <flux:button variant="outline" size="sm">{{ __('Transfers') }}</flux:button>
                     </div>
                 </div>
             </div>
@@ -112,7 +109,7 @@
                             {{ __('Pending Approval') }}
                         </h3>
                         <div class="flex items-center space-x-2">
-                            <flux:button variant="ghost" size="sm" icon="check">
+                            <flux:button variant="outline" size="sm" icon="check">
                                 {{ __('Bulk Approve') }}
                             </flux:button>
                         </div>
@@ -223,14 +220,11 @@
                                     </span>
                                 </div>
                                 <div class="flex items-center space-x-2">
-                                    <flux:button variant="outline" size="sm" icon="eye">
+                                    <flux:button variant="outline" size="sm">
                                         {{ __('Review') }}
                                     </flux:button>
-                                    <flux:button variant="outline" size="sm" icon="x-mark" class="text-red-600 border-red-200 hover:bg-red-50">
-                                        {{ __('Reject') }}
-                                    </flux:button>
-                                    <flux:button variant="primary" size="sm" icon="check">
-                                        {{ __('Approve') }}
+                                    <flux:button variant="primary" size="sm">
+                                        {{ __('Process') }}
                                     </flux:button>
                                 </div>
                             </div>
@@ -247,7 +241,7 @@
                         <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                             {{ __('Recent Transactions') }}
                         </h3>
-                        <flux:button variant="ghost" size="sm" icon="arrow-right">
+                        <flux:button variant="outline" size="sm" icon="arrow-right">
                             {{ __('View All') }}
                         </flux:button>
                     </div>

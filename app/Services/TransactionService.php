@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +18,13 @@ class TransactionService
     const SINGLE_TRANSACTION_LIMIT = 500000; // KES 500,000
     const MINIMUM_BALANCE = 1000; // KES 1,000 minimum balance
     const LARGE_TRANSACTION_THRESHOLD = 50000; // Requires approval
+
+    private NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
 
     /**
      * Process a deposit transaction
@@ -61,6 +69,14 @@ class TransactionService
                     'requires_approval' => $requiresApproval,
                 ]),
             ]);
+
+            // Send notifications
+            $this->notificationService->sendTransactionNotification($transaction, 'created');
+            
+            // Send large deposit notification if applicable
+            if ($amount >= 50000) {
+                $this->notificationService->sendLargeDepositNotification($transaction);
+            }
 
             // Log the transaction
             Log::info('Deposit processed', [
@@ -126,6 +142,9 @@ class TransactionService
                     'requires_approval' => $requiresApproval,
                 ]),
             ]);
+
+            // Send notifications
+            $this->notificationService->sendTransactionNotification($transaction, 'created');
 
             // Log the transaction
             Log::info('Withdrawal processed', [
@@ -227,6 +246,10 @@ class TransactionService
                 ]),
             ]);
 
+            // Send notifications for both transactions
+            $this->notificationService->sendTransactionNotification($debitTransaction, 'created');
+            $this->notificationService->sendTransactionNotification($creditTransaction, 'created');
+
             // Log the transfer
             Log::info('Transfer processed', [
                 'transfer_reference' => $transferReference,
@@ -296,6 +319,9 @@ class TransactionService
                 ]),
             ]);
 
+            // Send approval notification
+            $this->notificationService->sendTransactionNotification($transaction, 'approved');
+
             Log::info('Transaction approved', [
                 'transaction_id' => $transaction->id,
                 'approved_by' => $approver->id,
@@ -329,6 +355,9 @@ class TransactionService
                     'rejection_reason' => $reason ?: 'Transaction rejected',
                 ]),
             ]);
+
+            // Send rejection notification
+            $this->notificationService->sendTransactionNotification($transaction, 'failed');
 
             Log::info('Transaction rejected', [
                 'transaction_id' => $transaction->id,
