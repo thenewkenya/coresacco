@@ -111,7 +111,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings', function () { return view('system.settings'); })->name('settings');
     });
 
-
+    // Notifications
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [App\Http\Controllers\NotificationController::class, 'index'])->name('index');
+        Route::post('/{id}/mark-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('mark-read');
+        Route::post('/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+        Route::delete('/{id}', [App\Http\Controllers\NotificationController::class, 'destroy'])->name('destroy');
+        Route::get('/clear-read', [App\Http\Controllers\NotificationController::class, 'clearRead'])->name('clearRead');
+        Route::get('/settings', [App\Http\Controllers\NotificationController::class, 'settings'])->name('settings');
+        Route::post('/settings', [App\Http\Controllers\NotificationController::class, 'updateSettings'])->name('settings.update');
+    });
 
     Route::prefix('schedule')->name('schedule.')->group(function () {
         Route::get('/', function () { return view('schedule.index'); })->name('index');

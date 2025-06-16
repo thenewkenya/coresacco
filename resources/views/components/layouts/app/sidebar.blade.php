@@ -386,63 +386,10 @@
                     @endif
 
                     <!-- Utility Icons -->
-                    <div class="flex items-center space-x-1">
+                    <div class="flex items-center space-x-3">
                         <!-- Mobile search -->
                         <flux:tooltip :content="__('Search')" position="bottom">
                             <flux:navbar.item class="md:hidden" icon="magnifying-glass" href="#" />
-                        </flux:tooltip>
-
-                        <!-- Notifications -->
-                        <flux:tooltip :content="__('Notifications')" position="bottom">
-                            <flux:dropdown position="bottom" align="end">
-                                <flux:navbar.item class="relative" icon="bell">
-                                    <span class="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full">3</span>
-                                </flux:navbar.item>
-                                
-                                <flux:menu class="w-80">
-                                    <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
-                                        <div class="flex items-center justify-between">
-                                            <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{{ __('Notifications') }}</h3>
-                                            <a href="#" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">{{ __('Mark all read') }}</a>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="max-h-64 overflow-y-auto">
-                                        <!-- Sample notifications -->
-                                        <flux:menu.item class="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                                            <div class="flex items-start space-x-3">
-                                                <div class="flex-shrink-0">
-                                                    <flux:icon.credit-card class="h-5 w-5 text-blue-500" />
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <p class="text-sm text-zinc-900 dark:text-zinc-100 font-medium">{{ __('New loan application') }}</p>
-                                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('John Doe - KES 50,000') }}</p>
-                                                    <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{{ __('2 min ago') }}</p>
-                                                </div>
-                                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                            </div>
-                                        </flux:menu.item>
-
-                                        <flux:menu.item class="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                                            <div class="flex items-start space-x-3">
-                                                <div class="flex-shrink-0">
-                                                    <flux:icon.banknotes class="h-5 w-5 text-green-500" />
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <p class="text-sm text-zinc-900 dark:text-zinc-100 font-medium">{{ __('Large deposit') }}</p>
-                                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('KES 75,000 needs approval') }}</p>
-                                                    <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{{ __('5 min ago') }}</p>
-                                                </div>
-                                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                                            </div>
-                                        </flux:menu.item>
-                                    </div>
-                                    
-                                    <div class="px-4 py-2 border-t border-zinc-200 dark:border-zinc-700">
-                                        <a href="#" class="block text-center text-sm text-blue-600 dark:text-blue-400 hover:underline">{{ __('View all') }}</a>
-                                    </div>
-                                </flux:menu>
-                            </flux:dropdown>
                         </flux:tooltip>
 
                         <!-- External links (Desktop only) -->
@@ -451,6 +398,19 @@
                                 class="hidden xl:block"
                                 icon="folder-git-2"
                                 href="https://github.com/thenewkenya/saccocore.git"
+                                target="_blank"
+                            />
+                        </flux:tooltip>
+
+                        <!-- Notifications (Centered) -->
+                        @livewire('notifications-dropdown')
+
+                        <!-- Documentation (Desktop only) -->
+                        <flux:tooltip :content="__('Documentation')" position="bottom">
+                            <flux:navbar.item
+                                class="hidden xl:block"
+                                icon="book-open-text"
+                                href="https://laravel.com/docs/starter-kits#livewire"
                                 target="_blank"
                             />
                         </flux:tooltip>
