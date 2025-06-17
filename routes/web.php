@@ -51,18 +51,41 @@ Route::middleware(['auth'])->group(function () {
 
     // Financial Services
     Route::prefix('savings')->name('savings.')->group(function () {
-        Route::get('/', function () { return view('savings.index'); })->name('index');
-        Route::get('/my', function () { return view('savings.my'); })->name('my');
+        Route::get('/', [App\Http\Controllers\SavingsController::class, 'index'])->name('index');
+        Route::get('/my', [App\Http\Controllers\SavingsController::class, 'my'])->name('my');
+        Route::get('/create', [App\Http\Controllers\SavingsController::class, 'create'])->name('create')->middleware('can:create,App\Models\Account');
+        Route::post('/', [App\Http\Controllers\SavingsController::class, 'store'])->name('store')->middleware('can:create,App\Models\Account');
+        Route::get('/{account}', [App\Http\Controllers\SavingsController::class, 'show'])->name('show');
+        Route::post('/{account}/deposit', [App\Http\Controllers\SavingsController::class, 'deposit'])->name('deposit');
+        Route::post('/{account}/withdraw', [App\Http\Controllers\SavingsController::class, 'withdraw'])->name('withdraw');
+        Route::post('/{account}/interest', [App\Http\Controllers\SavingsController::class, 'calculateInterest'])->name('interest')->middleware('can:manage,App\Models\Account');
+        Route::patch('/{account}/status', [App\Http\Controllers\SavingsController::class, 'updateStatus'])->name('status')->middleware('can:manage,App\Models\Account');
+        Route::get('/reports/generate', [App\Http\Controllers\SavingsController::class, 'report'])->name('report')->middleware('can:view-reports');
     });
 
     Route::prefix('loans')->name('loans.')->group(function () {
-        Route::get('/', function () { return view('loans.index'); })->name('index');
-        Route::get('/my', function () { return view('loans.my'); })->name('my');
+        Route::get('/', [App\Http\Controllers\LoansController::class, 'index'])->name('index');
+        Route::get('/my', [App\Http\Controllers\LoansController::class, 'my'])->name('my');
+        Route::get('/create', [App\Http\Controllers\LoansController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\LoansController::class, 'store'])->name('store');
+        Route::get('/{loan}', [App\Http\Controllers\LoansController::class, 'show'])->name('show');
+        Route::post('/{loan}/approve', [App\Http\Controllers\LoansController::class, 'approve'])->name('approve')->middleware('can:approve,loan');
+        Route::post('/{loan}/reject', [App\Http\Controllers\LoansController::class, 'reject'])->name('reject')->middleware('can:approve,loan');
+        Route::post('/{loan}/repayment', [App\Http\Controllers\LoansController::class, 'repayment'])->name('repayment');
+        Route::get('/reports/generate', [App\Http\Controllers\LoansController::class, 'report'])->name('report')->middleware('can:view-reports');
     });
 
     Route::prefix('payments')->name('payments.')->group(function () {
-        Route::get('/', function () { return view('payments.index'); })->name('index');
-        Route::get('/my', function () { return view('payments.my'); })->name('my');
+        Route::get('/', [App\Http\Controllers\PaymentsController::class, 'index'])->name('index');
+        Route::get('/my', [App\Http\Controllers\PaymentsController::class, 'my'])->name('my');
+        Route::get('/create', [App\Http\Controllers\PaymentsController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\PaymentsController::class, 'store'])->name('store');
+        Route::get('/{transaction}', [App\Http\Controllers\PaymentsController::class, 'show'])->name('show');
+        Route::post('/{transaction}/approve', [App\Http\Controllers\PaymentsController::class, 'approve'])->name('approve')->middleware('can:approve,transaction');
+        Route::post('/{transaction}/reject', [App\Http\Controllers\PaymentsController::class, 'reject'])->name('reject')->middleware('can:approve,transaction');
+        Route::get('/{transaction}/receipt', [App\Http\Controllers\PaymentsController::class, 'receipt'])->name('receipt');
+        Route::post('/mobile-money', [App\Http\Controllers\PaymentsController::class, 'mobileMoney'])->name('mobile-money');
+        Route::get('/reports/generate', [App\Http\Controllers\PaymentsController::class, 'report'])->name('report')->middleware('can:view-reports');
     });
 
     // Member Services

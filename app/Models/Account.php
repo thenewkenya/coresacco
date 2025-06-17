@@ -40,6 +40,7 @@ class Account extends Model
     // Account statuses
     const STATUS_ACTIVE = 'active';
     const STATUS_INACTIVE = 'inactive';
+    const STATUS_SUSPENDED = 'suspended';
     const STATUS_FROZEN = 'frozen';
     const STATUS_CLOSED = 'closed';
 
@@ -48,6 +49,8 @@ class Account extends Model
     {
         return $this->belongsTo(User::class, 'member_id');
     }
+
+
 
     public function transactions(): HasMany
     {
@@ -73,5 +76,29 @@ class Account extends Model
 
         $this->balance -= $amount;
         return $this->save();
+    }
+
+    /**
+     * Generate unique account number
+     */
+    public static function generateAccountNumber(): string
+    {
+        do {
+            $accountNumber = 'ACC' . date('Y') . str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
+        } while (self::where('account_number', $accountNumber)->exists());
+
+        return $accountNumber;
+    }
+
+    /**
+     * Get available account types
+     */
+    public static function getAccountTypes(): array
+    {
+        return [
+            self::TYPE_SAVINGS,
+            self::TYPE_SHARES,
+            self::TYPE_DEPOSITS,
+        ];
     }
 } 

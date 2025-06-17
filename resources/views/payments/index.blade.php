@@ -13,10 +13,13 @@
                         </p>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <flux:button variant="outline" icon="arrow-path">
+                        <flux:button variant="outline" icon="arrow-path" onclick="window.location.reload()">
                             {{ __('Refresh Queue') }}
                         </flux:button>
-                        <flux:button variant="primary" icon="plus">
+                        <flux:button variant="outline" icon="document-chart-bar" :href="route('payments.report')" wire:navigate>
+                            {{ __('Reports') }}
+                        </flux:button>
+                        <flux:button variant="primary" icon="plus" :href="route('payments.create')" wire:navigate>
                             {{ __('New Payment') }}
                         </flux:button>
                     </div>
@@ -37,8 +40,8 @@
                     </div>
                     <div>
                         <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Processed Today') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KSh 245K</p>
-                        <p class="text-xs text-emerald-600 dark:text-emerald-400">{{ __('47 payments') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KES {{ number_format($todayAmount) }}</p>
+                        <p class="text-xs text-emerald-600 dark:text-emerald-400">{{ number_format($todayTransactions) }} {{ __('payments') }}</p>
                     </div>
                 </div>
 
@@ -51,7 +54,7 @@
                     </div>
                     <div>
                         <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Pending Queue') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">12</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($pendingPayments) }}</p>
                         <p class="text-xs text-amber-600 dark:text-amber-400">{{ __('Needs attention') }}</p>
                     </div>
                 </div>
@@ -78,9 +81,9 @@
                         <span class="text-sm text-blue-600 dark:text-blue-400 font-medium">This Month</span>
                     </div>
                     <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Total Volume') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KSh 2.8M</p>
-                        <p class="text-xs text-blue-600 dark:text-blue-400">{{ __('523 payments') }}</p>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Total Transactions') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($totalTransactions) }}</p>
+                        <p class="text-xs text-blue-600 dark:text-blue-400">{{ __('All time') }}</p>
                     </div>
                 </div>
             </div>
@@ -101,88 +104,85 @@
                 </div>
 
                 <div class="divide-y divide-zinc-200 dark:divide-zinc-700">
-                    @foreach([
-                        [
-                            'id' => 'PAY-001',
-                            'member' => 'John Mukama',
-                            'type' => 'Loan Payment',
-                            'amount' => '15000',
-                            'method' => 'M-Pesa',
-                            'status' => 'pending',
-                            'submitted' => '2024-12-15 09:30',
-                            'priority' => 'normal'
-                        ],
-                        [
-                            'id' => 'PAY-002',
-                            'member' => 'Sarah Wanjiku',
-                            'type' => 'Deposit',
-                            'amount' => '25000',
-                            'method' => 'Bank Transfer',
-                            'status' => 'processing',
-                            'submitted' => '2024-12-15 08:45',
-                            'priority' => 'high'
-                        ],
-                        [
-                            'id' => 'PAY-003',
-                            'member' => 'Peter Kimani',
-                            'type' => 'Withdrawal',
-                            'amount' => '8000',
-                            'method' => 'Cash',
-                            'status' => 'pending',
-                            'submitted' => '2024-12-15 10:15',
-                            'priority' => 'normal'
-                        ]
-                    ] as $payment)
+                    @forelse($transactions->take(10) as $transaction)
                     <div class="p-6">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
-                                <div class="p-2 rounded-lg {{ $payment['status'] === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-blue-100 dark:bg-blue-900/30' }}">
-                                    @if($payment['status'] === 'pending')
+                                <div class="p-2 rounded-lg {{ $transaction->status === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30' : ($transaction->status === 'completed' ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-red-100 dark:bg-red-900/30') }}">
+                                    @if($transaction->status === 'pending')
                                         <flux:icon.clock class="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                    @elseif($transaction->status === 'completed')
+                                        <flux:icon.check-circle class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                                     @else
-                                        <flux:icon.arrow-path class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                        <flux:icon.x-circle class="w-4 h-4 text-red-600 dark:text-red-400" />
                                     @endif
                                 </div>
                                 <div>
                                     <div class="flex items-center space-x-2">
                                         <p class="font-medium text-zinc-900 dark:text-zinc-100">
-                                            {{ $payment['member'] }}
+                                            {{ $transaction->member->name ?? 'N/A' }}
                                         </p>
-                                        @if($payment['priority'] === 'high')
+                                        @if($transaction->amount >= 50000)
                                         <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 rounded-full">
-                                            High Priority
+                                            High Amount
                                         </span>
                                         @endif
                                     </div>
                                     <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                                        {{ $payment['type'] }} • {{ $payment['method'] }} • {{ $payment['id'] }}
+                                        {{ ucfirst(str_replace('_', ' ', $transaction->type)) }} • {{ $transaction->metadata['payment_method'] ?? 'Cash' }} • {{ $transaction->reference_number }}
                                     </p>
                                     <p class="text-xs text-zinc-500 dark:text-zinc-500">
-                                        {{ \Carbon\Carbon::parse($payment['submitted'])->format('M d, Y g:i A') }}
+                                        {{ $transaction->created_at->format('M d, Y g:i A') }}
                                     </p>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-4">
                                 <div class="text-right">
                                     <p class="font-semibold text-zinc-900 dark:text-zinc-100">
-                                        KSh {{ number_format($payment['amount']) }}
+                                        KES {{ number_format($transaction->amount, 2) }}
                                     </p>
-                                    <span class="px-2 py-1 text-xs font-medium {{ $payment['status'] === 'pending' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' }} rounded-full">
-                                        {{ ucfirst($payment['status']) }}
-                                    </span>
+                                    @if($transaction->status === 'pending')
+                                        <flux:badge variant="warning">Pending</flux:badge>
+                                    @elseif($transaction->status === 'completed')
+                                        <flux:badge variant="success">Completed</flux:badge>
+                                    @else
+                                        <flux:badge variant="danger">{{ ucfirst($transaction->status) }}</flux:badge>
+                                    @endif
                                 </div>
                                 <div class="flex items-center space-x-2">
-                                    <flux:button variant="outline" size="sm">
-                                        {{ __('Review') }}
+                                    <flux:button size="sm" variant="outline" :href="route('payments.show', $transaction)" wire:navigate>
+                                        {{ __('View') }}
                                     </flux:button>
-                                    <flux:button variant="primary" size="sm">
-                                        {{ __('Process') }}
-                                    </flux:button>
+                                    @if($transaction->status === 'pending')
+                                        @can('approve', $transaction)
+                                        <flux:dropdown>
+                                            <flux:button size="sm" variant="ghost" icon="ellipsis-horizontal" />
+                                            <flux:menu>
+                                                <flux:menu.item icon="check" onclick="approvePayment({{ $transaction->id }})">
+                                                    Approve
+                                                </flux:menu.item>
+                                                <flux:menu.item icon="x-mark" onclick="rejectPayment({{ $transaction->id }})">
+                                                    Reject
+                                                </flux:menu.item>
+                                            </flux:menu>
+                                        </flux:dropdown>
+                                        @endcan
+                                    @endif
                                 </div>
                             </div>
                         </div>
                     </div>
-                    @endforeach
+                    @empty
+                    <div class="p-12 text-center">
+                        <flux:icon.currency-dollar class="mx-auto h-12 w-12 text-zinc-400 mb-4" />
+                        <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+                            {{ __('No Transactions Found') }}
+                        </h3>
+                        <p class="text-zinc-600 dark:text-zinc-400">
+                            {{ __('No payment transactions available at the moment.') }}
+                        </p>
+                    </div>
+                    @endforelse
                 </div>
             </div>
 
@@ -231,4 +231,22 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function approvePayment(transactionId) {
+            if (confirm('Are you sure you want to approve this payment?')) {
+                // Implementation for payment approval
+                console.log('Approving payment:', transactionId);
+                // You would typically make an AJAX call here
+            }
+        }
+
+        function rejectPayment(transactionId) {
+            if (confirm('Are you sure you want to reject this payment?')) {
+                // Implementation for payment rejection
+                console.log('Rejecting payment:', transactionId);
+                // You would typically make an AJAX call here
+            }
+        }
+    </script>
 </x-layouts.app> 
