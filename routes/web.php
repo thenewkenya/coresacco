@@ -101,11 +101,24 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('goals')->name('goals.')->group(function () {
-        Route::get('/', function () { return view('goals.index'); })->name('index');
+        Route::get('/', [App\Http\Controllers\GoalsController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\GoalsController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\GoalsController::class, 'store'])->name('store');
+        Route::get('/{goal}', [App\Http\Controllers\GoalsController::class, 'show'])->name('show');
+        Route::get('/{goal}/edit', [App\Http\Controllers\GoalsController::class, 'edit'])->name('edit');
+        Route::put('/{goal}', [App\Http\Controllers\GoalsController::class, 'update'])->name('update');
+        Route::delete('/{goal}', [App\Http\Controllers\GoalsController::class, 'destroy'])->name('destroy');
+        Route::post('/{goal}/progress', [App\Http\Controllers\GoalsController::class, 'updateProgress'])->name('progress.update');
     });
 
     Route::prefix('budget')->name('budget.')->group(function () {
-        Route::get('/', function () { return view('budget.index'); })->name('index');
+        Route::get('/', [App\Http\Controllers\BudgetController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\BudgetController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\BudgetController::class, 'store'])->name('store');
+        Route::get('/{budget}', [App\Http\Controllers\BudgetController::class, 'show'])->name('show');
+        Route::post('/{budget}/expenses', [App\Http\Controllers\BudgetController::class, 'recordExpense'])->name('expenses.store');
+        Route::delete('/{budget}/expenses/{expense}', [App\Http\Controllers\BudgetController::class, 'deleteExpense'])->name('expenses.destroy');
+        Route::get('/{budget}/report', [App\Http\Controllers\BudgetController::class, 'report'])->name('report');
     });
 
     Route::prefix('insurance')->name('insurance.')->group(function () {
