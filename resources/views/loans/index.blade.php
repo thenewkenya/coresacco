@@ -261,7 +261,7 @@
                 </div>
                 @else
                 <div class="p-12 text-center">
-                    <flux:icon.credit-card class="mx-auto h-12 w-12 text-zinc-400 mb-4" />
+                <flux:icon.credit-card class="mx-auto h-12 w-12 text-zinc-400 mb-4" />
                     <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">
                         {{ __('No Loans Found') }}
                     </h3>

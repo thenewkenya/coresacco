@@ -223,10 +223,10 @@
                             {{ __('Quick Actions') }}
                         </h3>
                         <div class="space-y-3">
-                            <flux:button variant="outline" class="w-full justify-start" icon="plus">
+                            <flux:button variant="outline" class="w-full justify-start" icon="plus" :href="route('transactions.deposit.create', ['account' => $account->id])">
                                 {{ __('Make Deposit') }}
                             </flux:button>
-                            <flux:button variant="outline" class="w-full justify-start" icon="minus">
+                            <flux:button variant="outline" class="w-full justify-start" icon="minus" :href="route('transactions.withdrawal.create', ['account' => $account->id])">
                                 {{ __('Make Withdrawal') }}
                             </flux:button>
                             @if(auth()->user()->role !== 'member')

@@ -287,7 +287,7 @@ $branchPerformance = Branch::all()->map(function($branch) {
                                 <flux:icon.information-circle class="w-4 h-4 text-zinc-400 inline" />
                             </div>
                             <flux:icon.ellipsis-horizontal class="w-5 h-5 text-zinc-400" />
-                        </div>
+                                </div>
                         
                         <div class="mb-4">
                             <div class="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white mb-1">
