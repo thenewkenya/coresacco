@@ -241,19 +241,20 @@ $branchPerformance = Branch::all()->map(function($branch) {
 
             <!-- Analytics and Performance Charts -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Analytics Chart -->
+                <!-- Transaction Volume Chart -->
                 <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
                     <div class="flex items-center justify-between mb-6">
                         <div>
                             <div class="flex items-center space-x-2">
-                                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Analytics</h3>
+                                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Transaction Volume</h3>
                                 <flux:icon.information-circle class="w-4 h-4 text-zinc-400" />
                             </div>
                         </div>
                         <div class="flex items-center space-x-4">
                             <select class="text-sm border-0 bg-transparent text-zinc-600 dark:text-zinc-400 focus:ring-0">
-                                <option>This year</option>
-                                <option>Last year</option>
+                                <option>Last 30 days</option>
+                                <option>Last 7 days</option>
+                                <option>This month</option>
                             </select>
                             <flux:button variant="outline" size="sm" icon="funnel">Filters</flux:button>
                         </div>
@@ -261,49 +262,26 @@ $branchPerformance = Branch::all()->map(function($branch) {
                     
                     <div class="mb-6">
                         <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
-                            KES -{{ number_format(4530) }} <span class="text-sm font-normal text-red-500">sales +6.04%</span>
+                            KES {{ number_format($thisMonthTransactions) }} 
+                            <span class="text-sm font-normal {{ $transactionGrowth >= 0 ? 'text-emerald-500' : 'text-red-500' }}">
+                                {{ $transactionGrowth >= 0 ? '+' : '' }}{{ number_format($transactionGrowth, 1) }}%
+                            </span>
                         </div>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400">vs last month</p>
                     </div>
                     
-                    <div class="h-64 flex items-end space-x-2">
-                        @php
-                            $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG'];
-                            $heights = [40, 60, 45, 70, 35, 80, 90, 60];
-                        @endphp
-                        @foreach($months as $index => $month)
-                            <div class="flex-1 flex flex-col items-center">
-                                <div class="w-full bg-gradient-to-t from-orange-500/20 to-orange-500/60 rounded-t" 
-                                     style="height: {{ $heights[$index] }}%"></div>
-                                <span class="text-xs text-zinc-500 mt-2">{{ $month }}</span>
-                            </div>
-                        @endforeach
+                    <div class="h-64">
+                        <canvas id="transactionVolumeChart"></canvas>
                     </div>
                 </div>
 
                 <!-- Additional Analytics -->
                 <div class="space-y-6">
-                    <!-- Conversion Rate -->
-                    <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="text-2xl font-bold text-zinc-900 dark:text-white">0.73%</div>
-                                <div class="text-sm text-zinc-600 dark:text-zinc-400 flex items-center">
-                                    Conversion rate 
-                                    <span class="ml-2 text-emerald-600 flex items-center">
-                                        <flux:icon.arrow-up class="w-3 h-3" />
-                                        +1.3%
-                                    </span>
-                                </div>
-                            </div>
-                            <flux:icon.information-circle class="w-4 h-4 text-zinc-400" />
-                        </div>
-                    </div>
-
-                    <!-- Total Visits -->
+                    <!-- Member Growth Chart -->
                     <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
                         <div class="flex items-center justify-between mb-4">
                             <div>
-                                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Total visits by hourly</h3>
+                                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Member Growth</h3>
                                 <flux:icon.information-circle class="w-4 h-4 text-zinc-400 inline" />
                             </div>
                             <flux:icon.ellipsis-horizontal class="w-5 h-5 text-zinc-400" />
@@ -311,30 +289,34 @@ $branchPerformance = Branch::all()->map(function($branch) {
                         
                         <div class="mb-4">
                             <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
-                                288,822 <span class="text-sm font-normal text-emerald-600">+2.4%</span>
+                                {{ number_format($totalMembers) }} <span class="text-sm font-normal text-emerald-600">+{{ number_format($memberGrowth, 1) }}%</span>
+                            </div>
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400">Total members</p>
+                        </div>
+                        
+                        <div class="h-32">
+                            <canvas id="memberGrowthChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Loan Status Chart -->
+                    <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Loan Status</h3>
+                                <flux:icon.information-circle class="w-4 h-4 text-zinc-400 inline" />
                             </div>
                         </div>
                         
-                        <div class="space-y-3">
-                            @php
-                                $days = [
-                                    ['day' => 'MON', 'time' => '3:00-9:00 AM', 'color' => 'bg-orange-500', 'width' => '75%'],
-                                    ['day' => 'TUE', 'time' => '', 'color' => 'bg-orange-300', 'width' => '45%'],
-                                    ['day' => 'WED', 'time' => '', 'color' => 'bg-orange-500', 'width' => '85%']
-                                ];
-                            @endphp
-                            @foreach($days as $day)
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-xs text-zinc-500 w-8">{{ $day['day'] }}</span>
-                                    <div class="flex-1 bg-zinc-100 dark:bg-zinc-700 rounded-full h-6 flex items-center">
-                                        <div class="{{ $day['color'] }} h-4 rounded-full ml-1" style="width: {{ $day['width'] }}"></div>
-                                    </div>
-                                                                         @if($day['time'])
-                                         <span class="text-xs text-zinc-500">{{ $day['time'] }}</span>
-                                         <flux:icon.x-mark class="w-3 h-3 text-zinc-400" />
-                                     @endif
-                                </div>
-                            @endforeach
+                        <div class="mb-4">
+                            <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
+                                {{ $activeLoans }} <span class="text-sm font-normal text-emerald-600">Active</span>
+                            </div>
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400">Out of {{ $activeLoans + $pendingLoans }} total</p>
+                        </div>
+                        
+                        <div class="h-40">
+                            <canvas id="loanStatusChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -497,10 +479,38 @@ $branchPerformance = Branch::all()->map(function($branch) {
         </div>
     </div>
 
-    <!-- Include Chart.js for charts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Pass data to JavaScript -->
     <script>
-        // You can add Chart.js initialization here for more dynamic charts
-        // This would replace the static chart elements with actual interactive charts
+        // Pass chart data to JavaScript
+        window.memberGrowthData = @json($memberGrowthData);
+        window.transactionVolumeData = @json($transactionVolumeData);
+        window.loanStatusData = @json($loanStatusData);
+        
+        // Branch performance data
+        window.branchPerformance = @json($branchPerformance);
+        
+        // Initialize charts when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof window.initializeDashboardCharts === 'function') {
+                window.initializeDashboardCharts();
+            }
+        });
+        
+        // Handle Livewire navigation
+        document.addEventListener('livewire:navigated', function() {
+            // Ensure data is available and charts are initialized
+            setTimeout(() => {
+                if (typeof window.initializeDashboardCharts === 'function') {
+                    window.initializeDashboardCharts();
+                }
+            }, 150);
+        });
+        
+        // Debug: Log when dashboard is loaded
+        console.log('Dashboard script loaded with chart data:', {
+            memberGrowth: window.memberGrowthData?.length || 0,
+            transactionVolume: window.transactionVolumeData?.length || 0,
+            loanStatus: window.loanStatusData?.length || 0
+        });
     </script>
 </x-layouts.app>
