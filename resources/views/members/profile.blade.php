@@ -12,7 +12,7 @@
                             {{ __('Manage your personal information and account settings') }}
                         </p>
                     </div>
-                    <flux:button variant="primary" icon="pencil">
+                    <flux:button variant="primary" icon="pencil" :href="route('settings.profile')">
                         {{ __('Edit Profile') }}
                     </flux:button>
                 </div>

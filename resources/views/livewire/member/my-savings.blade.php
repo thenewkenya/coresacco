@@ -36,7 +36,7 @@ new class extends Component
             <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">My Savings</h1>
             <p class="text-gray-600 dark:text-gray-400">Manage your savings accounts and track your progress</p>
         </div>
-        <flux:button variant="primary" icon="plus">
+        <flux:button variant="primary" icon="plus" :href="route('transactions.deposit.create')">
             New Deposit
         </flux:button>
     </div>

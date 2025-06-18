@@ -136,4 +136,20 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Branch::class);
     }
+
+    /**
+     * Get the user's financial goals
+     */
+    public function goals(): HasMany
+    {
+        return $this->hasMany(Goal::class, 'member_id');
+    }
+
+    /**
+     * Get the user's budgets
+     */
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(Budget::class);
+    }
 }

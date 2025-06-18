@@ -27,6 +27,7 @@ class Loan extends Model
         'disbursement_date',
         'due_date',
         'collateral_details',
+        'metadata',
     ];
 
     protected $casts = [
@@ -36,6 +37,7 @@ class Loan extends Model
         'disbursement_date' => 'datetime',
         'due_date' => 'datetime',
         'collateral_details' => 'array',
+        'metadata' => 'array',
     ];
 
     // Loan statuses

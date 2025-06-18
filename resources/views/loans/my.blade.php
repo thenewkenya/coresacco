@@ -13,7 +13,7 @@
                         </p>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <flux:button variant="primary" icon="plus">
+                        <flux:button variant="primary" icon="plus" :href="route('loans.create')" wire:navigate>
                             {{ __('Apply for Loan') }}
                         </flux:button>
                     </div>
@@ -203,6 +203,14 @@
                     </div>
                     @endforeach
                 </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="text-center py-8">
+                <p class="text-gray-500 dark:text-gray-400 mb-6">You haven't applied for any loans yet.</p>
+                <flux:button variant="primary" :href="route('loans.create')" wire:navigate>
+                    {{ __('Apply for Your First Loan') }}
+                </flux:button>
             </div>
         </div>
     </div>

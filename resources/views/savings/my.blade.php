@@ -13,7 +13,7 @@
                         </p>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <flux:button variant="primary" icon="plus">
+                        <flux:button variant="primary" icon="plus" :href="route('transactions.deposit.create')">
                             {{ __('New Deposit') }}
                         </flux:button>
                     </div>

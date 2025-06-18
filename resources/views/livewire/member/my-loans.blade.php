@@ -188,10 +188,10 @@ new class extends Component
 
                         <div class="flex space-x-3">
                             @if($loan->status === 'active')
-                                <flux:button variant="primary" size="sm">Make Payment</flux:button>
+                                <flux:button variant="primary" size="sm" :href="route('loans.repayment', $loan)">Make Payment</flux:button>
                             @endif
-                            <flux:button variant="ghost" size="sm">View Details</flux:button>
-                            <flux:button variant="ghost" size="sm">Download Statement</flux:button>
+                            <flux:button variant="ghost" size="sm" :href="route('loans.show', $loan)" wire:navigate>View Details</flux:button>
+                            <flux:button variant="ghost" size="sm" :href="route('loans.statement', $loan)">Download Statement</flux:button>
                         </div>
                     </div>
                 @empty

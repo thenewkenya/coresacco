@@ -12,7 +12,7 @@
                             {{ __('View and manage your payment history') }}
                         </p>
                     </div>
-                    <flux:button variant="primary" icon="plus">
+                    <flux:button variant="primary" icon="plus" :href="route('payments.create')">
                         {{ __('Make Payment') }}
                     </flux:button>
                 </div>
