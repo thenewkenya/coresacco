@@ -58,15 +58,8 @@ A comprehensive management system for Savings and Credit Cooperative Organizatio
    php artisan key:generate
    ```
 
-5. **Configure your database in `.env`**
-   ```env
-   DB_CONNECTION=mysql,sqlite,pgsql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306,5432
-   DB_DATABASE=sacco_core
-   DB_USERNAME=username
-   DB_PASSWORD=password
-   ```
+5. **Configure your database in `.env` if needed**
+
 
 6. **Run database migrations**
    ```bash
