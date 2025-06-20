@@ -32,7 +32,8 @@ A comprehensive management system for Savings and Credit Cooperative Organizatio
 - Composer
 - Node.js & NPM
 - MySQL/PostgreSQL/SQLite
-- Laravel Sail (optional, for Docker development)
+- Laravel Sail
+- Docker
 
 ## Installation
 
