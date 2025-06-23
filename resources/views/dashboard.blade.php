@@ -819,12 +819,12 @@ $branchPerformance = Branch::all()->map(function($branch) {
                                     </svg>
                                     <span class="text-xs text-red-600">Withdraw</span>
                                 </a>
-                                <a href="{{ route('members.create') }}" 
+                                <a href="{{ route('members.index') }}" 
                                    class="flex flex-col items-center p-2 sm:p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
                                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 mb-1 sm:mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                                     </svg>
-                                    <span class="text-xs text-emerald-600">New Member</span>
+                                    <span class="text-xs text-emerald-600">Manage Members</span>
                                 </a>
                                 <a href="{{ route('reports.index') }}" 
                                    class="flex flex-col items-center p-2 sm:p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">

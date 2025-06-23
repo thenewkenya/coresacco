@@ -24,8 +24,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{transaction}', [App\Http\Controllers\TransactionController::class, 'show'])->name('show');
         
         // Deposit routes
-        Route::get('/create/deposit', [App\Http\Controllers\TransactionController::class, 'createDeposit'])->name('deposit.create');
-        Route::post('/create/deposit', [App\Http\Controllers\TransactionController::class, 'storeDeposit'])->name('deposit.store');
+        Volt::route('/create/deposit', 'transactions.create-deposit')->name('deposit.create');
         
         // Withdrawal routes
         Route::get('/create/withdrawal', [App\Http\Controllers\TransactionController::class, 'createWithdrawal'])->name('withdrawal.create');
@@ -90,20 +89,14 @@ Route::middleware(['auth'])->group(function () {
 
     // Member Services
     Route::prefix('members')->name('members.')->group(function () {
-        Route::get('/', [App\Http\Controllers\MemberController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\MemberController::class, 'create'])->name('create');
+        Volt::route('/', 'members.manage-members')->name('index');
         Route::get('/profile', [App\Http\Controllers\MemberController::class, 'profile'])->name('profile');
-        Route::post('/', [App\Http\Controllers\MemberController::class, 'store'])->name('store');
         Route::get('/{member}', [App\Http\Controllers\MemberController::class, 'show'])->name('show');
-        Route::get('/{member}/edit', [App\Http\Controllers\MemberController::class, 'edit'])->name('edit');
-        Route::put('/{member}', [App\Http\Controllers\MemberController::class, 'update'])->name('update');
-        Route::delete('/{member}', [App\Http\Controllers\MemberController::class, 'destroy'])->name('destroy');
     });
 
     Route::prefix('goals')->name('goals.')->group(function () {
         Route::get('/', [App\Http\Controllers\GoalsController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\GoalsController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\GoalsController::class, 'store'])->name('store');
+        Volt::route('/create', 'goals.create-goal')->name('create');
         Route::get('/{goal}', [App\Http\Controllers\GoalsController::class, 'show'])->name('show');
         Route::get('/{goal}/edit', [App\Http\Controllers\GoalsController::class, 'edit'])->name('edit');
         Route::put('/{goal}', [App\Http\Controllers\GoalsController::class, 'update'])->name('update');
@@ -113,8 +106,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('budget')->name('budget.')->group(function () {
         Route::get('/', [App\Http\Controllers\BudgetController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\BudgetController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\BudgetController::class, 'store'])->name('store');
+        Volt::route('/create', 'budget.create-budget')->name('create');
         Route::get('/{budget}', [App\Http\Controllers\BudgetController::class, 'show'])->name('show');
         Route::post('/{budget}/expenses', [App\Http\Controllers\BudgetController::class, 'recordExpense'])->name('expenses.store');
         Route::delete('/{budget}/expenses/{expense}', [App\Http\Controllers\BudgetController::class, 'deleteExpense'])->name('expenses.destroy');
@@ -149,7 +141,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Notifications
     Route::prefix('notifications')->name('notifications.')->group(function () {
-        Route::get('/', [App\Http\Controllers\NotificationController::class, 'index'])->name('index');
+        Volt::route('/', 'notifications.notification-center')->name('index');
         Route::post('/{id}/mark-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('mark-read');
         Route::post('/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
         Route::delete('/{id}', [App\Http\Controllers\NotificationController::class, 'destroy'])->name('destroy');

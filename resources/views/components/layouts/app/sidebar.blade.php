@@ -277,18 +277,6 @@
                                         ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => false],
                                         ['label' => __('Members'), 'route' => 'members.index', 'current' => true]
                                     ],
-                                    'actions' => [
-                                        ['label' => __('Add'), 'route' => 'members.create', 'icon' => 'user-plus']
-                                    ]
-                                ],
-                                'members.create' => [
-                                    'icon' => 'user-plus',
-                                    'title' => __('Add Member'),
-                                    'breadcrumbs' => [
-                                        ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => false],
-                                        ['label' => __('Members'), 'route' => 'members.index', 'current' => false],
-                                        ['label' => __('Add Member'), 'route' => null, 'current' => true]
-                                    ],
                                     'actions' => []
                                 ],
                                 'savings.index' => [
