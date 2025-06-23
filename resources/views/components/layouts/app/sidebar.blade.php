@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
 
 <head>
     @include('partials.head')
@@ -38,6 +38,18 @@
 
             <!-- Financial Services -->
             <flux:navlist.group :heading="__('Financial Services')">
+                @roleany('admin', 'manager', 'staff')
+                <flux:navlist.item icon="credit-card" :href="route('accounts.index')" :current="request()->routeIs('accounts.*')" wire:navigate>
+                    {{ __('Account Management') }}
+                </flux:navlist.item>
+                @endroleany
+
+                @role('member')
+                <flux:navlist.item icon="credit-card" :href="route('accounts.index')" :current="request()->routeIs('accounts.*')" wire:navigate>
+                    {{ __('My Accounts') }}
+                </flux:navlist.item>
+                @endrole
+
                 @roleany('admin', 'manager', 'staff')
                 <flux:navlist.item icon="banknotes" :href="route('savings.index')" :current="request()->routeIs('savings.*')" wire:navigate>
                     {{ __('Savings Accounts') }}
@@ -276,18 +288,6 @@
                                     'breadcrumbs' => [
                                         ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => false],
                                         ['label' => __('Members'), 'route' => 'members.index', 'current' => true]
-                                    ],
-                                    'actions' => [
-                                        ['label' => __('Add'), 'route' => 'members.create', 'icon' => 'user-plus']
-                                    ]
-                                ],
-                                'members.create' => [
-                                    'icon' => 'user-plus',
-                                    'title' => __('Add Member'),
-                                    'breadcrumbs' => [
-                                        ['label' => __('Dashboard'), 'route' => 'dashboard', 'current' => false],
-                                        ['label' => __('Members'), 'route' => 'members.index', 'current' => false],
-                                        ['label' => __('Add Member'), 'route' => null, 'current' => true]
                                     ],
                                     'actions' => []
                                 ],

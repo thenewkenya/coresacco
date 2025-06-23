@@ -24,29 +24,44 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        $accountFilter = $request->get('account'); // Account ID to filter by
         
         if ($user->role === 'member') {
             // Member view - show only their own accounts and transactions
-            $accounts = $user->accounts()->with(['transactions' => function($query) {
-                $query->where('member_id', auth()->id())->latest();
+            $accounts = $user->accounts()->with(['transactions' => function($query) use ($accountFilter) {
+                $query->where('member_id', auth()->id());
+                if ($accountFilter) {
+                    $query->where('account_id', $accountFilter);
+                }
+                $query->latest();
             }])->get();
             
-            $recentTransactions = Transaction::where('member_id', $user->id)
+            $recentTransactionsQuery = Transaction::where('member_id', $user->id)
                 ->where(function($query) {
                     $query->whereNotNull('account_id')
                           ->orWhereIn('type', [Transaction::TYPE_LOAN_DISBURSEMENT, Transaction::TYPE_LOAN_REPAYMENT]);
                 })
-                ->with('account')
-                ->latest()
-                ->limit(10)
-                ->get();
+                ->with('account');
+            
+            // Apply account filter if provided
+            if ($accountFilter) {
+                $recentTransactionsQuery->where('account_id', $accountFilter);
+            }
+            
+            $recentTransactions = $recentTransactionsQuery->latest()->limit(10)->get();
             
             $summary = [];
             foreach ($accounts as $account) {
                 $summary[$account->id] = $this->transactionService->getAccountTransactionSummary($account);
             }
 
-            return view('transactions.member-dashboard', compact('accounts', 'recentTransactions', 'summary'));
+            // Get the filtered account details if filtering by specific account
+            $filteredAccount = null;
+            if ($accountFilter) {
+                $filteredAccount = $user->accounts()->find($accountFilter);
+            }
+
+            return view('transactions.member-dashboard', compact('accounts', 'recentTransactions', 'summary', 'filteredAccount'));
         } else {
             // Staff/Admin view - show all pending transactions and overview with filtering
             
@@ -64,6 +79,11 @@ class TransactionController extends Controller
                 $query->where('status', Transaction::STATUS_PENDING);
             } else {
                 $query->where('status', $status);
+            }
+
+            // Apply account filter for staff if provided
+            if ($accountFilter) {
+                $query->where('account_id', $accountFilter);
             }
 
             // Apply filters
@@ -122,6 +142,12 @@ class TransactionController extends Controller
                 ->limit(10)
                 ->get();
 
+            // Get the filtered account details if filtering by specific account
+            $filteredAccount = null;
+            if ($accountFilter) {
+                $filteredAccount = Account::with('member')->find($accountFilter);
+            }
+
             return view('transactions.staff-dashboard', compact(
                 'pendingTransactions', 
                 'todayStats', 
@@ -131,7 +157,8 @@ class TransactionController extends Controller
                 'type',
                 'priority',
                 'dateFrom',
-                'dateTo'
+                'dateTo',
+                'filteredAccount'
             ));
         }
     }
@@ -269,9 +296,11 @@ class TransactionController extends Controller
     /**
      * Show transfer form
      */
-    public function createTransfer()
+    public function createTransfer(Request $request)
     {
         $user = Auth::user();
+        $preSelectedFromAccount = $request->get('from_account');
+        $preSelectedToAccount = $request->get('to_account');
         
         if ($user->role === 'member') {
             $fromAccounts = $user->accounts()
@@ -279,12 +308,9 @@ class TransactionController extends Controller
                 ->where('balance', '>', TransactionService::MINIMUM_BALANCE)
                 ->get();
                 
-            // Members can transfer to any active account
-            $toAccounts = Account::where('status', Account::STATUS_ACTIVE)
-                ->where('id', '!=', function($query) use ($user) {
-                    $query->select('id')->from('accounts')->where('member_id', $user->id);
-                })
-                ->with('member')
+            // Members can only transfer to their own accounts
+            $toAccounts = $user->accounts()
+                ->where('status', Account::STATUS_ACTIVE)
                 ->get();
         } else {
             // Staff can transfer between any accounts
@@ -298,7 +324,27 @@ class TransactionController extends Controller
                 ->get();
         }
 
-        return view('transactions.transfer', compact('fromAccounts', 'toAccounts'));
+        // Validate the pre-selected from account if provided
+        $selectedFromAccount = null;
+        if ($preSelectedFromAccount) {
+            $selectedFromAccount = $fromAccounts->firstWhere('id', $preSelectedFromAccount);
+            // If user is a member, ensure they own the account
+            if ($user->role === 'member' && $selectedFromAccount && $selectedFromAccount->member_id !== $user->id) {
+                $selectedFromAccount = null;
+            }
+        }
+
+        // Validate the pre-selected to account if provided
+        $selectedToAccount = null;
+        if ($preSelectedToAccount) {
+            $selectedToAccount = $toAccounts->firstWhere('id', $preSelectedToAccount);
+            // If user is a member, ensure they own the account
+            if ($user->role === 'member' && $selectedToAccount && $selectedToAccount->member_id !== $user->id) {
+                $selectedToAccount = null;
+            }
+        }
+
+        return view('transactions.transfer', compact('fromAccounts', 'toAccounts', 'selectedFromAccount', 'selectedToAccount'));
     }
 
     /**
@@ -318,8 +364,13 @@ class TransactionController extends Controller
             $toAccount = Account::findOrFail($request->to_account_id);
             
             // Check permissions for members
-            if (Auth::user()->role === 'member' && $fromAccount->member_id !== Auth::id()) {
-                return back()->withErrors(['from_account_id' => 'You can only transfer from your own accounts.']);
+            if (Auth::user()->role === 'member') {
+                if ($fromAccount->member_id !== Auth::id()) {
+                    return back()->withErrors(['from_account_id' => 'You can only transfer from your own accounts.']);
+                }
+                if ($toAccount->member_id !== Auth::id()) {
+                    return back()->withErrors(['to_account_id' => 'You can only transfer to your own accounts.']);
+                }
             }
 
             $result = $this->transactionService->processTransfer(

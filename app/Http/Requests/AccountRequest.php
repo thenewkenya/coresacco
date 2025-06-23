@@ -14,10 +14,16 @@ class AccountRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            'member_id' => 'required|exists:users,id',
-            'account_type' => 'required|in:savings,shares,deposits',
+        $rules = [
+            'account_type' => ['required', 'in:' . implode(',', Account::getAccountTypes())],
             'currency' => 'sometimes|string|size:3',
         ];
+
+        // Only require member_id for staff users, not for members creating their own accounts
+        if (!auth()->user()->hasRole('member')) {
+            $rules['member_id'] = 'required|exists:users,id';
+        }
+
+        return $rules;
     }
 } 

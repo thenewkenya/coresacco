@@ -46,7 +46,8 @@
                                                dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
                                         <option value="">-- Select source account --</option>
                                         @foreach($fromAccounts as $account)
-                                            <option value="{{ $account->id }}" {{ old('from_account_id') == $account->id ? 'selected' : '' }}>
+                                            <option value="{{ $account->id }}" 
+                                                {{ (old('from_account_id') == $account->id || ($selectedFromAccount && $selectedFromAccount->id == $account->id)) ? 'selected' : '' }}>
                                                 {{ $account->account_number }} - {{ ucfirst($account->account_type) }} (KES {{ number_format($account->balance, 2) }})
                                                 @if(auth()->user()->role !== 'member')
                                                     - {{ $account->member->name }}
@@ -57,6 +58,15 @@
                                     @error('from_account_id')
                                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                     @enderror
+                                    
+                                    @if($selectedFromAccount)
+                                        <div class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                            <div class="flex items-center text-sm text-blue-700 dark:text-blue-300">
+                                                <flux:icon.information-circle class="w-4 h-4 mr-2" />
+                                                <span>Pre-selected from account details page</span>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <!-- To Account Selection -->
@@ -70,7 +80,8 @@
                                                dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
                                         <option value="">-- Select destination account --</option>
                                         @foreach($toAccounts as $account)
-                                            <option value="{{ $account->id }}" {{ old('to_account_id') == $account->id ? 'selected' : '' }}>
+                                            <option value="{{ $account->id }}" 
+                                                {{ (old('to_account_id') == $account->id || ($selectedToAccount && $selectedToAccount->id == $account->id)) ? 'selected' : '' }}>
                                                 {{ $account->account_number }} - {{ ucfirst($account->account_type) }} - {{ $account->member->name }}
                                             </option>
                                         @endforeach
@@ -78,6 +89,15 @@
                                     @error('to_account_id')
                                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                     @enderror
+                                    
+                                    @if($selectedToAccount)
+                                        <div class="mt-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                                            <div class="flex items-center text-sm text-emerald-700 dark:text-emerald-300">
+                                                <flux:icon.information-circle class="w-4 h-4 mr-2" />
+                                                <span>Pre-selected as destination account (insufficient funds for transfer out)</span>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <!-- Amount -->
@@ -139,6 +159,33 @@
 
                     <!-- Info Panel -->
                     <div class="space-y-6">
+                        <!-- Transaction Summary -->
+                        <div id="transferSummary" class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 hidden">
+                            <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Transaction Summary</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-400">From Account:</span>
+                                    <span id="summaryFromAccount" class="text-sm font-medium text-zinc-900 dark:text-zinc-100"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-400">To Account:</span>
+                                    <span id="summaryToAccount" class="text-sm font-medium text-zinc-900 dark:text-zinc-100"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-400">Transfer Amount:</span>
+                                    <span id="summaryTransferAmount" class="text-sm font-medium text-purple-600 dark:text-purple-400"></span>
+                                </div>
+                                <div class="flex justify-between border-t border-zinc-200 dark:border-zinc-700 pt-3">
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-400 font-medium">From Balance After:</span>
+                                    <span id="summaryFromNewBalance" class="text-sm font-bold text-zinc-900 dark:text-zinc-100"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-400 font-medium">To Balance After:</span>
+                                    <span id="summaryToNewBalance" class="text-sm font-bold text-emerald-600 dark:text-emerald-400"></span>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Transaction Info -->
                         <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
                             <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Transfer Limits</h3>
@@ -181,4 +228,58 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function updateTransferSummary() {
+            const fromSelect = document.getElementById('from_account_id');
+            const toSelect = document.getElementById('to_account_id');
+            const amountInput = document.getElementById('amount');
+            const summaryDiv = document.getElementById('transferSummary');
+            
+            const fromOption = fromSelect.options[fromSelect.selectedIndex];
+            const toOption = toSelect.options[toSelect.selectedIndex];
+            const amount = parseFloat(amountInput.value) || 0;
+            
+            if (fromOption.value && toOption.value && amount > 0) {
+                // Show summary
+                summaryDiv.classList.remove('hidden');
+                
+                // Parse account information
+                const fromBalance = parseFloat(fromOption.textContent.match(/KES ([\d,]+\.\d{2})/)?.[1]?.replace(/,/g, '') || 0);
+                const toBalance = parseFloat(toOption.textContent.match(/KES ([\d,]+\.\d{2})/)?.[1]?.replace(/,/g, '') || 0);
+                
+                // Update summary fields
+                document.getElementById('summaryFromAccount').textContent = fromOption.textContent.split(' (KES')[0];
+                document.getElementById('summaryToAccount').textContent = toOption.textContent.split(' - ')[1];
+                document.getElementById('summaryTransferAmount').textContent = 'KES ' + amount.toLocaleString('en-KE', {minimumFractionDigits: 2});
+                
+                // Calculate new balances
+                const fromNewBalance = fromBalance - amount;
+                const toNewBalance = toBalance + amount;
+                
+                document.getElementById('summaryFromNewBalance').textContent = 'KES ' + fromNewBalance.toLocaleString('en-KE', {minimumFractionDigits: 2});
+                document.getElementById('summaryToNewBalance').textContent = 'KES ' + toNewBalance.toLocaleString('en-KE', {minimumFractionDigits: 2});
+                
+                // Color code the from balance if it would go below minimum
+                const minBalance = 1000; // KES 1,000 minimum balance
+                if (fromNewBalance < minBalance) {
+                    document.getElementById('summaryFromNewBalance').className = 'text-sm font-bold text-red-600 dark:text-red-400';
+                } else {
+                    document.getElementById('summaryFromNewBalance').className = 'text-sm font-bold text-zinc-900 dark:text-zinc-100';
+                }
+            } else {
+                summaryDiv.classList.add('hidden');
+            }
+        }
+        
+        // Add event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('from_account_id').addEventListener('change', updateTransferSummary);
+            document.getElementById('to_account_id').addEventListener('change', updateTransferSummary);
+            document.getElementById('amount').addEventListener('input', updateTransferSummary);
+            
+            // Initial update
+            updateTransferSummary();
+        });
+    </script>
 </x-layouts.app> 

@@ -117,72 +117,619 @@
             </div>
         </div>
 
-        <!-- Features Section -->
+        <!-- Features Overview -->
         <div id="features" class="py-12 bg-gray-50 dark:bg-gray-800">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="lg:text-center">
-                    <h2 class="text-base text-blue-600 font-semibold tracking-wide uppercase">Features</h2>
+                    <h2 class="text-base text-blue-600 font-semibold tracking-wide uppercase">Complete Solution</h2>
                     <p class="mt-2 text-3xl leading-8 font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
-                        Complete SACCO Management Solution
+                        Everything Your SACCO Needs
                     </p>
                     <p class="mt-4 max-w-2xl text-xl text-gray-500 dark:text-gray-400 lg:mx-auto">
-                        Everything you need to run a modern SACCO organization efficiently and securely.
+                        From member onboarding to financial reporting, we've got every aspect of your SACCO covered with enterprise-grade tools.
                     </p>
                 </div>
 
-                <div class="mt-10">
-                    <div class="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
-                        <!-- Member Management -->
-                        <div class="relative">
-                            <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
-                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                <div class="mt-16">
+                    <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+                        <!-- Core Features Grid -->
+                        <div class="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4">
+                                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                             </div>
-                            <p class="ml-16 text-lg leading-6 font-medium text-gray-900 dark:text-white">Member Management</p>
-                            <dd class="mt-2 ml-16 text-base text-gray-500 dark:text-gray-400">
-                                Complete member registration, profile management, and member directory with multi-branch support.
-                            </dd>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Member Management</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">23 active members across 3 branches with complete profile management.</p>
                         </div>
 
-                        <!-- Transaction Processing -->
-                        <div class="relative">
-                            <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white">
-                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                            <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-4">
+                                <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                                 </svg>
                             </div>
-                            <p class="ml-16 text-lg leading-6 font-medium text-gray-900 dark:text-white">Real-time Transactions</p>
-                            <dd class="mt-2 ml-16 text-base text-gray-500 dark:text-gray-400">
-                                Process deposits, withdrawals, and transfers with real-time balance updates and approval workflows.
-                            </dd>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Real-time Transactions</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">800+ transactions processed with instant balance updates and notifications.</p>
                         </div>
 
-                        <!-- Loan Management -->
-                        <div class="relative">
-                            <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-purple-500 text-white">
-                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-4">
+                                <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             </div>
-                            <p class="ml-16 text-lg leading-6 font-medium text-gray-900 dark:text-white">Loan Management</p>
-                            <dd class="mt-2 ml-16 text-base text-gray-500 dark:text-gray-400">
-                                Handle loan applications, approval workflows, disbursement, and repayment tracking with automated calculations.
-                            </dd>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Loan Management</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Complete loan lifecycle from application to disbursement and repayment.</p>
                         </div>
 
-                        <!-- Security & Permissions -->
-                        <div class="relative">
-                            <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-red-500 text-white">
-                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        <div class="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                            <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center mb-4">
+                                <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                 </svg>
                             </div>
-                            <p class="ml-16 text-lg leading-6 font-medium text-gray-900 dark:text-white">Role-Based Security</p>
-                            <dd class="mt-2 ml-16 text-base text-gray-500 dark:text-gray-400">
-                                Granular permissions system with Admin, Manager, Staff, and Member roles for secure access control.
-                            </dd>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Financial Analytics</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">KES 5.5M+ assets under management with comprehensive reporting.</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Features Section -->
+        <div class="py-16 bg-white dark:bg-gray-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Member Management Deep Dive -->
+                <div class="mb-20">
+                    <div class="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
+                        <div>
+                            <h2 class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+                                Complete Member Lifecycle Management
+                            </h2>
+                            <p class="mt-3 max-w-3xl text-lg text-gray-500 dark:text-gray-400">
+                                From onboarding to account management, handle every aspect of member relationships with powerful tools designed for SACCO operations.
+                            </p>
+                            <div class="mt-8 space-y-4">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="flex items-center justify-center h-6 w-6 rounded-full bg-green-500 text-white">
+                                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Digital Member Registration</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Streamlined onboarding with document upload, verification, and automatic account creation.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="flex items-center justify-center h-6 w-6 rounded-full bg-green-500 text-white">
+                                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Multi-Branch Support</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage members across multiple branches with centralized data and local access controls.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="flex items-center justify-center h-6 w-6 rounded-full bg-green-500 text-white">
+                                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Member Self-Service Portal</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Empower members with 24/7 access to their accounts, statements, and service requests.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-10 lg:mt-0">
+                            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-8 text-white">
+                                <div class="text-center">
+                                    <h3 class="text-2xl font-bold mb-4">Member Dashboard Preview</h3>
+                                    <div class="bg-white/10 rounded-lg p-4 mb-4">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <span class="text-sm opacity-90">Account Balance</span>
+                                            <span class="font-bold">KES 125,450</span>
+                                        </div>
+                                        <div class="flex justify-between items-center mb-2">
+                                            <span class="text-sm opacity-90">Shares</span>
+                                            <span class="font-bold">KES 45,000</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm opacity-90">Active Loans</span>
+                                            <span class="font-bold">2</span>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button class="bg-white/20 hover:bg-white/30 px-3 py-2 rounded text-sm transition-colors">Deposit</button>
+                                        <button class="bg-white/20 hover:bg-white/30 px-3 py-2 rounded text-sm transition-colors">Withdraw</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction Processing Deep Dive -->
+                <div class="mb-20">
+                    <div class="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
+                        <div class="order-2 lg:order-1">
+                            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8">
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Transaction Processing Engine</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg">
+                                        <div class="flex items-center">
+                                            <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Deposit</span>
+                                        </div>
+                                        <span class="text-sm text-green-600">+KES 15,000</span>
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg">
+                                        <div class="flex items-center">
+                                            <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Transfer</span>
+                                        </div>
+                                        <span class="text-sm text-blue-600">KES 5,000</span>
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg">
+                                        <div class="flex items-center">
+                                            <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Withdrawal</span>
+                                        </div>
+                                        <span class="text-sm text-orange-600">-KES 8,500</span>
+                                    </div>
+                                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                        <div class="flex justify-between text-sm">
+                                            <span class="text-gray-500 dark:text-gray-400">Today's Volume</span>
+                                            <span class="font-medium text-gray-900 dark:text-white">47 transactions</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-1 lg:order-2">
+                            <h2 class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+                                Real-time Transaction Processing
+                            </h2>
+                            <p class="mt-3 max-w-3xl text-lg text-gray-500 dark:text-gray-400">
+                                Process transactions instantly with multi-level approval workflows, automated notifications, and comprehensive audit trails.
+                            </p>
+                            <div class="mt-8 space-y-4">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="flex items-center justify-center h-6 w-6 rounded-full bg-green-500 text-white">
+                                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Instant Balance Updates</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Real-time balance calculations with automatic reconciliation and error detection.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="flex items-center justify-center h-6 w-6 rounded-full bg-green-500 text-white">
+                                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Approval Workflows</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Configurable approval chains for high-value transactions with automatic routing.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="flex items-center justify-center h-6 w-6 rounded-full bg-green-500 text-white">
+                                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Smart Notifications</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Automated SMS and email notifications for large deposits, withdrawals, and suspicious activities.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loan Management Deep Dive -->
+                <div class="mb-20">
+                    <div class="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
+                        <div>
+                            <h2 class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+                                Advanced Loan Management
+                            </h2>
+                            <p class="mt-3 max-w-3xl text-lg text-gray-500 dark:text-gray-400">
+                                Complete loan lifecycle management with automated calculations, flexible repayment schedules, and intelligent risk assessment.
+                            </p>
+                            <div class="mt-8 space-y-4">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="flex items-center justify-center h-6 w-6 rounded-full bg-green-500 text-white">
+                                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Multiple Loan Products</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Support for development loans, emergency loans, asset financing, and custom loan products.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="flex items-center justify-center h-6 w-6 rounded-full bg-green-500 text-white">
+                                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Automated Calculations</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Interest calculations, penalty charges, and payment schedules updated automatically.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="flex items-center justify-center h-6 w-6 rounded-full bg-green-500 text-white">
+                                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Digital Loan Applications</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Online applications with document upload, creditworthiness scoring, and approval workflows.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-10 lg:mt-0">
+                            <div class="bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg p-8 text-white">
+                                <div class="text-center">
+                                    <h3 class="text-2xl font-bold mb-4">Loan Portfolio Overview</h3>
+                                    <div class="grid grid-cols-2 gap-4 mb-6">
+                                        <div class="bg-white/10 rounded-lg p-3">
+                                            <div class="text-2xl font-bold">12</div>
+                                            <div class="text-sm opacity-90">Active Loans</div>
+                                        </div>
+                                        <div class="bg-white/10 rounded-lg p-3">
+                                            <div class="text-2xl font-bold">98.5%</div>
+                                            <div class="text-sm opacity-90">Recovery Rate</div>
+                                        </div>
+                                        <div class="bg-white/10 rounded-lg p-3">
+                                            <div class="text-2xl font-bold">KES 2.1M</div>
+                                            <div class="text-sm opacity-90">Outstanding</div>
+                                        </div>
+                                        <div class="bg-white/10 rounded-lg p-3">
+                                            <div class="text-2xl font-bold">5</div>
+                                            <div class="text-sm opacity-90">Applications</div>
+                                        </div>
+                                    </div>
+                                    <button class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded transition-colors">
+                                        View Loan Dashboard
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security & Analytics Section -->
+        <div class="py-16 bg-gray-50 dark:bg-gray-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="lg:text-center mb-16">
+                    <h2 class="text-base text-blue-600 font-semibold tracking-wide uppercase">Security & Intelligence</h2>
+                    <p class="mt-2 text-3xl leading-8 font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+                        Enterprise-Grade Security & Analytics
+                    </p>
+                    <p class="mt-4 max-w-2xl text-xl text-gray-500 dark:text-gray-400 lg:mx-auto">
+                        Advanced security controls and intelligent analytics to protect your SACCO and drive data-driven decisions.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                    <!-- Security Features -->
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Advanced Security Controls</h3>
+                        <div class="space-y-6">
+                            <div class="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <h4 class="font-semibold text-gray-900 dark:text-white">Role-Based Access Control</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Four-tier permission system (Admin, Manager, Staff, Member) with granular controls over 50+ operations.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <h4 class="font-semibold text-gray-900 dark:text-white">Audit Trail System</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Complete transaction logging with user tracking, IP addresses, and timestamp records for compliance.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5-5-5h5v-6h4v6zM1 1h12v12H1V1z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <h4 class="font-semibold text-gray-900 dark:text-white">Fraud Detection</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Automated alerts for large deposits (>KES 100K), suspicious patterns, and policy violations.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Features -->
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Intelligent Analytics</h3>
+                        <div class="bg-white dark:bg-gray-900 rounded-lg p-6 shadow-sm">
+                            <div class="mb-6">
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Real-time Dashboard</h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-gradient-to-r from-green-400 to-green-500 p-4 rounded-lg text-white">
+                                        <div class="text-2xl font-bold">KES 5.5M</div>
+                                        <div class="text-sm opacity-90">Total Assets</div>
+                                    </div>
+                                    <div class="bg-gradient-to-r from-blue-400 to-blue-500 p-4 rounded-lg text-white">
+                                        <div class="text-2xl font-bold">847</div>
+                                        <div class="text-sm opacity-90">Transactions</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">Loan Portfolio Health</span>
+                                    <span class="text-sm text-green-600">98.5% Recovery</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: 98.5%"></div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">Member Growth</span>
+                                    <span class="text-sm text-blue-600">+15% YoY</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full" style="width: 75%"></div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">Savings Target</span>
+                                    <span class="text-sm text-purple-600">87% Complete</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div class="bg-purple-500 h-2 rounded-full" style="width: 87%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Features Showcase -->
+        <div class="py-16 bg-white dark:bg-gray-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+                        Comprehensive Feature Set
+                    </h2>
+                    <p class="mt-4 text-lg text-gray-500 dark:text-gray-400">
+                        Every tool you need to run a successful SACCO operation
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Financial Planning -->
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
+                        <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center mb-6">
+                            <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Financial Planning Tools</h3>
+                        <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Personal & Business Goals Setting
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Budget Planning & Expense Tracking
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Savings Progress Monitoring
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Investment Planning Tools
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Notification System -->
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
+                        <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center mb-6">
+                            <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5-5-5h5v-6h4v6zM1 1h12v12H1V1z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Smart Notifications</h3>
+                        <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Real-time Transaction Alerts
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Loan Payment Reminders
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Large Deposit Notifications
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                System & Security Alerts
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Reporting & Compliance -->
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
+                        <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-6">
+                            <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Comprehensive Reporting</h3>
+                        <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Financial Statements & Balance Sheets
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Loan Portfolio Analysis
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Member Activity & Trends
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Regulatory Compliance Reports
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Insurance Management -->
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
+                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-6">
+                            <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Insurance Management</h3>
+                        <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Member Insurance Registration
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Premium Collection Tracking
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Claims Processing Workflows
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Coverage Status Monitoring
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Multi-Branch Operations -->
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
+                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-6">
+                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Multi-Branch Operations</h3>
+                        <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Centralized Member Database
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Branch-Specific Reporting
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Inter-Branch Transfers
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Distributed User Management
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- API & Integration -->
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
+                        <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center mb-6">
+                            <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">API & Integration</h3>
+                        <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                RESTful API with Sanctum
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Third-Party Payment Gateways
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Mobile App Integration Ready
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                Webhook Support for Events
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>

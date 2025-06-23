@@ -153,33 +153,33 @@
 
                     <!-- Account Details & Info -->
                     <div class="space-y-6">
-                        <!-- Selected Account Details -->
-                        <div id="accountDetails" class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 hidden">
-                            <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Account Details</h3>
+                        <!-- Transaction Summary -->
+                        <div id="transactionSummary" class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 hidden">
+                            <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Transaction Summary</h3>
                             <div class="space-y-3">
                                 <div class="flex justify-between">
                                     <span class="text-sm text-zinc-600 dark:text-zinc-400">Account Number:</span>
-                                    <span id="accountNumber" class="text-sm font-medium text-zinc-900 dark:text-zinc-100"></span>
+                                    <span id="summaryAccountNumber" class="text-sm font-medium text-zinc-900 dark:text-zinc-100"></span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-sm text-zinc-600 dark:text-zinc-400">Account Type:</span>
-                                    <span id="accountType" class="text-sm font-medium text-zinc-900 dark:text-zinc-100"></span>
+                                    <span id="summaryAccountType" class="text-sm font-medium text-zinc-900 dark:text-zinc-100"></span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-sm text-zinc-600 dark:text-zinc-400">Current Balance:</span>
-                                    <span id="currentBalance" class="text-sm font-medium text-emerald-600 dark:text-emerald-400"></span>
+                                    <span id="summaryCurrentBalance" class="text-sm font-medium text-emerald-600 dark:text-emerald-400"></span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-sm text-zinc-600 dark:text-zinc-400">Available for Withdrawal:</span>
-                                    <span id="availableBalance" class="text-sm font-medium text-blue-600 dark:text-blue-400"></span>
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-400">Withdrawal Amount:</span>
+                                    <span id="summaryWithdrawalAmount" class="text-sm font-medium text-red-600 dark:text-red-400"></span>
                                 </div>
-                                <div id="memberInfo" class="flex justify-between hidden">
+                                <div class="flex justify-between border-t border-zinc-200 dark:border-zinc-700 pt-3">
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Balance After Withdrawal:</span>
+                                    <span id="summaryNewBalance" class="text-sm font-bold text-zinc-900 dark:text-zinc-100"></span>
+                                </div>
+                                <div id="summaryMemberInfo" class="flex justify-between hidden">
                                     <span class="text-sm text-zinc-600 dark:text-zinc-400">Account Holder:</span>
-                                    <span id="memberName" class="text-sm font-medium text-zinc-900 dark:text-zinc-100"></span>
-                                </div>
-                                <div id="newBalance" class="flex justify-between pt-3 border-t border-zinc-200 dark:border-zinc-700 hidden">
-                                    <span class="text-sm text-zinc-600 dark:text-zinc-400">Balance After Withdrawal:</span>
-                                    <span id="newBalanceAmount" class="text-sm font-bold text-zinc-900 dark:text-zinc-100"></span>
+                                    <span id="summaryMemberName" class="text-sm font-medium text-zinc-900 dark:text-zinc-100"></span>
                                 </div>
                             </div>
                         </div>
@@ -246,7 +246,7 @@
         function updateAccountDetails() {
             const select = document.getElementById('account_id');
             const selectedOption = select.options[select.selectedIndex];
-            const detailsDiv = document.getElementById('accountDetails');
+            const detailsDiv = document.getElementById('transactionSummary');
             
             if (selectedOption.value) {
                 // Show account details
@@ -256,17 +256,17 @@
                 const availableForWithdrawal = Math.max(0, balance - MINIMUM_BALANCE);
                 
                 // Update fields
-                document.getElementById('accountNumber').textContent = selectedOption.dataset.number;
-                document.getElementById('accountType').textContent = selectedOption.dataset.type.charAt(0).toUpperCase() + selectedOption.dataset.type.slice(1);
-                document.getElementById('currentBalance').textContent = 'KES ' + balance.toLocaleString('en-KE', {minimumFractionDigits: 2});
-                document.getElementById('availableBalance').textContent = 'KES ' + availableForWithdrawal.toLocaleString('en-KE', {minimumFractionDigits: 2});
+                document.getElementById('summaryAccountNumber').textContent = selectedOption.dataset.number;
+                document.getElementById('summaryAccountType').textContent = selectedOption.dataset.type.charAt(0).toUpperCase() + selectedOption.dataset.type.slice(1);
+                document.getElementById('summaryCurrentBalance').textContent = 'KES ' + balance.toLocaleString('en-KE', {minimumFractionDigits: 2});
+                document.getElementById('summaryWithdrawalAmount').textContent = '- KES 0.00';
                 
                 // Show member info for staff
                 if (selectedOption.dataset.member) {
-                    document.getElementById('memberInfo').classList.remove('hidden');
-                    document.getElementById('memberName').textContent = selectedOption.dataset.member;
+                    document.getElementById('summaryMemberInfo').classList.remove('hidden');
+                    document.getElementById('summaryMemberName').textContent = selectedOption.dataset.member;
                 } else {
-                    document.getElementById('memberInfo').classList.add('hidden');
+                    document.getElementById('summaryMemberInfo').classList.add('hidden');
                 }
                 
                 // Update new balance if amount is entered
@@ -284,14 +284,18 @@
             const select = document.getElementById('account_id');
             const selectedOption = select.options[select.selectedIndex];
             const amountInput = document.getElementById('amount');
-            const newBalanceDiv = document.getElementById('newBalance');
-            const newBalanceSpan = document.getElementById('newBalanceAmount');
+            const withdrawalAmountSpan = document.getElementById('summaryWithdrawalAmount');
+            const newBalanceSpan = document.getElementById('summaryNewBalance');
             
             if (selectedOption.value && amountInput.value && parseFloat(amountInput.value) > 0) {
                 const currentBalance = parseFloat(selectedOption.dataset.balance);
                 const withdrawalAmount = parseFloat(amountInput.value);
                 const newBalance = currentBalance - withdrawalAmount;
                 
+                // Update withdrawal amount in summary
+                withdrawalAmountSpan.textContent = '- KES ' + withdrawalAmount.toLocaleString('en-KE', {minimumFractionDigits: 2});
+                
+                // Update new balance
                 newBalanceSpan.textContent = 'KES ' + newBalance.toLocaleString('en-KE', {minimumFractionDigits: 2});
                 
                 // Color code based on minimum balance
@@ -300,10 +304,10 @@
                 } else {
                     newBalanceSpan.className = 'text-sm font-bold text-zinc-900 dark:text-zinc-100';
                 }
-                
-                newBalanceDiv.classList.remove('hidden');
             } else {
-                newBalanceDiv.classList.add('hidden');
+                // Reset to empty when no amount
+                withdrawalAmountSpan.textContent = '- KES 0.00';
+                newBalanceSpan.textContent = '';
             }
         }
 
