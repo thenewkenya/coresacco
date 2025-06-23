@@ -80,7 +80,8 @@
                                                dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
                                         <option value="">-- Select destination account --</option>
                                         @foreach($toAccounts as $account)
-                                            <option value="{{ $account->id }}" {{ old('to_account_id') == $account->id ? 'selected' : '' }}>
+                                            <option value="{{ $account->id }}" 
+                                                {{ (old('to_account_id') == $account->id || ($selectedToAccount && $selectedToAccount->id == $account->id)) ? 'selected' : '' }}>
                                                 {{ $account->account_number }} - {{ ucfirst($account->account_type) }} - {{ $account->member->name }}
                                             </option>
                                         @endforeach
@@ -88,6 +89,15 @@
                                     @error('to_account_id')
                                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                     @enderror
+                                    
+                                    @if($selectedToAccount)
+                                        <div class="mt-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                                            <div class="flex items-center text-sm text-emerald-700 dark:text-emerald-300">
+                                                <flux:icon.information-circle class="w-4 h-4 mr-2" />
+                                                <span>Pre-selected as destination account (insufficient funds for transfer out)</span>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <!-- Amount -->

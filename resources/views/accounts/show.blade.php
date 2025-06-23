@@ -212,13 +212,21 @@
                                 </flux:button>
                             @endif
                             
+                            @php
+                                // Determine if account has sufficient balance for transfers
+                                // Minimum balance requirement is 1000 KES, so account needs more than that to transfer out
+                                $canTransferFrom = $account->balance > 1000;
+                                $transferParam = $canTransferFrom ? 'from_account' : 'to_account';
+                                $transferText = $canTransferFrom ? 'Transfer Funds' : 'Receive Transfer';
+                            @endphp
+                            
                             <flux:button 
-                                href="{{ route('transactions.transfer.create', ['from_account' => $account->id]) }}" 
+                                href="{{ route('transactions.transfer.create', [$transferParam => $account->id]) }}" 
                                 variant="outline" 
                                 icon="arrow-right-circle"
                                 class="w-full justify-start"
                             >
-                                Transfer Funds
+                                {{ $transferText }}
                             </flux:button>
                             
                             <flux:button 

@@ -300,6 +300,7 @@ class TransactionController extends Controller
     {
         $user = Auth::user();
         $preSelectedFromAccount = $request->get('from_account');
+        $preSelectedToAccount = $request->get('to_account');
         
         if ($user->role === 'member') {
             $fromAccounts = $user->accounts()
@@ -323,7 +324,7 @@ class TransactionController extends Controller
                 ->get();
         }
 
-        // Validate the pre-selected account if provided
+        // Validate the pre-selected from account if provided
         $selectedFromAccount = null;
         if ($preSelectedFromAccount) {
             $selectedFromAccount = $fromAccounts->firstWhere('id', $preSelectedFromAccount);
@@ -333,7 +334,17 @@ class TransactionController extends Controller
             }
         }
 
-        return view('transactions.transfer', compact('fromAccounts', 'toAccounts', 'selectedFromAccount'));
+        // Validate the pre-selected to account if provided
+        $selectedToAccount = null;
+        if ($preSelectedToAccount) {
+            $selectedToAccount = $toAccounts->firstWhere('id', $preSelectedToAccount);
+            // If user is a member, ensure they own the account
+            if ($user->role === 'member' && $selectedToAccount && $selectedToAccount->member_id !== $user->id) {
+                $selectedToAccount = null;
+            }
+        }
+
+        return view('transactions.transfer', compact('fromAccounts', 'toAccounts', 'selectedFromAccount', 'selectedToAccount'));
     }
 
     /**
