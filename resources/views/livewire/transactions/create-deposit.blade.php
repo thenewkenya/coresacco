@@ -168,234 +168,347 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
         <div class="px-4 sm:px-6 lg:px-8 py-6">
             <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                        {{ __('Process Deposit') }}
-                    </h1>
-                    <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                        {{ __('Add funds to member accounts') }}
-                    </p>
+                <div class="flex items-center space-x-4">
+                    <a href="{{ route('transactions.index') }}" class="p-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+                        <flux:icon.arrow-left class="w-5 h-5" />
+                    </a>
+                    <div>
+                        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Process Deposit</h1>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400">Add funds to member accounts securely</p>
+                    </div>
                 </div>
-                <flux:button variant="ghost" :href="route('transactions.index')" wire:navigate>
-                    {{ __('Back') }}
-                </flux:button>
+                <div class="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
+                    <flux:icon.shield-check class="w-4 h-4" />
+                    <span>Secure Transaction</span>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Content -->
     <div class="px-4 sm:px-6 lg:px-8 py-8">
-        <div class="max-w-2xl mx-auto">
-            <form wire:submit="processDeposit" class="space-y-6">
-                
-                <!-- Member Selection (for admin users) -->
-                @if(in_array(auth()->user()->email, ['admin@sacco.com']))
-                    <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
-                        <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-4">
-                            {{ __('Select Member') }}
-                        </h3>
+        <div class="max-w-4xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Deposit Form -->
+                <div class="lg:col-span-2">
+                    <form wire:submit="processDeposit" class="space-y-6">
+                        
+                        <!-- Member Selection (for admin users) -->
+                        @if(in_array(auth()->user()->email, ['admin@sacco.com']))
+                            <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
+                                <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-4">
+                                    {{ __('Select Member') }}
+                                </h3>
 
-                        <div class="relative">
-                            <flux:field>
-                                <flux:label>{{ __('Search Member') }}</flux:label>
-                                <flux:input 
-                                    wire:model.live.debounce.300ms="member_search"
-                                    type="text"
-                                    placeholder="{{ __('Type member name, email, or member number...') }}" />
-                            </flux:field>
+                                <div class="relative">
+                                    <flux:field>
+                                        <flux:label>{{ __('Search Member') }}</flux:label>
+                                        <flux:input 
+                                            wire:model.live.debounce.300ms="member_search"
+                                            type="text"
+                                            placeholder="{{ __('Type member name, email, or member number...') }}" />
+                                    </flux:field>
 
-                            @if(count($members) > 0 && $member_search && !$selectedMember)
-                                <div class="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                    @foreach($members as $member)
-                                        <div 
-                                            wire:click="selectMember({{ $member->id }})"
-                                            class="px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-700 cursor-pointer border-b border-zinc-100 dark:border-zinc-600 last:border-b-0">
-                                            <div class="font-medium text-zinc-900 dark:text-zinc-100">{{ $member->name }}</div>
-                                            <div class="text-sm text-zinc-500 dark:text-zinc-400">
-                                                {{ $member->email }} • {{ $member->member_number ?? 'No member number' }}
+                                    @if(count($members) > 0 && $member_search && !$selectedMember)
+                                        <div class="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                            @foreach($members as $member)
+                                                <div 
+                                                    wire:click="selectMember({{ $member->id }})"
+                                                    class="px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-700 cursor-pointer border-b border-zinc-100 dark:border-zinc-600 last:border-b-0">
+                                                    <div class="font-medium text-zinc-900 dark:text-zinc-100">{{ $member->name }}</div>
+                                                    <div class="text-sm text-zinc-500 dark:text-zinc-400">
+                                                        {{ $member->email }} • {{ $member->member_number ?? 'No member number' }}
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+
+                                @if($selectedMember)
+                                    <div class="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <div class="font-medium text-green-900 dark:text-green-100">
+                                                    {{ $selectedMember->name }}
+                                                </div>
+                                                <div class="text-sm text-green-600 dark:text-green-400">
+                                                    {{ $selectedMember->email }} • {{ $selectedMember->member_number ?? 'No member number' }}
+                                                </div>
+                                            </div>
+                                            <flux:button 
+                                                type="button"
+                                                wire:click="$set('selectedMember', null)"
+                                                variant="ghost"
+                                                size="sm">
+                                                {{ __('Change') }}
+                                            </flux:button>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+
+                        <!-- Account Selection -->
+                        @if($member_id && count($accounts) > 0)
+                            <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
+                                <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-4">
+                                    {{ __('Select Account') }}
+                                </h3>
+
+                                <div class="mb-4">
+                                    <label for="account_select" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                        Select Account *
+                                    </label>
+                                    <select 
+                                        wire:model.live="account_id" 
+                                        id="account_select" 
+                                        required 
+                                        class="w-full px-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
+                                               focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                               dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
+                                        <option value="">-- Select an account --</option>
+                                        @foreach($accounts as $account)
+                                            <option value="{{ $account->id }}" {{ $account_id == $account->id ? 'selected' : '' }}>
+                                                {{ $account->account_number }} - {{ ucfirst($account->account_type) }} (KES {{ number_format($account->balance, 2) }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('account_id')
+                                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                @if($selectedAccount)
+                                    <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">Account Details</h4>
+                                        <div class="space-y-2 text-sm">
+                                            <div class="flex justify-between">
+                                                <span class="text-blue-600 dark:text-blue-400">Account Number:</span>
+                                                <span class="font-medium text-blue-900 dark:text-blue-100">{{ $selectedAccount->account_number }}</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-blue-600 dark:text-blue-400">Account Type:</span>
+                                                <span class="font-medium text-blue-900 dark:text-blue-100">{{ ucfirst($selectedAccount->account_type) }}</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-blue-600 dark:text-blue-400">Current Balance:</span>
+                                                <span class="font-medium text-emerald-600 dark:text-emerald-400">KES {{ number_format($selectedAccount->balance, 2) }}</span>
                                             </div>
                                         </div>
-                                    @endforeach
-                                </div>
-                            @endif
-                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
 
-                        @if($selectedMember)
-                            <div class="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                <div class="flex items-center justify-between">
+                        <!-- Deposit Details -->
+                        @if($account_id)
+                            <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
+                                <div class="mb-6">
+                                    <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Deposit Information</h2>
+                                    <p class="text-sm text-zinc-600 dark:text-zinc-400">Fill in the details below to process the deposit</p>
+                                </div>
+
+                                <div class="space-y-6">
+                                    <!-- Amount -->
                                     <div>
-                                        <div class="font-medium text-green-900 dark:text-green-100">
-                                            {{ $selectedMember->name }}
+                                        <label for="amount" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                            Deposit Amount (KES) *
+                                        </label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-zinc-500 dark:text-zinc-400">KES</span>
+                                            </div>
+                                            <input 
+                                                wire:model.live="amount"
+                                                type="number" 
+                                                id="amount" 
+                                                required
+                                                min="1" 
+                                                max="1000000" 
+                                                step="0.01" 
+                                                placeholder="0.00"
+                                                class="w-full pl-12 pr-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
+                                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                                       dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
                                         </div>
-                                        <div class="text-sm text-green-600 dark:text-green-400">
-                                            {{ $selectedMember->email }} • {{ $selectedMember->member_number ?? 'No member number' }}
+                                        <div class="mt-2 flex items-center justify-between text-sm">
+                                            <span class="text-zinc-500 dark:text-zinc-400">Minimum: KES 1.00</span>
+                                            <span class="text-zinc-500 dark:text-zinc-400">Maximum: KES 1,000,000.00</span>
                                         </div>
+                                        @error('amount')
+                                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                        @enderror
+                                        
+                                        @if($amount >= 50000)
+                                            <div class="mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                                                <div class="flex">
+                                                    <flux:icon.clock class="w-5 h-5 text-amber-400 mr-2 flex-shrink-0" />
+                                                    <p class="text-sm text-amber-800 dark:text-amber-200">
+                                                        Large deposits (KES 50,000+) require management approval.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
-                                    <flux:button 
-                                        type="button"
-                                        wire:click="$set('selectedMember', null)"
-                                        variant="ghost"
-                                        size="sm">
-                                        {{ __('Change') }}
-                                    </flux:button>
+
+                                    <!-- Payment Method -->
+                                    <div>
+                                        <label for="payment_method" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                            Payment Method *
+                                        </label>
+                                        <select 
+                                            wire:model="payment_method" 
+                                            id="payment_method" 
+                                            required
+                                            class="w-full px-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
+                                                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                                   dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
+                                            @foreach($paymentMethods as $key => $label)
+                                                <option value="{{ $key }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('payment_method')
+                                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Reference Number -->
+                                    <div>
+                                        <label for="reference_number" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                            Reference Number (Optional)
+                                        </label>
+                                        <div class="flex gap-2">
+                                            <input 
+                                                wire:model="reference_number"
+                                                type="text" 
+                                                id="reference_number" 
+                                                placeholder="Optional external reference"
+                                                class="flex-1 px-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
+                                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                                       dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
+                                            <button 
+                                                type="button"
+                                                wire:click="generateReference"
+                                                class="px-4 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 
+                                                       hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-lg transition-colors">
+                                                Generate
+                                            </button>
+                                        </div>
+                                        @error('reference_number')
+                                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Description -->
+                                    <div>
+                                        <label for="description" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                            Description (Optional)
+                                        </label>
+                                        <textarea 
+                                            wire:model="description"
+                                            id="description" 
+                                            rows="3" 
+                                            placeholder="Enter a description for this deposit..."
+                                            class="w-full px-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
+                                                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                                   dark:bg-zinc-700 dark:text-zinc-100 transition-colors">{{ old('description') }}</textarea>
+                                        @error('description')
+                                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                        @enderror
+                                    </div>
                                 </div>
                             </div>
                         @endif
-                    </div>
-                @endif
 
-                <!-- Account Selection -->
-                @if($member_id && count($accounts) > 0)
-                    <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
-                        <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-4">
-                            {{ __('Select Account') }}
-                        </h3>
-
-                        <div class="space-y-3">
-                            @foreach($accounts as $account)
-                                <div 
-                                    wire:click="selectAccount({{ $account->id }})"
-                                    class="border border-zinc-200 dark:border-zinc-600 rounded-lg p-4 cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 transition-colors {{ $account_id == $account->id ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20' : '' }}">
-                                    <div class="flex items-center">
-                                        <div class="w-4 h-4 rounded-full border-2 border-zinc-300 dark:border-zinc-600 {{ $account_id == $account->id ? 'border-blue-500 dark:border-blue-400' : '' }} flex items-center justify-center">
-                                            @if($account_id == $account->id)
-                                                <div class="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
-                                            @endif
-                                        </div>
-                                        <div class="ml-3 flex-1">
-                                            <div class="font-medium text-zinc-900 dark:text-zinc-100">
-                                                {{ ucfirst($account->account_type) }} Account
-                                            </div>
-                                            <div class="text-sm text-zinc-600 dark:text-zinc-400">
-                                                {{ $account->account_number }} • Balance: KES {{ number_format($account->balance) }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
+                        <!-- Form Actions -->
+                        <div class="flex items-center justify-between">
+                            <a href="{{ route('transactions.index') }}" 
+                                class="px-4 py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium">
+                                Cancel
+                            </a>
+                            <button 
+                                wire:click="processDeposit" 
+                                type="button"
+                                {{ !$account_id || !$amount ? 'disabled' : '' }}
+                                class="bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-400 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center">
+                                <flux:icon.arrow-down class="w-5 h-5 mr-2" />
+                                Process Deposit
+                            </button>
                         </div>
-                    </div>
-                @endif
-
-                <!-- Deposit Details -->
-                @if($account_id)
-                    <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
-                        <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-4">
-                            {{ __('Deposit Details') }}
-                        </h3>
-
-                        <div class="space-y-4">
-                            <flux:field>
-                                <flux:label>{{ __('Amount (KES)') }}</flux:label>
-                                <flux:input 
-                                    wire:model.live="amount"
-                                    type="number"
-                                    required
-                                    min="1"
-                                    max="1000000"
-                                    step="1"
-                                    placeholder="0.00" />
-                                <flux:description>
-                                    {{ __('Enter the amount to deposit') }}
-                                </flux:description>
-                            </flux:field>
-
-                            <flux:field>
-                                <flux:label>{{ __('Payment Method') }}</flux:label>
-                                <flux:select wire:model="payment_method" required>
-                                    @foreach($paymentMethods as $key => $label)
-                                        <option value="{{ $key }}">{{ $label }}</option>
-                                    @endforeach
-                                </flux:select>
-                            </flux:field>
-
-                            <flux:field>
-                                <flux:label>{{ __('Reference Number') }}</flux:label>
-                                <div class="flex gap-2">
-                                    <flux:input 
-                                        wire:model="reference_number"
-                                        type="text"
-                                        placeholder="{{ __('Optional external reference') }}"
-                                        class="flex-1" />
-                                    <flux:button 
-                                        type="button"
-                                        wire:click="generateReference"
-                                        variant="outline"
-                                        size="sm">
-                                        {{ __('Generate') }}
-                                    </flux:button>
-                                </div>
-                            </flux:field>
-
-                            <flux:field>
-                                <flux:label>{{ __('Description') }}</flux:label>
-                                <flux:textarea 
-                                    wire:model="description"
-                                    rows="3"
-                                    placeholder="{{ __('Optional description for this deposit...') }}"></flux:textarea>
-                            </flux:field>
-                        </div>
-                    </div>
-                @endif
-
-                <!-- Transaction Summary -->
-                @if($selectedAccount && $amount)
-                    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
-                        <h3 class="text-lg font-medium text-blue-900 dark:text-blue-100 mb-4">
-                            {{ __('Transaction Summary') }}
-                        </h3>
-
-                        <div class="space-y-3 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-blue-600 dark:text-blue-400">Account:</span>
-                                <span class="font-medium text-blue-900 dark:text-blue-100">
-                                    {{ ucfirst($selectedAccount->account_type) }} - {{ $selectedAccount->account_number }}
-                                </span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-blue-600 dark:text-blue-400">Current Balance:</span>
-                                <span class="font-medium text-blue-900 dark:text-blue-100">
-                                    KES {{ number_format($selectedAccount->balance) }}
-                                </span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-blue-600 dark:text-blue-400">Deposit Amount:</span>
-                                <span class="font-medium text-green-600 dark:text-green-400">
-                                    + KES {{ number_format($amount) }}
-                                </span>
-                            </div>
-                            <div class="flex justify-between border-t border-blue-200 dark:border-blue-700 pt-3">
-                                <span class="text-blue-600 dark:text-blue-400 font-medium">New Balance:</span>
-                                <span class="font-bold text-blue-900 dark:text-blue-100">
-                                    KES {{ number_format($selectedAccount->balance + $amount) }}
-                                </span>
-                            </div>
-                        </div>
-
-                        @if($amount >= 50000)
-                            <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                                <div class="text-sm text-yellow-800 dark:text-yellow-200">
-                                    <strong>⚠ Large Deposit Notice:</strong> 
-                                    This deposit requires management approval and may take additional processing time.
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                @endif
-
-                <!-- Form Actions -->
-                <div class="flex items-center justify-end space-x-4">
-                    <flux:button variant="ghost" :href="route('transactions.index')" wire:navigate>
-                        {{ __('Cancel') }}
-                    </flux:button>
-                    <flux:button 
-                        variant="primary" 
-                        type="submit" 
-                        :disabled="!$account_id || !$amount">
-                        {{ __('Process Deposit') }}
-                    </flux:button>
+                    </form>
                 </div>
-            </form>
+
+                <!-- Transaction Summary & Info -->
+                <div class="space-y-6">
+                    <!-- Transaction Summary -->
+                    @if($selectedAccount && $amount)
+                        <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
+                            <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Transaction Summary</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-400">Account Number:</span>
+                                    <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $selectedAccount->account_number }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-400">Account Type:</span>
+                                    <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ ucfirst($selectedAccount->account_type) }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-400">Current Balance:</span>
+                                    <span class="text-sm font-medium text-emerald-600 dark:text-emerald-400">KES {{ number_format($selectedAccount->balance, 2) }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-400">Deposit Amount:</span>
+                                    <span class="text-sm font-medium text-emerald-600 dark:text-emerald-400">+ KES {{ number_format($amount, 2) }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-400">Payment Method:</span>
+                                    <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $paymentMethods[$payment_method] ?? 'Cash' }}</span>
+                                </div>
+                                <div class="flex justify-between border-t border-zinc-200 dark:border-zinc-700 pt-3">
+                                    <span class="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Balance After Deposit:</span>
+                                    <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">KES {{ number_format($selectedAccount->balance + $amount, 2) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Deposit Limits -->
+                    <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
+                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Deposit Limits</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center text-sm">
+                                <flux:icon.check-circle class="w-4 h-4 text-emerald-500 mr-2" />
+                                <span class="text-zinc-600 dark:text-zinc-400">Minimum deposit: KES 1.00</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <flux:icon.check-circle class="w-4 h-4 text-emerald-500 mr-2" />
+                                <span class="text-zinc-600 dark:text-zinc-400">Maximum deposit: KES 1,000,000.00</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <flux:icon.clock class="w-4 h-4 text-amber-500 mr-2" />
+                                <span class="text-zinc-600 dark:text-zinc-400">Large deposits (KES 50,000+) require approval</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <flux:icon.shield-check class="w-4 h-4 text-blue-500 mr-2" />
+                                <span class="text-zinc-600 dark:text-zinc-400">All transactions are encrypted and secure</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Help -->
+                    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
+                        <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">Need Help?</h3>
+                        <p class="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                            If you have any questions about making deposits, our support team is here to help.
+                        </p>
+                        <a href="#" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 font-medium">
+                            Contact Support →
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div> 
