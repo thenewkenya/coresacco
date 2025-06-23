@@ -131,6 +131,20 @@ $formatCurrency = function ($amount) {
 
 mount(function () {
     $this->generateReferenceNumber();
+    
+    // Check if an account ID was passed in the URL
+    $accountId = request()->get('account');
+    if ($accountId) {
+        $account = Account::where('id', $accountId)
+            ->where('member_id', auth()->id())
+            ->where('status', 'active')
+            ->where('balance', '>', 1000) // Minimum balance requirement
+            ->first();
+            
+        if ($account) {
+            $this->selectedAccount = $accountId;
+        }
+    }
 });
 
 ?>

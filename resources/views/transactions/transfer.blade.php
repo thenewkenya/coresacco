@@ -46,7 +46,8 @@
                                                dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
                                         <option value="">-- Select source account --</option>
                                         @foreach($fromAccounts as $account)
-                                            <option value="{{ $account->id }}" {{ old('from_account_id') == $account->id ? 'selected' : '' }}>
+                                            <option value="{{ $account->id }}" 
+                                                {{ (old('from_account_id') == $account->id || ($selectedFromAccount && $selectedFromAccount->id == $account->id)) ? 'selected' : '' }}>
                                                 {{ $account->account_number }} - {{ ucfirst($account->account_type) }} (KES {{ number_format($account->balance, 2) }})
                                                 @if(auth()->user()->role !== 'member')
                                                     - {{ $account->member->name }}
@@ -57,6 +58,15 @@
                                     @error('from_account_id')
                                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                     @enderror
+                                    
+                                    @if($selectedFromAccount)
+                                        <div class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                            <div class="flex items-center text-sm text-blue-700 dark:text-blue-300">
+                                                <flux:icon.information-circle class="w-4 h-4 mr-2" />
+                                                <span>Pre-selected from account details page</span>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <!-- To Account Selection -->

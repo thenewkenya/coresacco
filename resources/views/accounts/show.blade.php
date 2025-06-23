@@ -193,7 +193,7 @@
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
                         <div class="space-y-3">
                             <flux:button 
-                                href="{{ route('transactions.deposit.create') }}" 
+                                href="{{ route('transactions.deposit.create', ['account' => $account->id]) }}" 
                                 variant="primary" 
                                 icon="arrow-down-circle"
                                 class="w-full justify-start"
@@ -203,7 +203,7 @@
                             
                             @if($account->balance > 0)
                                 <flux:button 
-                                    href="{{ route('transactions.withdrawal.create') }}" 
+                                    href="{{ route('transactions.withdrawal.create', ['account' => $account->id]) }}" 
                                     variant="outline" 
                                     icon="arrow-up-circle"
                                     class="w-full justify-start"
@@ -213,7 +213,7 @@
                             @endif
                             
                             <flux:button 
-                                href="{{ route('transactions.transfer.create') }}" 
+                                href="{{ route('transactions.transfer.create', ['from_account' => $account->id]) }}" 
                                 variant="outline" 
                                 icon="arrow-right-circle"
                                 class="w-full justify-start"
@@ -222,7 +222,7 @@
                             </flux:button>
                             
                             <flux:button 
-                                href="{{ route('transactions.index') }}" 
+                                href="{{ route('transactions.index', ['account' => $account->id]) }}" 
                                 variant="ghost" 
                                 icon="document-text"
                                 class="w-full justify-start"

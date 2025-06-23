@@ -30,6 +30,9 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function mount()
     {
+        // Check if an account ID was passed in the URL
+        $accountId = request()->get('account');
+        
         // For now, allow all users to search members - can be restricted later
         $this->loadMembers();
         
@@ -37,6 +40,26 @@ new #[Layout('components.layouts.app')] class extends Component {
         if (!in_array(auth()->user()->email, ['admin@sacco.com'])) { // Simple admin check
             $this->member_id = auth()->id();
             $this->loadAccountsForMember();
+            
+            // If a specific account was requested and user owns it, pre-select it
+            if ($accountId) {
+                $account = Account::find($accountId);
+                if ($account && $account->member_id === auth()->id()) {
+                    $this->account_id = $accountId;
+                    $this->selectedAccount = $account;
+                }
+            }
+        } elseif ($accountId) {
+            // For admin users, if an account was specified, pre-select the member and account
+            $account = Account::with('member')->find($accountId);
+            if ($account) {
+                $this->member_id = $account->member_id;
+                $this->selectedMember = $account->member;
+                $this->member_search = $account->member->name;
+                $this->loadAccountsForMember();
+                $this->account_id = $accountId;
+                $this->selectedAccount = $account;
+            }
         }
     }
 
