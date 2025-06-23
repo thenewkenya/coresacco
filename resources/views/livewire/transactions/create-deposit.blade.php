@@ -120,23 +120,11 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'processed_by' => auth()->id(),
             ];
 
-            // Create transaction record
-            $transaction = \App\Models\Transaction::create([
-                'member_id' => $account->member_id,
-                'account_id' => $account->id,
-                'type' => 'deposit',
-                'amount' => $this->amount,
-                'balance_before' => $account->balance,
-                'balance_after' => $account->balance + $this->amount,
-                'description' => $this->description ?: 'Deposit to ' . $account->account_type . ' account',
-                'reference_number' => 'DEP' . time() . rand(1000, 9999),
-                'status' => 'completed',
-                'processed_by' => auth()->id(),
-                'metadata' => $metadata,
-            ]);
-
-            // Update account balance
-            $account->increment('balance', $this->amount);
+            $description = $this->description ?: 'Deposit to ' . $account->account_type . ' account';
+            
+            // Use TransactionService for consistent processing
+            $transactionService = app(\App\Services\TransactionService::class);
+            $transaction = $transactionService->processDeposit($account, (float) $this->amount, $description, $metadata);
 
             session()->flash('success', 'Deposit processed successfully! Transaction ID: ' . $transaction->reference_number);
             

@@ -27,8 +27,7 @@ Route::middleware(['auth'])->group(function () {
         Volt::route('/create/deposit', 'transactions.create-deposit')->name('deposit.create');
         
         // Withdrawal routes
-        Route::get('/create/withdrawal', [App\Http\Controllers\TransactionController::class, 'createWithdrawal'])->name('withdrawal.create');
-        Route::post('/create/withdrawal', [App\Http\Controllers\TransactionController::class, 'storeWithdrawal'])->name('withdrawal.store');
+        Volt::route('/create/withdrawal', 'transactions.create-withdrawal')->name('withdrawal.create');
         
         // Transfer routes
         Route::get('/create/transfer', [App\Http\Controllers\TransactionController::class, 'createTransfer'])->name('transfer.create');
@@ -51,7 +50,7 @@ Route::middleware(['auth'])->group(function () {
     // Financial Services
     Route::prefix('savings')->name('savings.')->group(function () {
         Route::get('/', [App\Http\Controllers\SavingsController::class, 'index'])->name('index');
-        Route::get('/my', [App\Http\Controllers\SavingsController::class, 'my'])->name('my');
+        Volt::route('/my', 'member.my-savings')->name('my');
         Route::get('/create', [App\Http\Controllers\SavingsController::class, 'create'])->name('create')->middleware('can:create,App\Models\Account');
         Route::post('/', [App\Http\Controllers\SavingsController::class, 'store'])->name('store')->middleware('can:create,App\Models\Account');
         Route::get('/{account}', [App\Http\Controllers\SavingsController::class, 'show'])->name('show');
@@ -64,7 +63,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('loans')->name('loans.')->group(function () {
         Route::get('/', [App\Http\Controllers\LoansController::class, 'index'])->name('index');
-        Route::get('/my', [App\Http\Controllers\LoansController::class, 'my'])->name('my');
+        Volt::route('/my', 'member.my-loans')->name('my');
         Route::get('/create', [App\Http\Controllers\LoansController::class, 'create'])->name('create');
         Route::post('/', [App\Http\Controllers\LoansController::class, 'store'])->name('store');
         Route::get('/{loan}', [App\Http\Controllers\LoansController::class, 'show'])->name('show');

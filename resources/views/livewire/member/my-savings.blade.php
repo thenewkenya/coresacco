@@ -139,7 +139,7 @@ new class extends Component
                         <flux:icon.banknotes class="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Savings Accounts</h3>
                         <p class="text-gray-500 dark:text-gray-400 mb-4">You don't have any savings accounts yet.</p>
-                        <flux:button variant="primary">Open Savings Account</flux:button>
+                        <flux:button variant="primary" :href="route('savings.create')" wire:navigate>Open Savings Account</flux:button>
                     </div>
                 @endforelse
             </div>
