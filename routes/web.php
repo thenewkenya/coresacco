@@ -81,6 +81,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{transaction}', [App\Http\Controllers\PaymentsController::class, 'show'])->name('show');
         Route::post('/{transaction}/approve', [App\Http\Controllers\PaymentsController::class, 'approve'])->name('approve')->middleware('can:approve,transaction');
         Route::post('/{transaction}/reject', [App\Http\Controllers\PaymentsController::class, 'reject'])->name('reject')->middleware('can:approve,transaction');
+        Route::delete('/{transaction}/reverse', [App\Http\Controllers\PaymentsController::class, 'reverse'])->name('reverse')->middleware('auth');
         Route::get('/{transaction}/receipt', [App\Http\Controllers\PaymentsController::class, 'receipt'])->name('receipt');
         Route::post('/mobile-money', [App\Http\Controllers\PaymentsController::class, 'mobileMoney'])->name('mobile-money');
         Route::get('/reports/generate', [App\Http\Controllers\PaymentsController::class, 'report'])->name('report')->middleware('can:view-reports');

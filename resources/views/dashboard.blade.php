@@ -665,7 +665,7 @@ $branchPerformance = Branch::all()->map(function($branch) {
 
         function addWidget(widgetType) {
             if (window.dashboardWidgets.includes(widgetType)) {
-                alert('This widget is already added to your dashboard!');
+                showNotification('This widget is already added to your dashboard!', 'warning');
                 return;
             }
 
@@ -916,7 +916,9 @@ $branchPerformance = Branch::all()->map(function($branch) {
         }
 
         function resetWidgets() {
-            if (confirm('Are you sure you want to reset all widgets to default? This will remove all custom widgets.')) {
+            // For this simple case, we'll just use a custom notification-style confirmation
+            const result = window.confirm('Are you sure you want to reset all widgets to default? This will remove all custom widgets.');
+            if (result) {
                 window.dashboardWidgets = [];
                 document.getElementById('customWidgetsContainer').innerHTML = '';
                 hideCustomWidgetsContainer();

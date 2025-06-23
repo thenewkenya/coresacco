@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Payment Receipt - {{ $payment->reference_number }}</title>
+    <title>Payment Receipt - {{ $transaction->reference_number }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -141,7 +141,7 @@
 <body>
     <div class="actions no-print">
         <button class="btn" onclick="window.print()">Print Receipt</button>
-        <a href="{{ route('payments.show', $payment) }}" class="btn">Back to Payment</a>
+        <a href="{{ route('payments.show', $transaction) }}" class="btn">Back to Payment</a>
     </div>
 
     <div class="receipt-header">
@@ -155,15 +155,15 @@
     <div class="receipt-title">PAYMENT RECEIPT</div>
 
     <div class="reference-number">
-        REF: {{ $payment->reference_number }}
+        REF: {{ $transaction->reference_number }}
     </div>
 
-    <div class="status {{ $payment->status }}">
-        STATUS: {{ strtoupper($payment->status) }}
+    <div class="status {{ $transaction->status }}">
+        STATUS: {{ strtoupper($transaction->status) }}
     </div>
 
     <div class="amount">
-        KES {{ number_format($payment->amount, 2) }}
+        KES {{ number_format($transaction->amount, 2) }}
     </div>
 
     <div class="receipt-info">
@@ -171,24 +171,24 @@
             <h3>Payment Information</h3>
             <div class="info-item">
                 <span class="info-label">Type:</span>
-                {{ ucwords(str_replace('_', ' ', $payment->type)) }}
+                {{ ucwords(str_replace('_', ' ', $transaction->type)) }}
             </div>
             <div class="info-item">
                 <span class="info-label">Method:</span>
-                {{ ucwords(str_replace('_', ' ', $payment->payment_method)) }}
+                {{ ucwords(str_replace('_', ' ', $transaction->metadata['payment_method'] ?? 'Unknown')) }}
             </div>
             <div class="info-item">
                 <span class="info-label">Date:</span>
-                {{ $payment->created_at->format('M d, Y') }}
+                {{ $transaction->created_at->format('M d, Y') }}
             </div>
             <div class="info-item">
                 <span class="info-label">Time:</span>
-                {{ $payment->created_at->format('g:i A') }}
+                {{ $transaction->created_at->format('g:i A') }}
             </div>
-            @if($payment->external_reference)
+            @if($transaction->metadata['external_reference'] ?? null)
             <div class="info-item">
                 <span class="info-label">External Ref:</span>
-                {{ $payment->external_reference }}
+                {{ $transaction->metadata['external_reference'] }}
             </div>
             @endif
         </div>
@@ -197,49 +197,49 @@
             <h3>Member Details</h3>
             <div class="info-item">
                 <span class="info-label">Name:</span>
-                {{ $payment->member->name }}
+                {{ $transaction->member->name }}
             </div>
             <div class="info-item">
                 <span class="info-label">Email:</span>
-                {{ $payment->member->email }}
+                {{ $transaction->member->email }}
             </div>
             <div class="info-item">
                 <span class="info-label">Phone:</span>
-                {{ $payment->member->phone ?? 'N/A' }}
+                {{ $transaction->member->phone ?? 'N/A' }}
             </div>
             <div class="info-item">
                 <span class="info-label">Member ID:</span>
-                {{ $payment->member->member_number ?? $payment->member->id }}
+                {{ $transaction->member->member_number ?? $transaction->member->id }}
             </div>
         </div>
     </div>
 
-    @if($payment->account_id || $payment->loan_id)
+    @if($transaction->account_id || $transaction->loan_id)
     <div class="payment-details">
         <h3 style="margin-top: 0;">Transaction Details</h3>
         
-        @if($payment->account)
+        @if($transaction->account)
         <div style="margin-bottom: 15px;">
             <strong>Savings Account:</strong><br>
-            Account Number: {{ $payment->account->account_number }}<br>
-            Account Type: {{ ucwords($payment->account->account_type) }}<br>
-            Balance After Transaction: KES {{ number_format($payment->account->balance, 2) }}
+            Account Number: {{ $transaction->account->account_number }}<br>
+            Account Type: {{ ucwords($transaction->account->account_type) }}<br>
+            Balance After Transaction: KES {{ number_format($transaction->account->balance, 2) }}
         </div>
         @endif
 
-        @if($payment->loan)
+        @if($transaction->loan)
         <div style="margin-bottom: 15px;">
             <strong>Loan Repayment:</strong><br>
-            Loan Type: {{ $payment->loan->loanType->name }}<br>
-            Original Amount: KES {{ number_format($payment->loan->amount, 2) }}<br>
-            Outstanding Balance: KES {{ number_format($payment->loan->outstanding_balance ?? $payment->loan->amount, 2) }}
+            Loan Type: {{ $transaction->loan->loanType->name }}<br>
+            Original Amount: KES {{ number_format($transaction->loan->amount, 2) }}<br>
+            Outstanding Balance: KES {{ number_format($transaction->loan->outstanding_balance ?? $transaction->loan->amount, 2) }}
         </div>
         @endif
 
-        @if($payment->description)
+        @if($transaction->description)
         <div>
             <strong>Description:</strong><br>
-            {{ $payment->description }}
+            {{ $transaction->description }}
         </div>
         @endif
     </div>
@@ -249,16 +249,16 @@
         <h3 style="margin-top: 0;">Payment Breakdown</h3>
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <span>Payment Amount:</span>
-            <span><strong>KES {{ number_format($payment->amount, 2) }}</strong></span>
+            <span><strong>KES {{ number_format($transaction->amount, 2) }}</strong></span>
         </div>
-        @if($payment->fees > 0)
+        @if(($transaction->metadata['fees'] ?? 0) > 0)
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <span>Processing Fee:</span>
-            <span>KES {{ number_format($payment->fees, 2) }}</span>
+            <span>KES {{ number_format($transaction->metadata['fees'], 2) }}</span>
         </div>
         <div style="display: flex; justify-content: space-between; border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px;">
             <span><strong>Total Paid:</strong></span>
-            <span><strong>KES {{ number_format($payment->amount + $payment->fees, 2) }}</strong></span>
+            <span><strong>KES {{ number_format($transaction->amount + $transaction->metadata['fees'], 2) }}</strong></span>
         </div>
         @endif
     </div>
@@ -273,6 +273,10 @@
         </div>
         <div style="margin-top: 15px; font-size: 10px;">
             Receipt generated on {{ now()->format('M d, Y \a\t g:i A') }}
+        </div>
+        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee; font-size: 11px; color: #888;">
+            <strong>Powered by TheNewKenya</strong><br>
+            <span style="font-size: 9px;">Digital Solutions for Financial Institutions</span>
         </div>
     </div>
 
@@ -290,19 +294,19 @@
         <div class="receipt-title">PAYMENT RECEIPT</div>
         
         <div class="reference-number">
-            REF: {{ $payment->reference_number }}
+            REF: {{ $transaction->reference_number }}
         </div>
 
         <div class="amount">
-            KES {{ number_format($payment->amount, 2) }}
+            KES {{ number_format($transaction->amount, 2) }}
         </div>
 
         <div style="text-align: center; margin: 20px 0;">
-            <div><strong>{{ $payment->member->name }}</strong></div>
-            <div>{{ ucwords(str_replace('_', ' ', $payment->type)) }}</div>
-            <div>{{ $payment->created_at->format('M d, Y g:i A') }}</div>
-            <div class="status {{ $payment->status }}" style="display: inline-block; margin-top: 10px;">
-                {{ strtoupper($payment->status) }}
+            <div><strong>{{ $transaction->member->name }}</strong></div>
+            <div>{{ ucwords(str_replace('_', ' ', $transaction->type)) }}</div>
+            <div>{{ $transaction->created_at->format('M d, Y g:i A') }}</div>
+            <div class="status {{ $transaction->status }}" style="display: inline-block; margin-top: 10px;">
+                {{ strtoupper($transaction->status) }}
             </div>
         </div>
     </div>

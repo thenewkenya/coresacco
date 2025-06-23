@@ -16,14 +16,10 @@
                         <flux:button variant="outline" icon="pencil" :href="route('goals.edit', $goal)" wire:navigate>
                             {{ __('Edit Goal') }}
                         </flux:button>
-                        <form action="{{ route('goals.destroy', $goal) }}" method="POST" class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <flux:button variant="danger" icon="trash" type="submit" 
-                                onclick="return confirm('{{ __('Are you sure you want to delete this goal?') }}')">
-                                {{ __('Delete Goal') }}
-                            </flux:button>
-                        </form>
+                        <flux:button variant="danger" icon="trash" 
+                            x-data="" x-on:click.prevent="$dispatch('open-modal', 'delete-goal-modal')">
+                            {{ __('Delete Goal') }}
+                        </flux:button>
                     </div>
                 </div>
             </div>
@@ -138,4 +134,92 @@
             @endif
         </div>
     </div>
+
+    <!-- Delete Goal Modal -->
+    <flux:modal name="delete-goal-modal" class="md:w-96">
+        <div class="space-y-6">
+            <div class="text-center">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+                    <flux:icon.trash class="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div class="mt-3">
+                    <flux:heading size="lg">{{ __('Delete Goal') }}</flux:heading>
+                    <div class="mt-2">
+                        <flux:subheading>
+                            {{ __('Are you sure you want to delete this goal? This action cannot be undone.') }}
+                        </flux:subheading>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Goal:') }}</span>
+                        <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $goal->title }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Current Amount:') }}</span>
+                        <span class="font-semibold text-zinc-900 dark:text-zinc-100">KES {{ number_format($goal->current_amount) }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Target Amount:') }}</span>
+                        <span class="font-semibold text-zinc-900 dark:text-zinc-100">KES {{ number_format($goal->target_amount) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+                <div class="flex items-start">
+                    <flux:icon.exclamation-triangle class="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <div class="ml-3">
+                        <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                            {{ __('Warning') }}
+                        </h4>
+                        <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                            {{ __('Deleting this goal will permanently remove all associated data and progress. This action cannot be undone.') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <flux:modal.close>
+                    <flux:button variant="ghost" class="flex-1">
+                        {{ __('Cancel') }}
+                    </flux:button>
+                </flux:modal.close>
+                <flux:button variant="danger" class="flex-1" x-on:click="submitDeleteGoal()">
+                    <flux:icon.trash class="w-4 h-4 mr-2" />
+                    {{ __('Delete Goal') }}
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    <script>
+        function submitDeleteGoal() {
+            // Create a form and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route('goals.destroy', $goal) }}';
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+            
+            const methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'DELETE';
+            form.appendChild(methodInput);
+            
+            // Close modal and submit
+            window.dispatchEvent(new CustomEvent('close-modal', { detail: 'delete-goal-modal' }));
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
 </x-layouts.app> 

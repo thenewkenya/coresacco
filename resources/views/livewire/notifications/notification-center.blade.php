@@ -11,6 +11,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     public $filter = 'all';
     public $showMarkAllRead = false;
 
+
     public $filters = [
         'all' => 'All Notifications',
         'unread' => 'Unread',
@@ -293,4 +294,6 @@ new #[Layout('components.layouts.app')] class extends Component {
             @endif
         </div>
     </div>
+
+
 </div> 

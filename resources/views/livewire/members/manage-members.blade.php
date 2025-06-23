@@ -20,6 +20,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     public $showViewModal = false;
     public $selectedMember = null;
 
+
     // Form fields
     public $name = '';
     public $email = '';
@@ -651,4 +652,6 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
         </flux:modal>
     @endif
+
+
 </div> 

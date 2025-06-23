@@ -417,6 +417,88 @@ class PaymentsController extends Controller
     }
 
     /**
+     * Reverse completed payment (Admin only)
+     */
+    public function reverse(Request $request, Transaction $transaction)
+    {
+        $user = Auth::user();
+        
+        // Authorization check - only admins can reverse payments
+        if ($user->role !== 'admin') {
+            abort(403, 'Unauthorized to reverse payments. Admin access required.');
+        }
+
+        // Can only reverse completed transactions
+        if ($transaction->status !== Transaction::STATUS_COMPLETED) {
+            return back()->with('error', 'Only completed payments can be reversed.');
+        }
+
+        // Prevent reversing already reversed transactions
+        if ($transaction->status === Transaction::STATUS_REVERSED) {
+            return back()->with('error', 'This payment has already been reversed.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Create reversal transaction record
+            $reversalTransaction = Transaction::create([
+                'account_id' => $transaction->account_id,
+                'member_id' => $transaction->member_id,
+                'loan_id' => $transaction->loan_id,
+                'type' => $transaction->type === Transaction::TYPE_DEPOSIT ? Transaction::TYPE_WITHDRAWAL : Transaction::TYPE_DEPOSIT,
+                'amount' => $transaction->amount,
+                'description' => 'REVERSAL: ' . $transaction->description,
+                'reference_number' => 'REV-' . $transaction->reference_number,
+                'status' => Transaction::STATUS_COMPLETED,
+                'balance_before' => $transaction->account ? $transaction->account->balance : 0,
+                'metadata' => array_merge($transaction->metadata ?? [], [
+                    'is_reversal' => true,
+                    'original_transaction_id' => $transaction->id,
+                    'reversed_by' => $user->id,
+                    'reversed_at' => now(),
+                    'reversal_reason' => $request->input('reason', 'Administrative reversal'),
+                ])
+            ]);
+
+            // Update account balance (reverse the original transaction effect)
+            if ($transaction->account) {
+                $account = $transaction->account;
+                if ($transaction->type === Transaction::TYPE_DEPOSIT) {
+                    // Original was deposit, so subtract for reversal
+                    $account->balance -= $transaction->amount;
+                } elseif ($transaction->type === Transaction::TYPE_WITHDRAWAL) {
+                    // Original was withdrawal, so add back for reversal
+                    $account->balance += $transaction->amount;
+                }
+                $account->save();
+
+                // Update balance_after for reversal transaction
+                $reversalTransaction->update(['balance_after' => $account->balance]);
+            }
+
+            // Mark original transaction as reversed
+            $transaction->update([
+                'status' => Transaction::STATUS_REVERSED,
+                'metadata' => array_merge($transaction->metadata ?? [], [
+                    'reversed_by' => $user->id,
+                    'reversed_at' => now(),
+                    'reversal_transaction_id' => $reversalTransaction->id,
+                    'reversal_reason' => $request->input('reason', 'Administrative reversal'),
+                ])
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', 'Payment reversed successfully. Reversal transaction: ' . $reversalTransaction->reference_number);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to reverse payment: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Generate payment receipt
      */
     public function receipt(Transaction $transaction)

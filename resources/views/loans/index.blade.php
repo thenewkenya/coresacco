@@ -233,10 +233,10 @@
                                             <flux:dropdown>
                                                 <flux:button size="sm" variant="ghost" icon="ellipsis-horizontal" />
                                                 <flux:menu>
-                                                    <flux:menu.item icon="check" onclick="approveLoan({{ $loan->id }})">
+                                                    <flux:menu.item icon="check" x-data="" x-on:click.prevent="$dispatch('open-modal', 'approve-loan-modal'); setSelectedLoan({{ $loan->id }}, '{{ $loan->member->name }}', '{{ number_format($loan->amount, 2) }}')">
                                                         Approve
                                                     </flux:menu.item>
-                                                    <flux:menu.item icon="x-mark" onclick="rejectLoan({{ $loan->id }})">
+                                                    <flux:menu.item icon="x-mark" x-data="" x-on:click.prevent="$dispatch('open-modal', 'reject-loan-modal'); setSelectedLoan({{ $loan->id }}, '{{ $loan->member->name }}', '{{ number_format($loan->amount, 2) }}')">
                                                         Reject
                                                     </flux:menu.item>
                                                 </flux:menu>
@@ -274,24 +274,198 @@
         </div>
     </div>
 
+    <!-- Approve Loan Modal -->
+    <flux:modal name="approve-loan-modal" class="md:w-96">
+        <div class="space-y-6">
+            <div class="text-center">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+                    <flux:icon.check class="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+                <div class="mt-3">
+                    <flux:heading size="lg">{{ __('Approve Loan') }}</flux:heading>
+                    <div class="mt-2">
+                        <flux:subheading>
+                            {{ __('Are you sure you want to approve this loan application?') }}
+                        </flux:subheading>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Member:') }}</span>
+                        <span class="font-medium text-zinc-900 dark:text-zinc-100" id="approve-member-name"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Amount:') }}</span>
+                        <span class="font-semibold text-zinc-900 dark:text-zinc-100">KES <span id="approve-loan-amount"></span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <flux:field>
+                    <flux:label>{{ __('Approval Notes (Optional)') }}</flux:label>
+                    <flux:textarea 
+                        id="approval-notes"
+                        name="notes"
+                        placeholder="{{ __('Enter any notes about this approval...') }}"
+                        rows="3" />
+                </flux:field>
+            </div>
+
+            <div class="flex gap-3">
+                <flux:modal.close>
+                    <flux:button variant="ghost" class="flex-1">
+                        {{ __('Cancel') }}
+                    </flux:button>
+                </flux:modal.close>
+                <flux:button variant="primary" class="flex-1" x-on:click="submitApproval()">
+                    <flux:icon.check class="w-4 h-4 mr-2" />
+                    {{ __('Approve Loan') }}
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    <!-- Reject Loan Modal -->
+    <flux:modal name="reject-loan-modal" class="md:w-96">
+        <div class="space-y-6">
+            <div class="text-center">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+                    <flux:icon.x-mark class="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div class="mt-3">
+                    <flux:heading size="lg">{{ __('Reject Loan') }}</flux:heading>
+                    <div class="mt-2">
+                        <flux:subheading>
+                            {{ __('Are you sure you want to reject this loan application?') }}
+                        </flux:subheading>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Member:') }}</span>
+                        <span class="font-medium text-zinc-900 dark:text-zinc-100" id="reject-member-name"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Amount:') }}</span>
+                        <span class="font-semibold text-zinc-900 dark:text-zinc-100">KES <span id="reject-loan-amount"></span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <flux:field>
+                    <flux:label>{{ __('Rejection Reason') }} <span class="text-red-500">*</span></flux:label>
+                    <flux:textarea 
+                        id="rejection-reason"
+                        name="reason"
+                        placeholder="{{ __('Please provide a reason for rejection...') }}"
+                        rows="3" 
+                        required />
+                </flux:field>
+            </div>
+
+            <div class="flex gap-3">
+                <flux:modal.close>
+                    <flux:button variant="ghost" class="flex-1">
+                        {{ __('Cancel') }}
+                    </flux:button>
+                </flux:modal.close>
+                <flux:button variant="danger" class="flex-1" x-on:click="submitRejection()">
+                    <flux:icon.x-mark class="w-4 h-4 mr-2" />
+                    {{ __('Reject Loan') }}
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
     <script>
-        function approveLoan(loanId) {
-            if (confirm('Are you sure you want to approve this loan?')) {
-                // Implementation for loan approval
-                console.log('Approving loan:', loanId);
-            }
+        let selectedLoanId = null;
+
+        function setSelectedLoan(loanId, memberName, amount) {
+            selectedLoanId = loanId;
+            
+            // Update approve modal
+            document.getElementById('approve-member-name').textContent = memberName;
+            document.getElementById('approve-loan-amount').textContent = amount;
+            
+            // Update reject modal  
+            document.getElementById('reject-member-name').textContent = memberName;
+            document.getElementById('reject-loan-amount').textContent = amount;
         }
 
-        function rejectLoan(loanId) {
-            if (confirm('Are you sure you want to reject this loan?')) {
-                // Implementation for loan rejection
-                console.log('Rejecting loan:', loanId);
+        function submitApproval() {
+            if (!selectedLoanId) return;
+            
+            const notes = document.getElementById('approval-notes').value;
+            
+            // Create a form and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/loans/${selectedLoanId}/approve`;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+            
+            if (notes.trim()) {
+                const notesInput = document.createElement('input');
+                notesInput.type = 'hidden';
+                notesInput.name = 'notes';
+                notesInput.value = notes;
+                form.appendChild(notesInput);
             }
+            
+            // Close modal and submit
+            window.dispatchEvent(new CustomEvent('close-modal', { detail: 'approve-loan-modal' }));
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function submitRejection() {
+            if (!selectedLoanId) return;
+            
+            const reason = document.getElementById('rejection-reason').value;
+            
+            if (!reason.trim()) {
+                alert('Please provide a reason for rejection.');
+                return;
+            }
+            
+            // Create a form and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/loans/${selectedLoanId}/reject`;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+            
+            const reasonInput = document.createElement('input');
+            reasonInput.type = 'hidden';
+            reasonInput.name = 'reason';
+            reasonInput.value = reason;
+            form.appendChild(reasonInput);
+            
+            // Close modal and submit
+            window.dispatchEvent(new CustomEvent('close-modal', { detail: 'reject-loan-modal' }));
+            document.body.appendChild(form);
+            form.submit();
         }
 
         function processRepayment(loanId) {
             // Implementation for processing repayment
-            console.log('Processing repayment for loan:', loanId);
+            window.location.href = `/loans/${loanId}?tab=repayment`;
         }
     </script>
 </x-layouts.app> 

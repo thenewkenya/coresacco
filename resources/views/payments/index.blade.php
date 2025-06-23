@@ -158,10 +158,10 @@
                                         <flux:dropdown>
                                             <flux:button size="sm" variant="ghost" icon="ellipsis-horizontal" />
                                             <flux:menu>
-                                                <flux:menu.item icon="check" onclick="approvePayment({{ $transaction->id }})">
+                                                <flux:menu.item icon="check" x-data="" x-on:click.prevent="$dispatch('open-modal', 'approve-payment-modal'); setSelectedPayment({{ $transaction->id }}, '{{ $transaction->member->name ?? 'N/A' }}', '{{ number_format($transaction->amount, 2) }}', '{{ $transaction->reference_number }}')">
                                                     Approve
                                                 </flux:menu.item>
-                                                <flux:menu.item icon="x-mark" onclick="rejectPayment({{ $transaction->id }})">
+                                                <flux:menu.item icon="x-mark" x-data="" x-on:click.prevent="$dispatch('open-modal', 'reject-payment-modal'); setSelectedPayment({{ $transaction->id }}, '{{ $transaction->member->name ?? 'N/A' }}', '{{ number_format($transaction->amount, 2) }}', '{{ $transaction->reference_number }}')">
                                                     Reject
                                                 </flux:menu.item>
                                             </flux:menu>
@@ -232,21 +232,203 @@
         </div>
     </div>
 
+    <!-- Approve Payment Modal -->
+    <flux:modal name="approve-payment-modal" class="md:w-96">
+        <div class="space-y-6">
+            <div class="text-center">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+                    <flux:icon.check class="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+                <div class="mt-3">
+                    <flux:heading size="lg">{{ __('Approve Payment') }}</flux:heading>
+                    <div class="mt-2">
+                        <flux:subheading>
+                            {{ __('Are you sure you want to approve this payment transaction?') }}
+                        </flux:subheading>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Member:') }}</span>
+                        <span class="font-medium text-zinc-900 dark:text-zinc-100" id="approve-payment-member"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Amount:') }}</span>
+                        <span class="font-semibold text-zinc-900 dark:text-zinc-100">KES <span id="approve-payment-amount"></span></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Reference:') }}</span>
+                        <span class="font-mono text-zinc-900 dark:text-zinc-100" id="approve-payment-reference"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <flux:field>
+                    <flux:label>{{ __('Approval Notes (Optional)') }}</flux:label>
+                    <flux:textarea 
+                        id="payment-approval-notes"
+                        name="notes"
+                        placeholder="{{ __('Enter any notes about this approval...') }}"
+                        rows="3" />
+                </flux:field>
+            </div>
+
+            <div class="flex gap-3">
+                <flux:modal.close>
+                    <flux:button variant="ghost" class="flex-1">
+                        {{ __('Cancel') }}
+                    </flux:button>
+                </flux:modal.close>
+                <flux:button variant="primary" class="flex-1" x-on:click="submitPaymentApproval()">
+                    <flux:icon.check class="w-4 h-4 mr-2" />
+                    {{ __('Approve Payment') }}
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    <!-- Reject Payment Modal -->
+    <flux:modal name="reject-payment-modal" class="md:w-96">
+        <div class="space-y-6">
+            <div class="text-center">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+                    <flux:icon.x-mark class="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div class="mt-3">
+                    <flux:heading size="lg">{{ __('Reject Payment') }}</flux:heading>
+                    <div class="mt-2">
+                        <flux:subheading>
+                            {{ __('Are you sure you want to reject this payment transaction?') }}
+                        </flux:subheading>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Member:') }}</span>
+                        <span class="font-medium text-zinc-900 dark:text-zinc-100" id="reject-payment-member"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Amount:') }}</span>
+                        <span class="font-semibold text-zinc-900 dark:text-zinc-100">KES <span id="reject-payment-amount"></span></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Reference:') }}</span>
+                        <span class="font-mono text-zinc-900 dark:text-zinc-100" id="reject-payment-reference"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <flux:field>
+                    <flux:label>{{ __('Rejection Reason') }} <span class="text-red-500">*</span></flux:label>
+                    <flux:textarea 
+                        id="payment-rejection-reason"
+                        name="reason"
+                        placeholder="{{ __('Please provide a reason for rejection...') }}"
+                        rows="3" 
+                        required />
+                </flux:field>
+            </div>
+
+            <div class="flex gap-3">
+                <flux:modal.close>
+                    <flux:button variant="ghost" class="flex-1">
+                        {{ __('Cancel') }}
+                    </flux:button>
+                </flux:modal.close>
+                <flux:button variant="danger" class="flex-1" x-on:click="submitPaymentRejection()">
+                    <flux:icon.x-mark class="w-4 h-4 mr-2" />
+                    {{ __('Reject Payment') }}
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
     <script>
-        function approvePayment(transactionId) {
-            if (confirm('Are you sure you want to approve this payment?')) {
-                // Implementation for payment approval
-                console.log('Approving payment:', transactionId);
-                // You would typically make an AJAX call here
-            }
+        let selectedPaymentId = null;
+
+        function setSelectedPayment(paymentId, memberName, amount, reference) {
+            selectedPaymentId = paymentId;
+            
+            // Update approve modal
+            document.getElementById('approve-payment-member').textContent = memberName;
+            document.getElementById('approve-payment-amount').textContent = amount;
+            document.getElementById('approve-payment-reference').textContent = reference;
+            
+            // Update reject modal  
+            document.getElementById('reject-payment-member').textContent = memberName;
+            document.getElementById('reject-payment-amount').textContent = amount;
+            document.getElementById('reject-payment-reference').textContent = reference;
         }
 
-        function rejectPayment(transactionId) {
-            if (confirm('Are you sure you want to reject this payment?')) {
-                // Implementation for payment rejection
-                console.log('Rejecting payment:', transactionId);
-                // You would typically make an AJAX call here
+        function submitPaymentApproval() {
+            if (!selectedPaymentId) return;
+            
+            const notes = document.getElementById('payment-approval-notes').value;
+            
+            // Create a form and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/payments/${selectedPaymentId}/approve`;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+            
+            if (notes.trim()) {
+                const notesInput = document.createElement('input');
+                notesInput.type = 'hidden';
+                notesInput.name = 'notes';
+                notesInput.value = notes;
+                form.appendChild(notesInput);
             }
+            
+            // Close modal and submit
+            window.dispatchEvent(new CustomEvent('close-modal', { detail: 'approve-payment-modal' }));
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function submitPaymentRejection() {
+            if (!selectedPaymentId) return;
+            
+            const reason = document.getElementById('payment-rejection-reason').value;
+            
+            if (!reason.trim()) {
+                alert('Please provide a reason for rejection.');
+                return;
+            }
+            
+            // Create a form and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/payments/${selectedPaymentId}/reject`;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+            
+            const reasonInput = document.createElement('input');
+            reasonInput.type = 'hidden';
+            reasonInput.name = 'rejection_reason';
+            reasonInput.value = reason;
+            form.appendChild(reasonInput);
+            
+            // Close modal and submit
+            window.dispatchEvent(new CustomEvent('close-modal', { detail: 'reject-payment-modal' }));
+            document.body.appendChild(form);
+            form.submit();
         }
     </script>
 </x-layouts.app> 
