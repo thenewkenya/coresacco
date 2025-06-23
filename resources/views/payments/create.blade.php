@@ -9,7 +9,7 @@
                             {{ __('Make Payment') }}
                         </h1>
                         <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                            {{ __('Process deposits, withdrawals, and loan repayments') }}
+                            {{ __('Process loan repayments, contributions, and SACCO fees') }}
                         </p>
                     </div>
                     <flux:button variant="ghost" :href="route('payments.my')" wire:navigate>
@@ -32,35 +32,7 @@
                             <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
                                 {{ __('Payment Type') }}
                             </label>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="relative">
-                                    <input type="radio" name="payment_type" value="deposit" id="type_deposit" 
-                                           class="sr-only peer" {{ $paymentType === 'deposit' ? 'checked' : '' }}>
-                                    <label for="type_deposit" class="flex items-center p-4 border-2 border-zinc-200 dark:border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700/50 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 dark:peer-checked:bg-emerald-900/20">
-                                        <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg mr-3">
-                                            <flux:icon.arrow-down class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                                        </div>
-                                        <div>
-                                            <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Deposit') }}</p>
-                                            <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Add money to account') }}</p>
-                                        </div>
-                                    </label>
-                                </div>
-                                
-                                <div class="relative">
-                                    <input type="radio" name="payment_type" value="withdrawal" id="type_withdrawal" 
-                                           class="sr-only peer" {{ $paymentType === 'withdrawal' ? 'checked' : '' }}>
-                                    <label for="type_withdrawal" class="flex items-center p-4 border-2 border-zinc-200 dark:border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700/50 peer-checked:border-red-500 peer-checked:bg-red-50 dark:peer-checked:bg-red-900/20">
-                                        <div class="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg mr-3">
-                                            <flux:icon.arrow-up class="w-5 h-5 text-red-600 dark:text-red-400" />
-                                        </div>
-                                        <div>
-                                            <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Withdrawal') }}</p>
-                                            <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Take money out') }}</p>
-                                        </div>
-                                    </label>
-                                </div>
-                                
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <div class="relative">
                                     <input type="radio" name="payment_type" value="loan_repayment" id="type_loan_repayment" 
                                            class="sr-only peer" {{ $paymentType === 'loan_repayment' ? 'checked' : '' }}>
@@ -71,6 +43,76 @@
                                         <div>
                                             <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Loan Repayment') }}</p>
                                             <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Pay back loan') }}</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <div class="relative">
+                                    <input type="radio" name="payment_type" value="monthly_contribution" id="type_monthly_contribution" 
+                                           class="sr-only peer" {{ $paymentType === 'monthly_contribution' ? 'checked' : '' }}>
+                                    <label for="type_monthly_contribution" class="flex items-center p-4 border-2 border-zinc-200 dark:border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700/50 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 dark:peer-checked:bg-emerald-900/20">
+                                        <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg mr-3">
+                                            <flux:icon.calendar class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Monthly Contribution') }}</p>
+                                            <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Regular savings') }}</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <div class="relative">
+                                    <input type="radio" name="payment_type" value="share_capital" id="type_share_capital" 
+                                           class="sr-only peer" {{ $paymentType === 'share_capital' ? 'checked' : '' }}>
+                                    <label for="type_share_capital" class="flex items-center p-4 border-2 border-zinc-200 dark:border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700/50 peer-checked:border-purple-500 peer-checked:bg-purple-50 dark:peer-checked:bg-purple-900/20">
+                                        <div class="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg mr-3">
+                                            <flux:icon.building-library class="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Share Capital') }}</p>
+                                            <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Buy SACCO shares') }}</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <div class="relative">
+                                    <input type="radio" name="payment_type" value="insurance_premium" id="type_insurance_premium" 
+                                           class="sr-only peer" {{ $paymentType === 'insurance_premium' ? 'checked' : '' }}>
+                                    <label for="type_insurance_premium" class="flex items-center p-4 border-2 border-zinc-200 dark:border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700/50 peer-checked:border-orange-500 peer-checked:bg-orange-50 dark:peer-checked:bg-orange-900/20">
+                                        <div class="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg mr-3">
+                                            <flux:icon.shield-check class="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Insurance Premium') }}</p>
+                                            <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Life/credit insurance') }}</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <div class="relative">
+                                    <input type="radio" name="payment_type" value="loan_processing_fee" id="type_loan_processing_fee" 
+                                           class="sr-only peer" {{ $paymentType === 'loan_processing_fee' ? 'checked' : '' }}>
+                                    <label for="type_loan_processing_fee" class="flex items-center p-4 border-2 border-zinc-200 dark:border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700/50 peer-checked:border-amber-500 peer-checked:bg-amber-50 dark:peer-checked:bg-amber-900/20">
+                                        <div class="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg mr-3">
+                                            <flux:icon.document-check class="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Loan Processing Fee') }}</p>
+                                            <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('One-time loan fee') }}</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <div class="relative">
+                                    <input type="radio" name="payment_type" value="membership_fee" id="type_membership_fee" 
+                                           class="sr-only peer" {{ $paymentType === 'membership_fee' ? 'checked' : '' }}>
+                                    <label for="type_membership_fee" class="flex items-center p-4 border-2 border-zinc-200 dark:border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700/50 peer-checked:border-teal-500 peer-checked:bg-teal-50 dark:peer-checked:bg-teal-900/20">
+                                        <div class="p-2 bg-teal-100 dark:bg-teal-900/30 rounded-lg mr-3">
+                                            <flux:icon.user-group class="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Membership Fee') }}</p>
+                                            <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ __('Annual dues') }}</p>
                                         </div>
                                     </label>
                                 </div>
@@ -86,7 +128,7 @@
                                         <option value="">{{ __('Select Account') }}</option>
                                         @foreach($accounts as $account)
                                         <option value="{{ $account->id }}">
-                                            {{ $account->account_number }} - {{ ucfirst($account->account_type) }} (KES {{ number_format($account->balance, 2) }})
+                                            {{ $account->account_number }} - {{ $account->getDisplayName() }} (KES {{ number_format($account->balance, 2) }})
                                         </option>
                                         @endforeach
                                     </flux:select>
@@ -261,7 +303,7 @@
             // Handle payment type changes
             paymentTypeRadios.forEach(radio => {
                 radio.addEventListener('change', function() {
-                    if (this.value === 'loan_repayment') {
+                    if (this.value === 'loan_repayment' || this.value === 'loan_processing_fee') {
                         loanSelection.style.display = 'block';
                         loanSelection.querySelector('select').required = true;
                     } else {
@@ -304,7 +346,7 @@
 
             // Initialize form based on current payment type
             const checkedPaymentType = document.querySelector('input[name="payment_type"]:checked');
-            if (checkedPaymentType && checkedPaymentType.value === 'loan_repayment') {
+            if (checkedPaymentType && (checkedPaymentType.value === 'loan_repayment' || checkedPaymentType.value === 'loan_processing_fee')) {
                 loanSelection.style.display = 'block';
                 loanSelection.querySelector('select').required = true;
             }

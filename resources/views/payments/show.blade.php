@@ -596,7 +596,7 @@
      </div>
      @endrole
 
-     <script>
+    <script>
         function showReversalModal() {
             console.log('showReversalModal called');
             

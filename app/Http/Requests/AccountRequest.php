@@ -16,7 +16,7 @@ class AccountRequest extends FormRequest
     {
         return [
             'member_id' => 'required|exists:users,id',
-            'account_type' => 'required|in:savings,shares,deposits',
+            'account_type' => ['required', 'in:' . implode(',', Account::getAccountTypes())],
             'currency' => 'sometimes|string|size:3',
         ];
     }

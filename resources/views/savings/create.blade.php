@@ -114,13 +114,85 @@
                                 'icon' => 'chart-pie'
                             ],
                             [
-                                'type' => 'fixed_deposit',
-                                'name' => 'Fixed Deposit',
+                                'type' => 'deposits',
+                                'name' => 'Term Deposits',
                                 'description' => 'Fixed term deposit with higher interest rates',
                                 'min_balance' => 10000,
                                 'interest_rate' => 15.0,
-                                'icon' => 'lock-closed',
+                                'icon' => 'lock-closed'
+                            ],
+                            [
+                                'type' => 'emergency_fund',
+                                'name' => 'Emergency Fund',
+                                'description' => 'Emergency savings for unexpected expenses',
+                                'min_balance' => 500,
+                                'interest_rate' => 6.0,
+                                'icon' => 'shield-exclamation'
+                            ],
+                            [
+                                'type' => 'holiday_savings',
+                                'name' => 'Holiday Savings',
+                                'description' => 'Save for holidays and vacation expenses',
+                                'min_balance' => 500,
+                                'interest_rate' => 7.0,
+                                'icon' => 'sun'
+                            ],
+                            [
+                                'type' => 'retirement',
+                                'name' => 'Retirement Savings',
+                                'description' => 'Long-term savings for retirement planning',
+                                'min_balance' => 2000,
+                                'interest_rate' => 10.0,
+                                'icon' => 'user-group'
+                            ],
+                            [
+                                'type' => 'education',
+                                'name' => 'Education Fund',
+                                'description' => 'Save for education and training expenses',
+                                'min_balance' => 1000,
+                                'interest_rate' => 9.0,
+                                'icon' => 'academic-cap'
+                            ],
+                            [
+                                'type' => 'development',
+                                'name' => 'Development Fund',
+                                'description' => 'Community and personal development savings',
+                                'min_balance' => 1000,
+                                'interest_rate' => 8.0,
+                                'icon' => 'arrow-trending-up'
+                            ],
+                            [
+                                'type' => 'welfare',
+                                'name' => 'Welfare Fund',
+                                'description' => 'Mutual aid and welfare support fund',
+                                'min_balance' => 500,
+                                'interest_rate' => 6.5,
+                                'icon' => 'heart'
+                            ],
+                            [
+                                'type' => 'investment',
+                                'name' => 'Investment Account',
+                                'description' => 'High-yield investment account',
+                                'min_balance' => 25000,
+                                'interest_rate' => 18.0,
+                                'icon' => 'trending-up',
                                 'restricted' => !auth()->user()->hasAnyRole(['admin', 'manager'])
+                            ],
+                            [
+                                'type' => 'loan_guarantee',
+                                'name' => 'Loan Guarantee Fund',
+                                'description' => 'Funds set aside to guarantee loans',
+                                'min_balance' => 5000,
+                                'interest_rate' => 5.0,
+                                'icon' => 'document-check'
+                            ],
+                            [
+                                'type' => 'insurance',
+                                'name' => 'Insurance Fund',
+                                'description' => 'Life and credit insurance contributions',
+                                'min_balance' => 1000,
+                                'interest_rate' => 4.0,
+                                'icon' => 'shield-check'
                             ]
                         ] as $accountType)
                         <div class="relative">

@@ -33,17 +33,25 @@
                     @foreach($accounts as $account)
                         <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
                             <div class="flex items-center justify-between mb-4">
-                                <div class="p-3 rounded-lg 
-                                    @if($account->account_type === 'savings') bg-emerald-100 dark:bg-emerald-900/30
-                                    @elseif($account->account_type === 'shares') bg-purple-100 dark:bg-purple-900/30
-                                    @else bg-blue-100 dark:bg-blue-900/30 @endif">
-                                    @if($account->account_type === 'savings')
-                                        <flux:icon.banknotes class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                                    @elseif($account->account_type === 'shares')
-                                        <flux:icon.sparkles class="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                                    @else
-                                        <flux:icon.document-text class="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                                    @endif
+                                @php
+                                    $accountStyles = [
+                                        'savings' => ['bg' => 'bg-emerald-100 dark:bg-emerald-900/30', 'text' => 'text-emerald-600 dark:text-emerald-400', 'icon' => 'banknotes'],
+                                        'shares' => ['bg' => 'bg-purple-100 dark:bg-purple-900/30', 'text' => 'text-purple-600 dark:text-purple-400', 'icon' => 'chart-pie'],
+                                        'deposits' => ['bg' => 'bg-blue-100 dark:bg-blue-900/30', 'text' => 'text-blue-600 dark:text-blue-400', 'icon' => 'lock-closed'],
+                                        'emergency_fund' => ['bg' => 'bg-red-100 dark:bg-red-900/30', 'text' => 'text-red-600 dark:text-red-400', 'icon' => 'shield-exclamation'],
+                                        'holiday_savings' => ['bg' => 'bg-yellow-100 dark:bg-yellow-900/30', 'text' => 'text-yellow-600 dark:text-yellow-400', 'icon' => 'sun'],
+                                        'retirement' => ['bg' => 'bg-indigo-100 dark:bg-indigo-900/30', 'text' => 'text-indigo-600 dark:text-indigo-400', 'icon' => 'user-group'],
+                                        'education' => ['bg' => 'bg-cyan-100 dark:bg-cyan-900/30', 'text' => 'text-cyan-600 dark:text-cyan-400', 'icon' => 'academic-cap'],
+                                        'development' => ['bg' => 'bg-green-100 dark:bg-green-900/30', 'text' => 'text-green-600 dark:text-green-400', 'icon' => 'arrow-trending-up'],
+                                        'welfare' => ['bg' => 'bg-pink-100 dark:bg-pink-900/30', 'text' => 'text-pink-600 dark:text-pink-400', 'icon' => 'heart'],
+                                        'investment' => ['bg' => 'bg-orange-100 dark:bg-orange-900/30', 'text' => 'text-orange-600 dark:text-orange-400', 'icon' => 'trending-up'],
+                                        'loan_guarantee' => ['bg' => 'bg-teal-100 dark:bg-teal-900/30', 'text' => 'text-teal-600 dark:text-teal-400', 'icon' => 'document-check'],
+                                        'insurance' => ['bg' => 'bg-slate-100 dark:bg-slate-900/30', 'text' => 'text-slate-600 dark:text-slate-400', 'icon' => 'shield-check'],
+                                    ];
+                                    $style = $accountStyles[$account->account_type] ?? $accountStyles['savings'];
+                                @endphp
+                                <div class="p-3 rounded-lg {{ $style['bg'] }}">
+                                    <flux:icon.{{ $style['icon'] }} class="w-6 h-6 {{ $style['text'] }}" />
                                 </div>
                                 <span class="text-sm px-2 py-1 rounded-full 
                                     @if($account->status === 'active') bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400
@@ -53,7 +61,7 @@
                             </div>
                             
                             <div class="mb-4">
-                                <h3 class="font-medium text-zinc-900 dark:text-zinc-100">{{ ucfirst($account->account_type) }} Account</h3>
+                                <h3 class="font-medium text-zinc-900 dark:text-zinc-100">{{ $account->getDisplayName() }}</h3>
                                 <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ $account->account_number }}</p>
                             </div>
                             

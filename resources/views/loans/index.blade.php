@@ -464,8 +464,8 @@
         }
 
         function processRepayment(loanId) {
-            // Implementation for processing repayment
-            window.location.href = `/loans/${loanId}?tab=repayment`;
+            // Redirect to loan details page with repayment tab
+            window.location.href = `/loans/${loanId}`;
         }
     </script>
 </x-layouts.app> 

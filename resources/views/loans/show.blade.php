@@ -14,7 +14,7 @@
                     </div>
                     <div class="flex items-center space-x-4">
                         @if(in_array($loan->status, ['active', 'disbursed']))
-                        <flux:button variant="outline" icon="credit-card" :href="route('loans.repayment', $loan)">
+                        <flux:button variant="outline" icon="credit-card" :href="route('payments.create', ['loan_id' => $loan->id])">
                             {{ __('Make Repayment') }}
                         </flux:button>
                         @endif

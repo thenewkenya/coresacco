@@ -185,7 +185,7 @@ class PaymentsController extends Controller
         $user = Auth::user();
         
         $validated = $request->validate([
-            'payment_type' => ['required', Rule::in(['deposit', 'loan_repayment', 'withdrawal'])],
+            'payment_type' => ['required', Rule::in(['loan_repayment', 'monthly_contribution', 'share_capital', 'insurance_premium', 'loan_processing_fee', 'membership_fee'])],
             'amount' => 'required|numeric|min:1',
             'account_id' => 'required|exists:accounts,id',
             'loan_id' => 'nullable|exists:loans,id',
@@ -237,70 +237,113 @@ class PaymentsController extends Controller
             }
 
             // Process payment based on type
-            switch ($validated['payment_type']) {
-                case 'deposit':
-                    $transaction = $this->transactionService->processDeposit(
-                        $account,
-                        $validated['amount'],
-                        $validated['description'] ?? 'Payment deposit',
-                        $metadata
-                    );
-                    $message = 'Deposit payment processed successfully.';
-                    break;
+                    switch ($validated['payment_type']) {
+            case 'loan_repayment':
+                if (!$validated['loan_id']) {
+                    return back()->withInput()->with('error', 'Loan ID is required for loan repayment.');
+                }
+                
+                $loan = Loan::findOrFail($validated['loan_id']);
+                if ($loan->member_id !== $user->id) {
+                    abort(403, 'Unauthorized access to this loan.');
+                }
 
-                case 'withdrawal':
-                    $transaction = $this->transactionService->processWithdrawal(
-                        $account,
-                        $validated['amount'],
-                        $validated['description'] ?? 'Payment withdrawal',
-                        $metadata
-                    );
-                    $message = $transaction->status === Transaction::STATUS_PENDING 
-                        ? 'Withdrawal request submitted for approval.'
-                        : 'Withdrawal payment processed successfully.';
-                    break;
+                $metadata['transaction_type'] = Transaction::TYPE_LOAN_REPAYMENT;
+                $metadata['loan_id'] = $loan->id;
 
-                case 'loan_repayment':
-                    if (!$validated['loan_id']) {
-                        return back()->withInput()->with('error', 'Loan ID is required for loan repayment.');
-                    }
-                    
-                    $loan = Loan::findOrFail($validated['loan_id']);
-                    if ($loan->member_id !== $user->id) {
-                        abort(403, 'Unauthorized access to this loan.');
-                    }
+                $transaction = $this->transactionService->processWithdrawal(
+                    $account,
+                    $validated['amount'],
+                    $validated['description'] ?? "Loan repayment",
+                    $metadata
+                );
 
-                    $metadata['transaction_type'] = Transaction::TYPE_LOAN_REPAYMENT;
-                    $metadata['loan_id'] = $loan->id;
+                // Update loan status if needed
+                $totalRepaid = $loan->transactions()
+                    ->where('type', Transaction::TYPE_LOAN_REPAYMENT)
+                    ->where('status', Transaction::STATUS_COMPLETED)
+                    ->sum('amount');
+                
+                $totalDue = $loan->calculateTotalRepayment();
+                
+                if ($totalRepaid >= $totalDue) {
+                    $loan->update(['status' => Loan::STATUS_COMPLETED]);
+                    $message = 'Loan repayment processed successfully. Loan is now fully repaid!';
+                } else {
+                    $loan->update(['status' => Loan::STATUS_ACTIVE]);
+                    $remaining = $totalDue - $totalRepaid;
+                    $message = 'Loan repayment processed successfully. Remaining balance: KES ' . number_format($remaining);
+                }
+                break;
 
-                    $transaction = $this->transactionService->processWithdrawal(
-                        $account,
-                        $validated['amount'],
-                        $validated['description'] ?? "Loan repayment",
-                        $metadata
-                    );
+            case 'monthly_contribution':
+                $metadata['payment_type'] = 'monthly_contribution';
+                $transaction = $this->transactionService->processDeposit(
+                    $account,
+                    $validated['amount'],
+                    $validated['description'] ?? 'Monthly savings contribution',
+                    $metadata
+                );
+                $message = 'Monthly contribution payment processed successfully.';
+                break;
 
-                    // Update loan status if needed
-                    $totalRepaid = $loan->transactions()
-                        ->where('type', Transaction::TYPE_LOAN_REPAYMENT)
-                        ->where('status', Transaction::STATUS_COMPLETED)
-                        ->sum('amount');
-                    
-                    $totalDue = $loan->calculateTotalRepayment();
-                    
-                    if ($totalRepaid >= $totalDue) {
-                        $loan->update(['status' => Loan::STATUS_COMPLETED]);
-                        $message = 'Loan repayment processed successfully. Loan is now fully repaid!';
-                    } else {
-                        $loan->update(['status' => Loan::STATUS_ACTIVE]);
-                        $remaining = $totalDue - $totalRepaid;
-                        $message = 'Loan repayment processed successfully. Remaining balance: KES ' . number_format($remaining);
-                    }
-                    break;
+            case 'share_capital':
+                $metadata['payment_type'] = 'share_capital';
+                $transaction = $this->transactionService->processDeposit(
+                    $account,
+                    $validated['amount'],
+                    $validated['description'] ?? 'Share capital purchase',
+                    $metadata
+                );
+                $message = 'Share capital payment processed successfully.';
+                break;
 
-                default:
-                    return back()->withInput()->with('error', 'Invalid payment type.');
-            }
+            case 'insurance_premium':
+                $metadata['payment_type'] = 'insurance_premium';
+                $transaction = $this->transactionService->processWithdrawal(
+                    $account,
+                    $validated['amount'],
+                    $validated['description'] ?? 'Insurance premium payment',
+                    $metadata
+                );
+                $message = 'Insurance premium payment processed successfully.';
+                break;
+
+            case 'loan_processing_fee':
+                if (!$validated['loan_id']) {
+                    return back()->withInput()->with('error', 'Loan ID is required for loan processing fee.');
+                }
+                
+                $loan = Loan::findOrFail($validated['loan_id']);
+                if ($loan->member_id !== $user->id) {
+                    abort(403, 'Unauthorized access to this loan.');
+                }
+
+                $metadata['payment_type'] = 'loan_processing_fee';
+                $metadata['loan_id'] = $loan->id;
+                $transaction = $this->transactionService->processWithdrawal(
+                    $account,
+                    $validated['amount'],
+                    $validated['description'] ?? 'Loan processing fee',
+                    $metadata
+                );
+                $message = 'Loan processing fee payment processed successfully.';
+                break;
+
+            case 'membership_fee':
+                $metadata['payment_type'] = 'membership_fee';
+                $transaction = $this->transactionService->processWithdrawal(
+                    $account,
+                    $validated['amount'],
+                    $validated['description'] ?? 'Annual membership fee',
+                    $metadata
+                );
+                $message = 'Membership fee payment processed successfully.';
+                break;
+
+            default:
+                return back()->withInput()->with('error', 'Invalid payment type.');
+        }
 
             return redirect()->route('payments.my')
                 ->with('success', $message);
@@ -527,7 +570,7 @@ class PaymentsController extends Controller
             'mobile_number' => 'required|string|max:15',
             'provider' => ['required', Rule::in(['mpesa', 'airtel', 'tkash'])],
             'account_id' => 'required|exists:accounts,id',
-            'payment_type' => ['required', Rule::in(['deposit', 'loan_repayment'])],
+            'payment_type' => ['required', Rule::in(['loan_repayment', 'monthly_contribution', 'share_capital', 'insurance_premium', 'loan_processing_fee', 'membership_fee'])],
             'loan_id' => 'nullable|exists:loans,id',
         ]);
 

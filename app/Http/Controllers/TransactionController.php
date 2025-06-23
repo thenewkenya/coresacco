@@ -279,12 +279,9 @@ class TransactionController extends Controller
                 ->where('balance', '>', TransactionService::MINIMUM_BALANCE)
                 ->get();
                 
-            // Members can transfer to any active account
-            $toAccounts = Account::where('status', Account::STATUS_ACTIVE)
-                ->where('id', '!=', function($query) use ($user) {
-                    $query->select('id')->from('accounts')->where('member_id', $user->id);
-                })
-                ->with('member')
+            // Members can only transfer to their own accounts
+            $toAccounts = $user->accounts()
+                ->where('status', Account::STATUS_ACTIVE)
                 ->get();
         } else {
             // Staff can transfer between any accounts
@@ -318,8 +315,13 @@ class TransactionController extends Controller
             $toAccount = Account::findOrFail($request->to_account_id);
             
             // Check permissions for members
-            if (Auth::user()->role === 'member' && $fromAccount->member_id !== Auth::id()) {
-                return back()->withErrors(['from_account_id' => 'You can only transfer from your own accounts.']);
+            if (Auth::user()->role === 'member') {
+                if ($fromAccount->member_id !== Auth::id()) {
+                    return back()->withErrors(['from_account_id' => 'You can only transfer from your own accounts.']);
+                }
+                if ($toAccount->member_id !== Auth::id()) {
+                    return back()->withErrors(['to_account_id' => 'You can only transfer to your own accounts.']);
+                }
             }
 
             $result = $this->transactionService->processTransfer(

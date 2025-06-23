@@ -100,14 +100,14 @@ $formatCurrency = function ($amount) {
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Borrowed</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $formatCurrency($this->summary['total_borrowed']) }}</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $this->formatCurrency($this->summary['total_borrowed']) }}</p>
                 </div>
                 <div class="p-3 bg-green-50 dark:bg-green-900/50 rounded-lg">
                     <flux:icon.banknotes class="w-6 h-6 text-green-600" />
                 </div>
             </div>
             <div class="mt-4">
-                <span class="text-sm text-gray-500">Remaining: {{ $formatCurrency($this->summary['total_remaining']) }}</span>
+                <span class="text-sm text-gray-500">Remaining: {{ $this->formatCurrency($this->summary['total_remaining']) }}</span>
             </div>
         </div>
 
@@ -115,7 +115,7 @@ $formatCurrency = function ($amount) {
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Monthly Payment</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $formatCurrency($this->summary['monthly_payment']) }}</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $this->formatCurrency($this->summary['monthly_payment']) }}</p>
                 </div>
                 <div class="p-3 bg-purple-50 dark:bg-purple-900/50 rounded-lg">
                     <flux:icon.calendar class="w-6 h-6 text-purple-600" />
@@ -167,7 +167,7 @@ $formatCurrency = function ($amount) {
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                                     {{ $loan->loanType->name }}
                                 </h3>
-                                <span class="px-2 py-1 text-xs font-medium rounded-full border {{ $getStatusColor($loan->status) }}">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full border {{ $this->getStatusColor($loan->status) }}">
                                     {{ ucfirst($loan->status) }}
                                 </span>
                             </div>
@@ -177,18 +177,18 @@ $formatCurrency = function ($amount) {
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                 <div>
                                     <p class="text-gray-500 dark:text-gray-400">Amount</p>
-                                    <p class="font-medium text-gray-900 dark:text-white">{{ $formatCurrency($loan->amount) }}</p>
+                                    <p class="font-medium text-gray-900 dark:text-white">{{ $this->formatCurrency($loan->amount) }}</p>
                                 </div>
                                 
                                 @if($loan->status === 'active')
                                     <div>
                                         <p class="text-gray-500 dark:text-gray-400">Remaining</p>
-                                        <p class="font-medium text-gray-900 dark:text-white">{{ $formatCurrency($loan->remaining_balance) }}</p>
+                                        <p class="font-medium text-gray-900 dark:text-white">{{ $this->formatCurrency($loan->remaining_balance) }}</p>
                                     </div>
                                     
                                     <div>
                                         <p class="text-gray-500 dark:text-gray-400">Monthly Payment</p>
-                                        <p class="font-medium text-gray-900 dark:text-white">{{ $formatCurrency($loan->monthly_payment) }}</p>
+                                        <p class="font-medium text-gray-900 dark:text-white">{{ $this->formatCurrency($loan->monthly_payment) }}</p>
                                     </div>
                                     
                                     <div>
