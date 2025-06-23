@@ -153,6 +153,21 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('schedule')->name('schedule.')->group(function () {
         Route::get('/', function () { return view('schedule.index'); })->name('index');
     });
+
+    // Account Management Routes
+    Route::prefix('accounts')->name('accounts.')->group(function () {
+        Route::get('/', [App\Http\Controllers\AccountController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\AccountController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\AccountController::class, 'store'])->name('store');
+        Route::get('/{account}', [App\Http\Controllers\AccountController::class, 'show'])->name('show');
+        Route::patch('/{account}/status', [App\Http\Controllers\AccountController::class, 'updateStatus'])
+            ->name('update-status')
+            ->middleware('can:manage,account');
+    });
+});
+
+Route::middleware(['auth', 'verified'])->prefix('savings')->name('savings.')->group(function () {
+    // ... existing code ...
 });
 
 require __DIR__.'/auth.php';

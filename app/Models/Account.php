@@ -23,6 +23,7 @@ class Account extends Model
         'account_type',
         'balance',
         'status',
+        'status_reason',
         'currency',
     ];
 
@@ -48,6 +49,7 @@ class Account extends Model
 
     // Account statuses
     const STATUS_ACTIVE = 'active';
+    const STATUS_DORMANT = 'dormant';
     const STATUS_INACTIVE = 'inactive';
     const STATUS_SUSPENDED = 'suspended';
     const STATUS_FROZEN = 'frozen';
@@ -121,6 +123,24 @@ class Account extends Model
     }
 
     /**
+     * Get account types constant array for easy access
+     */
+    public const ACCOUNT_TYPES = [
+        'savings',
+        'shares', 
+        'deposits',
+        'emergency_fund',
+        'holiday_savings',
+        'retirement',
+        'education',
+        'development',
+        'welfare',
+        'loan_guarantee',
+        'insurance',
+        'investment'
+    ];
+
+    /**
      * Get account type display names
      */
     public static function getAccountTypeNames(): array
@@ -148,5 +168,14 @@ class Account extends Model
     {
         $names = self::getAccountTypeNames();
         return $names[$this->account_type] ?? ucfirst(str_replace('_', ' ', $this->account_type));
+    }
+
+    /**
+     * Get display name for a specific account type (static method)
+     */
+    public static function getDisplayNameForType(string $type): string
+    {
+        $names = self::getAccountTypeNames();
+        return $names[$type] ?? ucfirst(str_replace('_', ' ', $type));
     }
 } 

@@ -39,6 +39,18 @@
             <!-- Financial Services -->
             <flux:navlist.group :heading="__('Financial Services')">
                 @roleany('admin', 'manager', 'staff')
+                <flux:navlist.item icon="credit-card" :href="route('accounts.index')" :current="request()->routeIs('accounts.*')" wire:navigate>
+                    {{ __('Account Management') }}
+                </flux:navlist.item>
+                @endroleany
+
+                @role('member')
+                <flux:navlist.item icon="credit-card" :href="route('accounts.index')" :current="request()->routeIs('accounts.*')" wire:navigate>
+                    {{ __('My Accounts') }}
+                </flux:navlist.item>
+                @endrole
+
+                @roleany('admin', 'manager', 'staff')
                 <flux:navlist.item icon="banknotes" :href="route('savings.index')" :current="request()->routeIs('savings.*')" wire:navigate>
                     {{ __('Savings Accounts') }}
                 </flux:navlist.item>
