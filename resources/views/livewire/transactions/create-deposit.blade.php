@@ -76,6 +76,12 @@ new #[Layout('components.layouts.app')] class extends Component {
         }
     }
 
+    public function selectAccount($accountId)
+    {
+        $this->account_id = $accountId;
+        $this->selectedAccount = Account::find($accountId);
+    }
+
     public function updatedAccountId()
     {
         if ($this->account_id) {
@@ -236,13 +242,15 @@ new #[Layout('components.layouts.app')] class extends Component {
 
                         <div class="space-y-3">
                             @foreach($accounts as $account)
-                                <label for="account_{{ $account->id }}" class="block border border-zinc-200 dark:border-zinc-600 rounded-lg p-4 cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 transition-colors {{ $account_id == $account->id ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20' : '' }}">
+                                <div 
+                                    wire:click="selectAccount({{ $account->id }})"
+                                    class="border border-zinc-200 dark:border-zinc-600 rounded-lg p-4 cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 transition-colors {{ $account_id == $account->id ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20' : '' }}">
                                     <div class="flex items-center">
-                                        <flux:radio 
-                                            id="account_{{ $account->id }}"
-                                            name="account_id" 
-                                            value="{{ $account->id }}" 
-                                            wire:model.live="account_id" />
+                                        <div class="w-4 h-4 rounded-full border-2 border-zinc-300 dark:border-zinc-600 {{ $account_id == $account->id ? 'border-blue-500 dark:border-blue-400' : '' }} flex items-center justify-center">
+                                            @if($account_id == $account->id)
+                                                <div class="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
+                                            @endif
+                                        </div>
                                         <div class="ml-3 flex-1">
                                             <div class="font-medium text-zinc-900 dark:text-zinc-100">
                                                 {{ ucfirst($account->account_type) }} Account
@@ -252,7 +260,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                             </div>
                                         </div>
                                     </div>
-                                </label>
+                                </div>
                             @endforeach
                         </div>
                     </div>
