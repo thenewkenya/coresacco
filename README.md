@@ -1,6 +1,6 @@
 # SACCO Core Management System
 
-A comprehensive Savings and Credit Cooperative (SACCO) management system built with Laravel, designed for seamless Docker deployment via Laravel Sail.
+A comprehensive Savings and Credit Cooperative (SACCO) management system.
 
 ## Table of Contents
 
@@ -8,18 +8,16 @@ A comprehensive Savings and Credit Cooperative (SACCO) management system built w
 - [Quick Start](#quick-start)
 - [Detailed Installation](#detailed-installation)
 - [Development Workflow](#development-workflow)
-- [Shell Alias](#shell-alias-highly-recommended)
+- [Shell alias (highly recommended)](#shell-alias-highly-recommended)
 - [Testing](#testing)
 - [Available services](#available-services)
 - [Custom commands](#custom-commands)
 - [Configuration](#configuration)
 - [Production Deployment](#production-deployment)
 - [Troubleshooting](#troubleshooting)
-- [Security notes](#security-notes)
+- [Security Notes](#security-notes)
 - [Documentation](#documentation)
-- [Contributing](#contributing)
 - [License](#license)
-- [Support](#support)
 
 ## Prerequisites
 
@@ -47,13 +45,10 @@ git clone https://github.com/thenewkenya/saccocore.git
 cd saccocore
 cp .env.example .env
 
-# Bootstrap dependencies
 docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php82-composer:latest composer install --ignore-platform-reqs
 
-# Configure Sail
 docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php82-composer:latest bash -c "composer require laravel/sail --dev && php artisan sail:install"
 
-# Start application
 ./vendor/bin/sail up -d
 ./vendor/bin/sail artisan key:generate
 ```
@@ -64,19 +59,13 @@ docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/htm
 
 ### Step 1: Clone and Prepare
 ```bash
-# Clone the repository
 git clone https://github.com/thenewkenya/saccocore.git
 cd saccocore
-
-# Copy environment configuration
-# Windows (PowerShell): copy .env.example .env
-# Unix/Linux/macOS:
 cp .env.example .env
 ```
 
 ### Step 2: Bootstrap Dependencies
 ```bash
-# Install PHP dependencies using Docker (no local PHP needed)
 docker run --rm \
     -u "$(id -u):$(id -g)" \
     -v "$(pwd):/var/www/html" \
@@ -85,11 +74,8 @@ docker run --rm \
     composer install --ignore-platform-reqs
 ```
 
-> Downloads all PHP packages and Laravel Sail using a temporary Docker container
-
 ### Step 3: Configure Laravel Sail
 ```bash
-# Install Sail and publish configuration (creates docker-compose.yml)
 docker run --rm \
     -u "$(id -u):$(id -g)" \
     -v "$(pwd):/var/www/html" \
@@ -98,37 +84,27 @@ docker run --rm \
     bash -c "composer require laravel/sail --dev && php artisan sail:install"
 ```
 
-> Installs Laravel Sail and sets up Docker Compose configuration for your Laravel application
-
 ### Step 4: Start the Application
 ```bash
-# Start all Docker containers in the background
 ./vendor/bin/sail up -d
-
-# Install Node.js dependencies
 ./vendor/bin/sail npm install
-
-# Generate application encryption key
 ./vendor/bin/sail artisan key:generate
 ```
 
+> ⚠️ **Note**: Always use Sail's npm inside the container. Local Node.js versions may differ.
+
 ### Step 5: Database Setup
 ```bash
-# Run database migrations (creates tables)
 ./vendor/bin/sail artisan migrate
-
-# Optional: Add sample data
 ./vendor/bin/sail artisan migrate:fresh --seed
 ```
 
 ### Step 6: Initial Configuration
 ```bash
-# Set up roles and create admin user
 ./vendor/bin/sail artisan sacco:setup-roles \
     --admin-email=admin@sacco.com \
     --admin-password=YourSecurePassword123
 
-# Build frontend assets
 ./vendor/bin/sail npm run build
 ```
 
@@ -138,51 +114,33 @@ docker run --rm \
 
 ### Starting Development
 ```bash
-# Start the application stack
 ./vendor/bin/sail up -d
-
-# Watch for file changes (keep this running in a separate terminal)
 ./vendor/bin/sail npm run dev
 ```
 
 ### Stopping the Application
 ```bash
-# Stop all containers
 ./vendor/bin/sail down
-
-# Stop and remove volumes (clears database)
 ./vendor/bin/sail down -v
 ```
 
 ### Daily Commands
 ```bash
-# View container logs
 ./vendor/bin/sail logs
-
-# Access application container shell
 ./vendor/bin/sail shell
-
-# Access PostgreSQL database
 ./vendor/bin/sail psql
-
-# Run Artisan commands
 ./vendor/bin/sail artisan [command]
-
-# Install new packages
 ./vendor/bin/sail composer install
 ./vendor/bin/sail npm install
 ```
 
-## Shell Alias (highly recommended)
+## Shell alias (highly recommended)
 
 Save time by creating a shell alias:
 
 ```bash
-# For Bash/Zsh (add to ~/.bashrc or ~/.zshrc)
+# Bash/Zsh (add to ~/.bashrc or ~/.zshrc)
 alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'
-
-# For Fish shell (add to ~/.config/fish/config.fish)
-alias sail='sh (test -f sail && echo sail || echo vendor/bin/sail)'
 ```
 
 > **Windows Users**: Use Sail commands in WSL2. PowerShell is not supported for Laravel Sail.
@@ -197,16 +155,9 @@ sail npm run dev
 ## Testing
 
 ```bash
-# Run all tests
 sail artisan test
-
-# Run tests with coverage report
 sail artisan test --coverage
-
-# Run specific test file
 sail artisan test tests/Feature/DashboardTest.php
-
-# Run tests in parallel (faster)
 sail artisan test --parallel
 ```
 
@@ -225,41 +176,28 @@ Your application includes these services:
 
 ### SACCO-Specific Commands
 ```bash
-# Set up roles and permissions
 sail artisan sacco:setup-roles --admin-email=admin@example.com --admin-password=password
-
-# Generate sample notifications (for testing)
 sail artisan sacco:generate-sample-notifications
 ```
 
 ### Laravel Commands
 ```bash
-# Database operations
-sail artisan migrate              # Run pending migrations
-sail artisan migrate:rollback    # Rollback last migration
-sail artisan migrate:fresh --seed # Fresh database with sample data
-sail artisan db:seed            # Add sample data only
-
-# Cache management
-sail artisan cache:clear         # Clear application cache
-sail artisan config:clear       # Clear configuration cache
-sail artisan view:clear         # Clear compiled views
-sail artisan route:clear        # Clear route cache
-
-# Queue management
-sail artisan queue:work          # Process background jobs
-sail artisan queue:restart      # Restart queue workers
+sail artisan migrate
+sail artisan migrate:rollback
+sail artisan migrate:fresh --seed
+sail artisan db:seed
+sail artisan cache:clear
+sail artisan config:clear
+sail artisan view:clear
+sail artisan route:clear
+sail artisan queue:work
+sail artisan queue:restart
 ```
 
 ### Frontend Commands
 ```bash
-# Development (watch for changes)
 sail npm run dev
-
-# Production build
 sail npm run build
-
-# Install new packages
 sail npm install package-name
 ```
 
@@ -306,25 +244,15 @@ Sail automatically configures a PostgreSQL database. No manual setup required!
 
 ### Container Issues
 ```bash
-# Rebuild containers from scratch
 sail build --no-cache
-
-# View container status
 sail ps
-
-# Restart all services
 sail restart
-
-# View detailed logs
 sail logs -f
 ```
 
 ### Permission Issues (Linux/WSL)
 ```bash
-# Fix file ownership
 sudo chown -R $USER:$USER .
-
-# Fix permissions
 chmod -R 755 storage bootstrap/cache
 ```
 
@@ -339,20 +267,14 @@ services:
 
 ### Database Issues
 ```bash
-# Reset database completely
 sail artisan migrate:fresh --seed
-
-# Check database connection
 sail artisan tinker
 >>> DB::connection()->getPdo();
 ```
 
 ### Performance Issues
 ```bash
-# Optimize for production
 sail artisan optimize
-
-# Clear all caches
 sail artisan optimize:clear
 ```
 
@@ -367,7 +289,7 @@ sail artisan optimize:clear
 - SSL certificates and HTTPS
 - File permissions and security
 
-## Security notes
+## Security Notes
 
 - **Change default passwords** in production
 - **Use strong passwords** for admin accounts
