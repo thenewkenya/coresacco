@@ -2,18 +2,24 @@
 
 A comprehensive Savings and Credit Cooperative (SACCO) management system built with Laravel, designed for seamless Docker deployment via Laravel Sail.
 
-## Quick Start (For Experienced Users)
+## Table of Contents
 
-```bash
-git clone https://github.com/thenewkenya/saccocore.git && cd saccocore
-cp .env.example .env
-docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php82-composer:latest composer install --ignore-platform-reqs
-./vendor/bin/sail up -d
-./vendor/bin/sail artisan key:generate && ./vendor/bin/sail artisan migrate:fresh --seed
-./vendor/bin/sail artisan sacco:setup-roles --admin-email=admin@sacco.com --admin-password=secure123
-```
-
-Your app will be available at [http://localhost](http://localhost)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Detailed Installation](#detailed-installation)
+- [Development Workflow](#development-workflow)
+- [Shell Alias](#shell-alias-highly-recommended)
+- [Testing](#testing)
+- [Available services](#available-services)
+- [Custom commands](#custom-commands)
+- [Configuration](#configuration)
+- [Production Deployment](#production-deployment)
+- [Troubleshooting](#troubleshooting)
+- [Security notes](#security-notes)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
 
 ## Prerequisites
 
@@ -22,11 +28,37 @@ Your app will be available at [http://localhost](http://localhost)
 - **Git** - For cloning the repository
 
 ### Operating System Specific
-- **Windows**: Enable WSL2 (Windows Subsystem for Linux 2)
+- **Windows**: 
+  - ⚠️ **Laravel Sail requires WSL2. You cannot use PowerShell or CMD for Docker/Laravel Sail workflows.**
+  - Install [Docker Desktop for Windows](https://docs.docker.com/desktop/windows/install/)
+  - Enable WSL2 integration in Docker Desktop settings
+  - All commands must be run in WSL2 terminal
 - **macOS**: Docker Desktop includes everything needed
 - **Linux**: Ensure Docker and Docker Compose are installed
 
-**Note**: No local PHP, Composer, MySQL, or Node.js installation required! Laravel Sail provides everything through Docker containers.
+**Note**: No local PHP, Composer, PostgreSQL, or Node.js installation required! Laravel Sail provides everything through Docker containers.
+
+## Quick Start
+
+For experienced developers who want the fastest setup:
+
+```bash
+git clone https://github.com/thenewkenya/saccocore.git
+cd saccocore
+cp .env.example .env
+
+# Bootstrap dependencies
+docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php82-composer:latest composer install --ignore-platform-reqs
+
+# Configure Sail
+docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php82-composer:latest bash -c "composer require laravel/sail --dev && php artisan sail:install"
+
+# Start application
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan key:generate
+```
+
+> Need full setup instructions? See [Detailed Installation](#detailed-installation)
 
 ## Detailed Installation
 
@@ -53,7 +85,7 @@ docker run --rm \
     composer install --ignore-platform-reqs
 ```
 
-> **What this does**: Downloads all PHP packages and Laravel Sail using a temporary Docker container
+> Downloads all PHP packages and Laravel Sail using a temporary Docker container
 
 ### Step 3: Configure Laravel Sail
 ```bash
@@ -66,7 +98,7 @@ docker run --rm \
     bash -c "composer require laravel/sail --dev && php artisan sail:install"
 ```
 
-**What this does**: Installs Laravel Sail and sets up Docker Compose configuration for your Laravel application
+> Installs Laravel Sail and sets up Docker Compose configuration for your Laravel application
 
 ### Step 4: Start the Application
 ```bash
@@ -130,8 +162,8 @@ docker run --rm \
 # Access application container shell
 ./vendor/bin/sail shell
 
-# Access MySQL database
-./vendor/bin/sail mysql
+# Access PostgreSQL database
+./vendor/bin/sail psql
 
 # Run Artisan commands
 ./vendor/bin/sail artisan [command]
@@ -141,7 +173,7 @@ docker run --rm \
 ./vendor/bin/sail npm install
 ```
 
-## Shell Alias (Highly Recommended)
+## Shell Alias (highly recommended)
 
 Save time by creating a shell alias:
 
@@ -151,10 +183,9 @@ alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'
 
 # For Fish shell (add to ~/.config/fish/config.fish)
 alias sail='sh (test -f sail && echo sail || echo vendor/bin/sail)'
-
-# For Windows PowerShell (add to profile)
-Set-Alias sail 'vendor/bin/sail'
 ```
+
+> **Windows Users**: Use Sail commands in WSL2. PowerShell is not supported for Laravel Sail.
 
 After setting up the alias, restart your terminal and use:
 ```bash
@@ -179,7 +210,7 @@ sail artisan test tests/Feature/DashboardTest.php
 sail artisan test --parallel
 ```
 
-## Available Services
+## Available services
 
 Your application includes these services:
 
@@ -187,10 +218,10 @@ Your application includes these services:
 |---------|-----|-------------|
 | **Laravel App** | [http://localhost](http://localhost) | Main SACCO application |
 | **Mailpit** | [http://localhost:8025](http://localhost:8025) | Email testing interface |
-| **MySQL** | `localhost:3306` | Database (accessible via Sail) |
+| **PostgreSQL** | `localhost:5432` | Database (accessible via Sail) |
 | **Redis** | `localhost:6379` | Caching and sessions |
 
-## Custom Commands
+## Custom commands
 
 ### SACCO-Specific Commands
 ```bash
@@ -246,9 +277,9 @@ APP_DEBUG=true
 APP_URL=http://localhost
 
 # Database (automatically configured by Sail)
-DB_CONNECTION=mysql
-DB_HOST=mysql
-DB_PORT=3306
+DB_CONNECTION=pgsql
+DB_HOST=pgsql
+DB_PORT=5432
 DB_DATABASE=saccocore
 DB_USERNAME=sail
 DB_PASSWORD=password
@@ -263,10 +294,10 @@ MAIL_PASSWORD=your-password
 
 ### Database Configuration
 
-Sail automatically configures a MySQL database. No manual setup required!
+Sail automatically configures a PostgreSQL database. No manual setup required!
 
-- **Host**: `mysql` (from within containers) or `localhost` (from host)
-- **Port**: `3306`
+- **Host**: `pgsql` (from within containers) or `localhost` (from host)
+- **Port**: `5432`
 - **Database**: `saccocore`
 - **Username**: `sail`
 - **Password**: `password`
@@ -325,7 +356,18 @@ sail artisan optimize
 sail artisan optimize:clear
 ```
 
-## Security Notes
+## Production Deployment
+
+**Coming soon**. For now, refer to Laravel's [deployment documentation](https://laravel.com/docs/deployment) and ensure the following are properly configured:
+
+- Environment variables (`.env` file)
+- Queue workers for background jobs
+- Caching configuration (Redis/Memcached)
+- Database optimization and backups
+- SSL certificates and HTTPS
+- File permissions and security
+
+## Security notes
 
 - **Change default passwords** in production
 - **Use strong passwords** for admin accounts
@@ -344,9 +386,6 @@ sail artisan optimize:clear
 
 This is a proprietary company product. All rights reserved.
 
-## Support
 
-- **Issues**: [GitHub Issues](https://github.com/thenewkenya/saccocore/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/thenewkenya/saccocore/discussions)
-- **Email**: support@saccocore.com
+> **Note**: This README is comprehensive but may be split into separate documentation files as the project grows (e.g., `docs/INSTALLATION.md`, `docs/COMMANDS.md`).
 
