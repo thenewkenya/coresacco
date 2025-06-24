@@ -18,10 +18,11 @@ A SACCO management system built with Laravel, designed to run seamlessly with Do
 
 2. **Copy environment file**
    ```bash
+   # Copy contents of .env.example to a .env file or use the command below if in a unix shell
    cp .env.example .env
    ```
 
-3. **Bootstrap with Docker (no local PHP required)**
+3. **Bootstrap with Docker**
    ```bash
    # Install PHP dependencies using Docker
    docker run --rm \
