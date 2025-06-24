@@ -355,19 +355,31 @@
             --amber-400: #fbbf24; --amber-500: #f59e0b; --amber-600: #d97706; --amber-700: #b45309;
         }
 
-        /* Account overview header styling */
-        .account-overview-card[data-color="emerald"] .account-header { background: linear-gradient(135deg, var(--emerald-500) 0%, var(--emerald-600) 100%); }
-        .account-overview-card[data-color="blue"] .account-header { background: linear-gradient(135deg, var(--blue-500) 0%, var(--blue-600) 100%); }
-        .account-overview-card[data-color="purple"] .account-header { background: linear-gradient(135deg, var(--purple-500) 0%, var(--purple-600) 100%); }
-        .account-overview-card[data-color="red"] .account-header { background: linear-gradient(135deg, var(--red-500) 0%, var(--red-600) 100%); }
-        .account-overview-card[data-color="yellow"] .account-header { background: linear-gradient(135deg, var(--yellow-500) 0%, var(--yellow-600) 100%); }
-        .account-overview-card[data-color="indigo"] .account-header { background: linear-gradient(135deg, var(--indigo-500) 0%, var(--indigo-600) 100%); }
-        .account-overview-card[data-color="cyan"] .account-header { background: linear-gradient(135deg, var(--cyan-500) 0%, var(--cyan-600) 100%); }
-        .account-overview-card[data-color="orange"] .account-header { background: linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%); }
-        .account-overview-card[data-color="pink"] .account-header { background: linear-gradient(135deg, var(--pink-500) 0%, var(--pink-600) 100%); }
-        .account-overview-card[data-color="gray"] .account-header { background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%); }
-        .account-overview-card[data-color="teal"] .account-header { background: linear-gradient(135deg, var(--teal-500) 0%, var(--teal-600) 100%); }
-        .account-overview-card[data-color="amber"] .account-header { background: linear-gradient(135deg, var(--amber-500) 0%, var(--amber-600) 100%); }
+        /* Account overview header styling - same as account creation */
+        .account-overview-card[data-color="emerald"] .account-header { background-color: rgb(209 250 229 / 0.5); color: white; }
+        .dark .account-overview-card[data-color="emerald"] .account-header { background-color: rgb(6 95 70 / 0.3); }
+        .account-overview-card[data-color="blue"] .account-header { background-color: rgb(219 234 254 / 0.5); color: white; }
+        .dark .account-overview-card[data-color="blue"] .account-header { background-color: rgb(30 58 138 / 0.3); }
+        .account-overview-card[data-color="purple"] .account-header { background-color: rgb(233 213 255 / 0.5); color: white; }
+        .dark .account-overview-card[data-color="purple"] .account-header { background-color: rgb(88 28 135 / 0.3); }
+        .account-overview-card[data-color="red"] .account-header { background-color: rgb(254 202 202 / 0.5); color: white; }
+        .dark .account-overview-card[data-color="red"] .account-header { background-color: rgb(127 29 29 / 0.3); }
+        .account-overview-card[data-color="yellow"] .account-header { background-color: rgb(254 252 232 / 0.5); color: #a16207; }
+        .dark .account-overview-card[data-color="yellow"] .account-header { background-color: rgb(133 77 14 / 0.3); color: #facc15; }
+        .account-overview-card[data-color="indigo"] .account-header { background-color: rgb(238 242 255 / 0.5); color: white; }
+        .dark .account-overview-card[data-color="indigo"] .account-header { background-color: rgb(55 48 163 / 0.3); }
+        .account-overview-card[data-color="cyan"] .account-header { background-color: rgb(236 254 255 / 0.5); color: white; }
+        .dark .account-overview-card[data-color="cyan"] .account-header { background-color: rgb(21 94 117 / 0.3); }
+        .account-overview-card[data-color="orange"] .account-header { background-color: rgb(255 247 237 / 0.5); color: white; }
+        .dark .account-overview-card[data-color="orange"] .account-header { background-color: rgb(154 52 18 / 0.3); }
+        .account-overview-card[data-color="pink"] .account-header { background-color: rgb(253 244 255 / 0.5); color: white; }
+        .dark .account-overview-card[data-color="pink"] .account-header { background-color: rgb(131 24 67 / 0.3); }
+        .account-overview-card[data-color="gray"] .account-header { background-color: rgb(248 250 252 / 0.5); color: #374151; }
+        .dark .account-overview-card[data-color="gray"] .account-header { background-color: rgb(51 65 85 / 0.3); color: #e2e8f0; }
+        .account-overview-card[data-color="teal"] .account-header { background-color: rgb(240 253 250 / 0.5); color: white; }
+        .dark .account-overview-card[data-color="teal"] .account-header { background-color: rgb(19 78 74 / 0.3); }
+        .account-overview-card[data-color="amber"] .account-header { background-color: rgb(255 251 235 / 0.5); color: #b45309; }
+        .dark .account-overview-card[data-color="amber"] .account-header { background-color: rgb(146 64 14 / 0.3); color: #fbbf24; }
 
         /* Account icon styling */
         .account-icon-large { background-color: rgba(255, 255, 255, 0.2); color: white; }
