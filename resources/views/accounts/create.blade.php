@@ -140,6 +140,42 @@
                         </div>
 
                         <!-- Member Selection -->
+                        @if(auth()->user()->hasRole('member'))
+                        <!-- Member Account Holder (Auto-populated for regular members) -->
+                        <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 mt-6">
+                            <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-6">
+                                {{ __('Account Holder') }}
+                            </h2>
+                            
+                            <div class="flex items-center space-x-4 p-4 bg-zinc-50 dark:bg-zinc-700/50 rounded-lg">
+                                <div class="flex-shrink-0">
+                                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                        <flux:icon.user class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                        {{ auth()->user()->name }}
+                                    </p>
+                                    <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                                        {{ auth()->user()->email }}
+                                    </p>
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+                                        {{ __('Account will be opened in your name') }}
+                                    </p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <flux:badge color="green" size="sm">
+                                        {{ __('You') }}
+                                    </flux:badge>
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden input for the member_id -->
+                            <input type="hidden" name="member_id" value="{{ auth()->user()->id }}">
+                        </div>
+                        @else
+                        <!-- Staff Member Selection -->
                         <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 mt-6">
                             <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-6">
                                 {{ __('Account Holder') }}
@@ -175,6 +211,7 @@
                             </flux:field>
                             @endif
                         </div>
+                        @endif
                     </div>
 
                     <!-- Account Summary -->
@@ -491,8 +528,16 @@
             const summaryContent = document.getElementById('summaryContent');
             const submitButton = document.getElementById('submitButton');
             
+            // Check if current user is a member (for auto-selection logic)
+            const isMember = @json(auth()->user()->hasRole('member'));
+            const currentUser = @json([
+                'id' => auth()->user()->id,
+                'name' => auth()->user()->name,
+                'email' => auth()->user()->email
+            ]);
+            
             let selectedAccountType = null;
-            let selectedMember = null;
+            let selectedMember = isMember ? currentUser : null;
 
             // Account type selection handler
             accountTypeInputs.forEach(input => {
@@ -513,18 +558,20 @@
                 });
             });
 
-            // Member selection handler
-            memberSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                selectedMember = selectedOption.value ? {
-                    id: selectedOption.value,
-                    name: selectedOption.dataset.name,
-                    email: selectedOption.dataset.email
-                } : null;
-                
-                updateSummary();
-                updateSubmitButton();
-            });
+            // Member selection handler (only for staff)
+            if (memberSelect) {
+                memberSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    selectedMember = selectedOption.value ? {
+                        id: selectedOption.value,
+                        name: selectedOption.dataset.name,
+                        email: selectedOption.dataset.email
+                    } : null;
+                    
+                    updateSummary();
+                    updateSubmitButton();
+                });
+            }
 
             function updateSummary() {
                 if (!selectedAccountType) return;
@@ -535,6 +582,10 @@
                     month: 'long', 
                     day: 'numeric' 
                 });
+                
+                // Get member name - either from selection or current user
+                const memberName = selectedMember ? selectedMember.name : 'Please select a member';
+                const memberEmail = selectedMember ? selectedMember.email : '';
                 
                 summaryContent.innerHTML = `
                     <div class="space-y-4">
@@ -554,9 +605,9 @@
                         <!-- Member Info -->
                         <div>
                             <dt class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Account Holder') }}</dt>
-                            <dd class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                ${selectedMember ? selectedMember.name : 'Please select a member'}
-                            </dd>
+                            <dd class="text-sm font-medium text-zinc-900 dark:text-zinc-100">${memberName}</dd>
+                            ${memberEmail ? `<dd class="text-xs text-zinc-500 dark:text-zinc-500">${memberEmail}</dd>` : ''}
+                            ${isMember ? '<dd class="text-xs text-green-600 dark:text-green-400 mt-1">{{ __("This account will be opened in your name") }}</dd>' : ''}
                         </div>
                         
                         <!-- Opening Date -->
@@ -579,7 +630,9 @@
             }
 
             function updateSubmitButton() {
-                const canSubmit = selectedAccountType && selectedMember;
+                // For members, only need account type selected since member is auto-selected
+                // For staff, need both account type and member selected
+                const canSubmit = selectedAccountType && (isMember || selectedMember);
                 
                 submitButton.disabled = !canSubmit;
                 if (canSubmit) {
@@ -590,6 +643,9 @@
                     submitButton.classList.remove('hover:shadow-lg', 'transition-all', 'duration-200');
                 }
             }
+
+            // Initialize the submit button state
+            updateSubmitButton();
         });
     </script>
 </x-layouts.app> 
