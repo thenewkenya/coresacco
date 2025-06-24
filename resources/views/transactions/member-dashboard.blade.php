@@ -26,120 +26,60 @@
         </div>
 
         <div class="px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Account Overview -->
+            <!-- Transaction Statistics -->
             <div class="mb-8">
-                <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">My Accounts</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @foreach($accounts as $account)
-                        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
-                            <div class="flex items-center justify-between mb-4">
-                                @php
-                                    $accountStyles = [
-                                        'savings' => ['bg' => 'bg-emerald-100 dark:bg-emerald-900/30', 'text' => 'text-emerald-600 dark:text-emerald-400', 'icon' => 'banknotes'],
-                                        'shares' => ['bg' => 'bg-purple-100 dark:bg-purple-900/30', 'text' => 'text-purple-600 dark:text-purple-400', 'icon' => 'chart-pie'],
-                                        'deposits' => ['bg' => 'bg-blue-100 dark:bg-blue-900/30', 'text' => 'text-blue-600 dark:text-blue-400', 'icon' => 'lock-closed'],
-                                        'emergency_fund' => ['bg' => 'bg-red-100 dark:bg-red-900/30', 'text' => 'text-red-600 dark:text-red-400', 'icon' => 'shield-exclamation'],
-                                        'holiday_savings' => ['bg' => 'bg-yellow-100 dark:bg-yellow-900/30', 'text' => 'text-yellow-600 dark:text-yellow-400', 'icon' => 'sun'],
-                                        'retirement' => ['bg' => 'bg-indigo-100 dark:bg-indigo-900/30', 'text' => 'text-indigo-600 dark:text-indigo-400', 'icon' => 'user-group'],
-                                        'education' => ['bg' => 'bg-cyan-100 dark:bg-cyan-900/30', 'text' => 'text-cyan-600 dark:text-cyan-400', 'icon' => 'academic-cap'],
-                                        'development' => ['bg' => 'bg-green-100 dark:bg-green-900/30', 'text' => 'text-green-600 dark:text-green-400', 'icon' => 'arrow-trending-up'],
-                                        'welfare' => ['bg' => 'bg-pink-100 dark:bg-pink-900/30', 'text' => 'text-pink-600 dark:text-pink-400', 'icon' => 'heart'],
-                                        'investment' => ['bg' => 'bg-orange-100 dark:bg-orange-900/30', 'text' => 'text-orange-600 dark:text-orange-400', 'icon' => 'trending-up'],
-                                        'loan_guarantee' => ['bg' => 'bg-teal-100 dark:bg-teal-900/30', 'text' => 'text-teal-600 dark:text-teal-400', 'icon' => 'document-check'],
-                                        'insurance' => ['bg' => 'bg-slate-100 dark:bg-slate-900/30', 'text' => 'text-slate-600 dark:text-slate-400', 'icon' => 'shield-check'],
-                                    ];
-                                    $style = $accountStyles[$account->account_type] ?? $accountStyles['savings'];
-                                @endphp
-                                <div class="p-3 rounded-lg {{ $style['bg'] }}">
-                                    <flux:icon.{{ $style['icon'] }} class="w-6 h-6 {{ $style['text'] }}" />
-                                </div>
-                                <span class="text-sm px-2 py-1 rounded-full 
-                                    @if($account->status === 'active') bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400
-                                    @else bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 @endif">
-                                    {{ ucfirst($account->status) }}
-                                </span>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                                <flux:icon.arrow-down class="w-6 h-6 text-emerald-600" />
                             </div>
-                            
-                            <div class="mb-4">
-                                <h3 class="font-medium text-zinc-900 dark:text-zinc-100">{{ $account->getDisplayName() }}</h3>
-                                <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ $account->account_number }}</p>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Total Deposits</p>
+                                <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KES {{ number_format($transactionStats['total_deposits'] ?? 0) }}</p>
                             </div>
-                            
-                            <div class="mb-4">
-                                <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                                    KES {{ number_format($account->balance, 2) }}
-                                </p>
-                            </div>
-
-                            @if(isset($summary[$account->id]))
-                                <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4">
-                                    <div class="grid grid-cols-2 gap-4 text-sm">
-                                        <div>
-                                            <p class="text-zinc-500 dark:text-zinc-400">30-day Deposits</p>
-                                            <p class="font-medium text-emerald-600 dark:text-emerald-400">
-                                                +{{ number_format($summary[$account->id]['total_deposits'], 0) }}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p class="text-zinc-500 dark:text-zinc-400">30-day Withdrawals</p>
-                                            <p class="font-medium text-red-600 dark:text-red-400">
-                                                -{{ number_format($summary[$account->id]['total_withdrawals'], 0) }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-700">
-                                        <p class="text-xs text-zinc-500 dark:text-zinc-400">
-                                            {{ $summary[$account->id]['total_transactions'] }} transactions in 30 days
-                                        </p>
-                                    </div>
-                                </div>
-                            @endif
                         </div>
-                    @endforeach
+                    </div>
+
+                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                                <flux:icon.arrow-up class="w-6 h-6 text-red-600" />
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Total Withdrawals</p>
+                                <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KES {{ number_format($transactionStats['total_withdrawals'] ?? 0) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                                <flux:icon.arrows-right-left class="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Transfers</p>
+                                <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($transactionStats['total_transfers'] ?? 0) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                                <flux:icon.document-text class="w-6 h-6 text-purple-600" />
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">This Month</p>
+                                <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($transactionStats['this_month_count'] ?? 0) }}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="mb-8">
-                <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Quick Actions</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <a href="{{ route('transactions.deposit.create') }}" class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700 hover:shadow-lg transition-all group">
-                        <div class="flex items-center space-x-4">
-                            <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/50 transition-colors">
-                                <flux:icon.plus class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                            </div>
-                            <div>
-                                <h3 class="font-medium text-zinc-900 dark:text-zinc-100">Make a Deposit</h3>
-                                <p class="text-sm text-zinc-500 dark:text-zinc-400">Add money to your accounts</p>
-                            </div>
-                        </div>
-                    </a>
 
-                    <a href="{{ route('transactions.withdrawal.create') }}" class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700 hover:shadow-lg transition-all group">
-                        <div class="flex items-center space-x-4">
-                            <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
-                                <flux:icon.arrow-up class="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                                <h3 class="font-medium text-zinc-900 dark:text-zinc-100">Withdraw Funds</h3>
-                                <p class="text-sm text-zinc-500 dark:text-zinc-400">Take money from your accounts</p>
-                            </div>
-                        </div>
-                    </a>
-
-                    <a href="{{ route('transactions.transfer.create') }}" class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700 hover:shadow-lg transition-all group">
-                        <div class="flex items-center space-x-4">
-                            <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
-                                <flux:icon.arrows-right-left class="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                            </div>
-                            <div>
-                                <h3 class="font-medium text-zinc-900 dark:text-zinc-100">Transfer Money</h3>
-                                <p class="text-sm text-zinc-500 dark:text-zinc-400">Send money to other accounts</p>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            </div>
 
             <!-- Recent Transactions -->
             <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">

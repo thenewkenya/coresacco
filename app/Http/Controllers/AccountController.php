@@ -23,8 +23,12 @@ class AccountController extends Controller
             // Staff see all accounts with search and filters
             $query = Account::with('member');
             
-            if (request('search')) {
-                $search = request('search');
+            // Store search parameters for view
+            $search = request('search');
+            $accountType = request('account_type');
+            $status = request('status');
+            
+            if ($search) {
                 $query->where(function($q) use ($search) {
                     $q->where('account_number', 'LIKE', "%{$search}%")
                       ->orWhereHas('member', function($memberQuery) use ($search) {
@@ -34,23 +38,34 @@ class AccountController extends Controller
                 });
             }
             
-            if (request('account_type')) {
-                $query->where('account_type', request('account_type'));
+            if ($accountType) {
+                $query->where('account_type', $accountType);
             }
             
-            if (request('status')) {
-                $query->where('status', request('status'));
+            if ($status) {
+                $query->where('status', $status);
             }
             
             $accounts = $query->latest()->paginate(15);
-            $accountTypes = collect(Account::ACCOUNT_TYPES)->map(function($type) {
-                return [
-                    'value' => $type, 
-                    'label' => Account::getDisplayNameForType($type)
-                ];
-            });
             
-            return view('accounts.index', compact('accounts', 'accountTypes'));
+            // Calculate statistics
+            $totalAccounts = Account::count();
+            $totalBalance = Account::sum('balance');
+            $activeAccounts = Account::where('status', 'active')->count();
+            $thisMonthAccounts = Account::whereMonth('created_at', now()->month)
+                                      ->whereYear('created_at', now()->year)
+                                      ->count();
+            
+            return view('accounts.index', compact(
+                'accounts', 
+                'search', 
+                'accountType', 
+                'status',
+                'totalAccounts',
+                'totalBalance', 
+                'activeAccounts',
+                'thisMonthAccounts'
+            ));
         }
     }
 

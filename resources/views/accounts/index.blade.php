@@ -1,258 +1,252 @@
-<x-layouts.app>
-    <div class="space-y-6">
+<x-layouts.app :title="__('Account Management')">
+    <div class="min-h-screen bg-zinc-50 dark:bg-zinc-900">
         <!-- Header -->
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Account Management</h1>
-                <p class="text-gray-600 dark:text-gray-400">Manage member accounts and view account details</p>
+        <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+            <div class="px-4 sm:px-6 lg:px-8 py-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                            {{ __('Account Management') }}
+                        </h1>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                            {{ __('Manage member accounts and monitor balances') }}
+                        </p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        @can('create', App\Models\Account::class)
+                            <flux:button variant="primary" icon="plus" :href="route('accounts.create')" wire:navigate>
+                                {{ __('Create Account') }}
+                            </flux:button>
+                        @endcan
+                    </div>
+                </div>
             </div>
-            <flux:button href="{{ route('accounts.create') }}" icon="plus" variant="primary">
-                Open New Account
-            </flux:button>
         </div>
 
-        <!-- Filters -->
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-            <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <flux:field>
-                        <flux:label>Search</flux:label>
+        <!-- Statistics Cards -->
+        <div class="px-4 sm:px-6 lg:px-8 py-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                            <flux:icon.credit-card class="w-6 h-6 text-blue-600" />
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Total Accounts</p>
+                            <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($totalAccounts) }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                            <flux:icon.banknotes class="w-6 h-6 text-green-600" />
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Total Balance</p>
+                            <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KES {{ number_format($totalBalance) }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                            <flux:icon.check-circle class="w-6 h-6 text-emerald-600" />
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Active Accounts</p>
+                            <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($activeAccounts) }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                            <flux:icon.calendar class="w-6 h-6 text-purple-600" />
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">This Month</p>
+                            <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{{ number_format($thisMonthAccounts) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 mb-6">
+                <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
                         <flux:input 
                             name="search" 
-                            value="{{ request('search') }}" 
-                            placeholder="Account number, member name, or email"
-                            icon="magnifying-glass"
+                            placeholder="Search accounts..." 
+                            value="{{ $search }}"
                         />
-                    </flux:field>
-                </div>
-                
-                <div>
-                    <flux:field>
-                        <flux:label>Account Type</flux:label>
-                        <flux:select name="account_type">
+                    </div>
+                    <div>
+                        <flux:select name="account_type" placeholder="All Types">
                             <option value="">All Types</option>
-                            @foreach($accountTypes as $type)
-                                <option 
-                                    value="{{ $type['value'] }}" 
-                                    {{ request('account_type') === $type['value'] ? 'selected' : '' }}
-                                >
-                                    {{ $type['label'] }}
-                                </option>
-                            @endforeach
+                            <option value="savings" {{ $accountType === 'savings' ? 'selected' : '' }}>Savings</option>
+                            <option value="shares" {{ $accountType === 'shares' ? 'selected' : '' }}>Shares</option>
+                            <option value="fixed_deposit" {{ $accountType === 'fixed_deposit' ? 'selected' : '' }}>Fixed Deposit</option>
+                            <option value="current" {{ $accountType === 'current' ? 'selected' : '' }}>Current</option>
                         </flux:select>
-                    </flux:field>
-                </div>
-                
-                <div>
-                    <flux:field>
-                        <flux:label>Status</flux:label>
-                        <flux:select name="status">
-                            <option value="">All Status</option>
-                            <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="dormant" {{ request('status') === 'dormant' ? 'selected' : '' }}>Dormant</option>
-                            <option value="frozen" {{ request('status') === 'frozen' ? 'selected' : '' }}>Frozen</option>
-                            <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>Closed</option>
+                    </div>
+                    <div>
+                        <flux:select name="status" placeholder="All Statuses">
+                            <option value="">All Statuses</option>
+                            <option value="active" {{ $status === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="inactive" {{ $status === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                            <option value="suspended" {{ $status === 'suspended' ? 'selected' : '' }}>Suspended</option>
+                            <option value="closed" {{ $status === 'closed' ? 'selected' : '' }}>Closed</option>
                         </flux:select>
-                    </flux:field>
-                </div>
-                
-                <div class="flex items-end space-x-2">
-                    <flux:button type="submit" variant="primary" class="flex-1">
-                        Filter
-                    </flux:button>
-                    <flux:button 
-                        href="{{ route('accounts.index') }}" 
-                        variant="ghost" 
-                        icon="x-mark"
-                        class="px-3"
-                    >
-                    </flux:button>
-                </div>
-            </form>
-        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <flux:button type="submit" variant="primary" class="flex-1">
+                            {{ __('Filter') }}
+                        </flux:button>
+                        <flux:button variant="outline" :href="route('accounts.index')" wire:navigate>
+                            {{ __('Clear') }}
+                        </flux:button>
+                    </div>
+                </form>
+            </div>
 
-        <!-- Accounts Table -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            @if($accounts->count() > 0)
+            <!-- Accounts Table -->
+            <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                <div class="p-6 border-b border-zinc-200 dark:border-zinc-700">
+                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                        {{ __('Account Directory') }}
+                    </h3>
+                </div>
+
+                @if($accounts->count() > 0)
                 <div class="overflow-x-auto">
                     <table class="w-full">
-                        <thead class="bg-gray-50 dark:bg-gray-700">
+                        <thead class="bg-zinc-50 dark:bg-zinc-700">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Account Details
+                                <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                    Account
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                                     Member
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                    Type
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                                     Balance
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                    Interest Rate
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                                     Status
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                                     Created
                                 </th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
+                        <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
                             @foreach($accounts as $account)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-10 w-10">
-                                                @php
-                                                    $accountColors = [
-                                                        'savings' => 'emerald', 'shares' => 'blue', 'deposits' => 'purple',
-                                                        'emergency_fund' => 'red', 'holiday_savings' => 'yellow', 'retirement' => 'indigo',
-                                                        'education' => 'cyan', 'development' => 'orange', 'welfare' => 'pink',
-                                                        'loan_guarantee' => 'gray', 'insurance' => 'teal', 'investment' => 'amber'
-                                                    ];
-                                                    $accountIcons = [
-                                                        'savings' => 'banknotes', 'shares' => 'building-library', 'deposits' => 'safe',
-                                                        'emergency_fund' => 'shield-check', 'holiday_savings' => 'sun', 'retirement' => 'home',
-                                                        'education' => 'academic-cap', 'development' => 'building-office-2', 'welfare' => 'heart',
-                                                        'loan_guarantee' => 'shield-exclamation', 'insurance' => 'shield-check', 'investment' => 'chart-bar'
-                                                    ];
-                                                    $color = $accountColors[$account->account_type] ?? 'gray';
-                                                    $icon = $accountIcons[$account->account_type] ?? 'banknotes';
-                                                @endphp
-                                                <div class="h-10 w-10 rounded-lg bg-{{ $color }}-100 dark:bg-{{ $color }}-900 flex items-center justify-center">
-                                                    <flux:icon.{{ $icon }} class="h-5 w-5 text-{{ $color }}-600 dark:text-{{ $color }}-400" />
-                                                </div>
-                                            </div>
-                                            <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {{ $account->account_number }}
-                                                </div>
-                                                <div class="text-sm text-gray-500 dark:text-gray-400">
-                                                    {{ $account->getDisplayName() }}
-                                                </div>
+                            <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700/50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                                            <flux:icon.credit-card class="w-5 h-5 text-blue-600" />
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                                {{ $account->account_number }}
                                             </div>
                                         </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div>
+                                        <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                                             {{ $account->member->name }}
                                         </div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                                        <div class="text-sm text-zinc-500 dark:text-zinc-400">
                                             {{ $account->member->email }}
                                         </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                            KES {{ number_format($account->balance, 2) }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        @php
-                                            $statusColors = [
-                                                'active' => 'green',
-                                                'dormant' => 'yellow', 
-                                                'frozen' => 'red',
-                                                'closed' => 'gray'
-                                            ];
-                                            $color = $statusColors[$account->status] ?? 'gray';
-                                        @endphp
-                                        <flux:badge color="{{ $color }}" size="sm">
-                                            {{ ucfirst($account->status) }}
-                                        </flux:badge>
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ $account->created_at->format('M j, Y') }}
-                                    </td>
-                                    <td class="px-6 py-4 text-right text-sm font-medium">
-                                        <flux:dropdown>
-                                            <flux:button icon="ellipsis-horizontal" variant="ghost" size="sm" />
-                                            <flux:menu>
-                                                <flux:menu.item icon="eye" href="{{ route('accounts.show', $account) }}">
-                                                    View Details
-                                                </flux:menu.item>
-                                                <flux:menu.item icon="currency-dollar" href="{{ route('transactions.deposit.create') }}">
-                                                    New Transaction
-                                                </flux:menu.item>
-                                                @if($account->status === 'active')
-                                                    <flux:menu.separator />
-                                                    <flux:menu.item 
-                                                        icon="pause" 
-                                                        href="#"
-                                                        x-data
-                                                        @click="$refs.statusModal{{ $account->id }}.showModal()"
-                                                    >
-                                                        Change Status
-                                                    </flux:menu.item>
-                                                @endif
-                                            </flux:menu>
-                                        </flux:dropdown>
-
-                                        <!-- Status Change Modal -->
-                                        <dialog x-ref="statusModal{{ $account->id }}" class="modal">
-                                            <div class="modal-box">
-                                                <h3 class="font-bold text-lg">Change Account Status</h3>
-                                                <p class="py-4">Change status for account {{ $account->account_number }}</p>
-                                                
-                                                <form method="POST" action="{{ route('accounts.update-status', $account) }}">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    
-                                                    <div class="space-y-4">
-                                                        <flux:field>
-                                                            <flux:label>New Status</flux:label>
-                                                                                                        <flux:select name="status" required>
-                                                <option value="active" {{ $account->status === 'active' ? 'selected' : '' }}>Active</option>
-                                                <option value="dormant" {{ $account->status === 'dormant' ? 'selected' : '' }}>Dormant</option>
-                                                <option value="frozen" {{ $account->status === 'frozen' ? 'selected' : '' }}>Frozen</option>
-                                                <option value="closed" {{ $account->status === 'closed' ? 'selected' : '' }}>Closed</option>
-                                            </flux:select>
-                                                        </flux:field>
-                                                        
-                                                        <flux:field>
-                                                            <flux:label>Reason</flux:label>
-                                                            <flux:textarea name="reason" placeholder="Reason for status change..." />
-                                                        </flux:field>
-                                                    </div>
-                                                    
-                                                    <div class="modal-action">
-                                                        <button type="button" class="btn btn-ghost" onclick="document.getElementById('statusModal{{ $account->id }}').close()">Cancel</button>
-                                                        <button type="submit" class="btn btn-primary">Update Status</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </dialog>
-                                    </td>
-                                </tr>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                        {{ ucfirst(str_replace('_', ' ', $account->account_type)) }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                        KES {{ number_format($account->balance, 2) }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-zinc-900 dark:text-zinc-100">
+                                        {{ $account->interest_rate }}% p.a.
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                        {{ $account->status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : '' }}
+                                        {{ $account->status === 'inactive' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400' : '' }}
+                                        {{ $account->status === 'suspended' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : '' }}
+                                        {{ $account->status === 'closed' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : '' }}">
+                                        {{ ucfirst($account->status) }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-zinc-900 dark:text-zinc-100">
+                                        {{ $account->created_at->format('M d, Y') }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center space-x-3">
+                                        <a href="{{ route('accounts.show', $account) }}" 
+                                           class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                                            View
+                                        </a>
+                                        @can('update', $account)
+                                            <a href="{{ route('accounts.edit', $account) }}" 
+                                               class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300">
+                                                Edit
+                                            </a>
+                                        @endcan
+                                    </div>
+                                </td>
+                            </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
 
                 <!-- Pagination -->
-                <div class="px-6 py-3 border-t border-gray-200 dark:border-gray-600">
+                @if($accounts->hasPages())
+                <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700">
                     {{ $accounts->links() }}
                 </div>
-            @else
+                @endif
+
+                @else
                 <div class="p-12 text-center">
-                    <flux:icon.folder-open class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No accounts found</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        @if(request()->hasAny(['search', 'account_type', 'status']))
-                            Try adjusting your search criteria.
-                        @else
-                            Get started by opening a new account.
-                        @endif
-                    </p>
-                    @if(!request()->hasAny(['search', 'account_type', 'status']))
-                        <div class="mt-6">
-                            <flux:button href="{{ route('accounts.create') }}" variant="primary">
-                                Open New Account
-                            </flux:button>
-                        </div>
-                    @endif
+                    <flux:icon.credit-card class="w-12 h-12 text-zinc-400 mx-auto mb-4" />
+                    <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">No accounts found</h3>
+                    <p class="text-zinc-600 dark:text-zinc-400 mb-6">Get started by creating your first account.</p>
+                    @can('create', App\Models\Account::class)
+                        <flux:button variant="primary" icon="plus" :href="route('accounts.create')" wire:navigate>
+                            {{ __('Create Account') }}
+                        </flux:button>
+                    @endcan
                 </div>
-            @endif
+                @endif
+            </div>
         </div>
     </div>
 </x-layouts.app> 
