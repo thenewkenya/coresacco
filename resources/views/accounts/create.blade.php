@@ -225,7 +225,7 @@
             --amber-400: #fbbf24; --amber-500: #f59e0b; --amber-600: #d97706; --amber-700: #b45309;
         }
 
-        /* Default icon colors */
+        /* Default icon colors - Light mode */
         .account-card[data-color="emerald"] .account-icon { background-color: rgb(209 250 229); color: var(--emerald-600); }
         .account-card[data-color="blue"] .account-icon { background-color: rgb(219 234 254); color: var(--blue-600); }
         .account-card[data-color="purple"] .account-icon { background-color: rgb(237 233 254); color: var(--purple-600); }
@@ -238,6 +238,20 @@
         .account-card[data-color="slate"] .account-icon { background-color: rgb(241 245 249); color: var(--slate-600); }
         .account-card[data-color="teal"] .account-icon { background-color: rgb(204 251 241); color: var(--teal-600); }
         .account-card[data-color="amber"] .account-icon { background-color: rgb(254 243 199); color: var(--amber-600); }
+
+        /* Default icon colors - Dark mode */
+        .dark .account-card[data-color="emerald"] .account-icon { background-color: rgb(6 78 59 / 0.4); color: var(--emerald-400); }
+        .dark .account-card[data-color="blue"] .account-icon { background-color: rgb(30 58 138 / 0.4); color: var(--blue-400); }
+        .dark .account-card[data-color="purple"] .account-icon { background-color: rgb(88 28 135 / 0.4); color: var(--purple-400); }
+        .dark .account-card[data-color="red"] .account-icon { background-color: rgb(127 29 29 / 0.4); color: var(--red-400); }
+        .dark .account-card[data-color="yellow"] .account-icon { background-color: rgb(133 77 14 / 0.4); color: var(--yellow-400); }
+        .dark .account-card[data-color="indigo"] .account-icon { background-color: rgb(55 48 163 / 0.4); color: var(--indigo-400); }
+        .dark .account-card[data-color="cyan"] .account-icon { background-color: rgb(21 94 117 / 0.4); color: var(--cyan-400); }
+        .dark .account-card[data-color="orange"] .account-icon { background-color: rgb(154 52 18 / 0.4); color: var(--orange-400); }
+        .dark .account-card[data-color="pink"] .account-icon { background-color: rgb(131 24 67 / 0.4); color: var(--pink-400); }
+        .dark .account-card[data-color="slate"] .account-icon { background-color: rgb(51 65 85 / 0.4); color: var(--slate-400); }
+        .dark .account-card[data-color="teal"] .account-icon { background-color: rgb(19 78 74 / 0.4); color: var(--teal-400); }
+        .dark .account-card[data-color="amber"] .account-icon { background-color: rgb(146 64 14 / 0.4); color: var(--amber-400); }
 
         /* Hover states - border color changes */
         .account-card[data-color="emerald"]:hover .card-container { border-color: var(--emerald-400); }
@@ -257,6 +271,9 @@
         .account-card:has(.account-radio:checked) .card-container { 
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
         }
+        .dark .account-card:has(.account-radio:checked) .card-container { 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); 
+        }
         .account-card:has(.account-radio:checked) .selected-overlay { opacity: 1; }
         .account-card:has(.account-radio:checked) .selection-indicator { opacity: 1; }
         .account-card:has(.account-radio:checked) .indicator-dot { opacity: 1; }
@@ -266,6 +283,9 @@
         .account-card[data-color="emerald"]:has(.account-radio:checked) .card-container { 
             border-color: var(--emerald-500); 
             background-color: rgb(236 253 245 / 0.5); 
+        }
+        .dark .account-card[data-color="emerald"]:has(.account-radio:checked) .card-container { 
+            background-color: rgb(6 78 59 / 0.2); 
         }
         .account-card[data-color="emerald"]:has(.account-radio:checked) .selected-overlay { 
             background-color: rgb(16 185 129 / 0.05); 
@@ -280,17 +300,26 @@
         .account-card[data-color="emerald"]:has(.account-radio:checked) .account-title { 
             color: var(--emerald-700); 
         }
+        .dark .account-card[data-color="emerald"]:has(.account-radio:checked) .account-title { 
+            color: var(--emerald-400); 
+        }
         .account-card[data-color="emerald"]:has(.account-radio:checked) .account-feature-icon { 
             color: var(--emerald-500); 
         }
         .account-card[data-color="emerald"]:has(.account-radio:checked) .account-feature-text { 
             color: var(--emerald-700); 
         }
+        .dark .account-card[data-color="emerald"]:has(.account-radio:checked) .account-feature-text { 
+            color: var(--emerald-300); 
+        }
 
         /* Blue selected state */
         .account-card[data-color="blue"]:has(.account-radio:checked) .card-container { 
             border-color: var(--blue-500); 
             background-color: rgb(239 246 255 / 0.5); 
+        }
+        .dark .account-card[data-color="blue"]:has(.account-radio:checked) .card-container { 
+            background-color: rgb(30 58 138 / 0.2); 
         }
         .account-card[data-color="blue"]:has(.account-radio:checked) .selected-overlay { 
             background-color: rgb(59 130 246 / 0.05); 
@@ -305,17 +334,26 @@
         .account-card[data-color="blue"]:has(.account-radio:checked) .account-title { 
             color: var(--blue-700); 
         }
+        .dark .account-card[data-color="blue"]:has(.account-radio:checked) .account-title { 
+            color: var(--blue-400); 
+        }
         .account-card[data-color="blue"]:has(.account-radio:checked) .account-feature-icon { 
             color: var(--blue-500); 
         }
         .account-card[data-color="blue"]:has(.account-radio:checked) .account-feature-text { 
             color: var(--blue-700); 
         }
+        .dark .account-card[data-color="blue"]:has(.account-radio:checked) .account-feature-text { 
+            color: var(--blue-300); 
+        }
 
         /* Purple selected state */
         .account-card[data-color="purple"]:has(.account-radio:checked) .card-container { 
             border-color: var(--purple-500); 
             background-color: rgb(245 243 255 / 0.5); 
+        }
+        .dark .account-card[data-color="purple"]:has(.account-radio:checked) .card-container { 
+            background-color: rgb(88 28 135 / 0.2); 
         }
         .account-card[data-color="purple"]:has(.account-radio:checked) .selected-overlay { 
             background-color: rgb(139 92 246 / 0.05); 
@@ -330,17 +368,26 @@
         .account-card[data-color="purple"]:has(.account-radio:checked) .account-title { 
             color: var(--purple-700); 
         }
+        .dark .account-card[data-color="purple"]:has(.account-radio:checked) .account-title { 
+            color: var(--purple-400); 
+        }
         .account-card[data-color="purple"]:has(.account-radio:checked) .account-feature-icon { 
             color: var(--purple-500); 
         }
         .account-card[data-color="purple"]:has(.account-radio:checked) .account-feature-text { 
             color: var(--purple-700); 
         }
+        .dark .account-card[data-color="purple"]:has(.account-radio:checked) .account-feature-text { 
+            color: var(--purple-300); 
+        }
 
         /* Red selected state */
         .account-card[data-color="red"]:has(.account-radio:checked) .card-container { 
             border-color: var(--red-500); 
             background-color: rgb(254 242 242 / 0.5); 
+        }
+        .dark .account-card[data-color="red"]:has(.account-radio:checked) .card-container { 
+            background-color: rgb(127 29 29 / 0.2); 
         }
         .account-card[data-color="red"]:has(.account-radio:checked) .selected-overlay { 
             background-color: rgb(239 68 68 / 0.05); 
@@ -355,53 +402,75 @@
         .account-card[data-color="red"]:has(.account-radio:checked) .account-title { 
             color: var(--red-700); 
         }
+        .dark .account-card[data-color="red"]:has(.account-radio:checked) .account-title { 
+            color: var(--red-400); 
+        }
         .account-card[data-color="red"]:has(.account-radio:checked) .account-feature-icon { 
             color: var(--red-500); 
         }
         .account-card[data-color="red"]:has(.account-radio:checked) .account-feature-text { 
             color: var(--red-700); 
         }
+        .dark .account-card[data-color="red"]:has(.account-radio:checked) .account-feature-text { 
+            color: var(--red-300); 
+        }
 
-        /* Add similar patterns for other colors... */
+        /* Simplified selected states for other colors with dark mode support */
         .account-card[data-color="yellow"]:has(.account-radio:checked) .card-container { border-color: var(--yellow-500); background-color: rgb(254 252 232 / 0.5); }
+        .dark .account-card[data-color="yellow"]:has(.account-radio:checked) .card-container { background-color: rgb(133 77 14 / 0.2); }
         .account-card[data-color="yellow"]:has(.account-radio:checked) .selection-indicator { border-color: var(--yellow-500); background-color: var(--yellow-500); }
         .account-card[data-color="yellow"]:has(.account-radio:checked) .account-icon { background-color: var(--yellow-500) !important; }
         .account-card[data-color="yellow"]:has(.account-radio:checked) .account-title { color: var(--yellow-700); }
+        .dark .account-card[data-color="yellow"]:has(.account-radio:checked) .account-title { color: var(--yellow-400); }
 
         .account-card[data-color="indigo"]:has(.account-radio:checked) .card-container { border-color: var(--indigo-500); background-color: rgb(238 242 255 / 0.5); }
+        .dark .account-card[data-color="indigo"]:has(.account-radio:checked) .card-container { background-color: rgb(55 48 163 / 0.2); }
         .account-card[data-color="indigo"]:has(.account-radio:checked) .selection-indicator { border-color: var(--indigo-500); background-color: var(--indigo-500); }
         .account-card[data-color="indigo"]:has(.account-radio:checked) .account-icon { background-color: var(--indigo-500) !important; }
         .account-card[data-color="indigo"]:has(.account-radio:checked) .account-title { color: var(--indigo-700); }
+        .dark .account-card[data-color="indigo"]:has(.account-radio:checked) .account-title { color: var(--indigo-400); }
 
         .account-card[data-color="cyan"]:has(.account-radio:checked) .card-container { border-color: var(--cyan-500); background-color: rgb(236 254 255 / 0.5); }
+        .dark .account-card[data-color="cyan"]:has(.account-radio:checked) .card-container { background-color: rgb(21 94 117 / 0.2); }
         .account-card[data-color="cyan"]:has(.account-radio:checked) .selection-indicator { border-color: var(--cyan-500); background-color: var(--cyan-500); }
         .account-card[data-color="cyan"]:has(.account-radio:checked) .account-icon { background-color: var(--cyan-500) !important; }
         .account-card[data-color="cyan"]:has(.account-radio:checked) .account-title { color: var(--cyan-700); }
+        .dark .account-card[data-color="cyan"]:has(.account-radio:checked) .account-title { color: var(--cyan-400); }
 
         .account-card[data-color="orange"]:has(.account-radio:checked) .card-container { border-color: var(--orange-500); background-color: rgb(255 247 237 / 0.5); }
+        .dark .account-card[data-color="orange"]:has(.account-radio:checked) .card-container { background-color: rgb(154 52 18 / 0.2); }
         .account-card[data-color="orange"]:has(.account-radio:checked) .selection-indicator { border-color: var(--orange-500); background-color: var(--orange-500); }
         .account-card[data-color="orange"]:has(.account-radio:checked) .account-icon { background-color: var(--orange-500) !important; }
         .account-card[data-color="orange"]:has(.account-radio:checked) .account-title { color: var(--orange-700); }
+        .dark .account-card[data-color="orange"]:has(.account-radio:checked) .account-title { color: var(--orange-400); }
 
         .account-card[data-color="pink"]:has(.account-radio:checked) .card-container { border-color: var(--pink-500); background-color: rgb(253 244 255 / 0.5); }
+        .dark .account-card[data-color="pink"]:has(.account-radio:checked) .card-container { background-color: rgb(131 24 67 / 0.2); }
         .account-card[data-color="pink"]:has(.account-radio:checked) .selection-indicator { border-color: var(--pink-500); background-color: var(--pink-500); }
         .account-card[data-color="pink"]:has(.account-radio:checked) .account-icon { background-color: var(--pink-500) !important; }
         .account-card[data-color="pink"]:has(.account-radio:checked) .account-title { color: var(--pink-700); }
+        .dark .account-card[data-color="pink"]:has(.account-radio:checked) .account-title { color: var(--pink-400); }
 
         .account-card[data-color="slate"]:has(.account-radio:checked) .card-container { border-color: var(--slate-500); background-color: rgb(248 250 252 / 0.5); }
+        .dark .account-card[data-color="slate"]:has(.account-radio:checked) .card-container { background-color: rgb(51 65 85 / 0.2); }
         .account-card[data-color="slate"]:has(.account-radio:checked) .selection-indicator { border-color: var(--slate-500); background-color: var(--slate-500); }
         .account-card[data-color="slate"]:has(.account-radio:checked) .account-icon { background-color: var(--slate-500) !important; }
         .account-card[data-color="slate"]:has(.account-radio:checked) .account-title { color: var(--slate-700); }
+        .dark .account-card[data-color="slate"]:has(.account-radio:checked) .account-title { color: var(--slate-400); }
 
         .account-card[data-color="teal"]:has(.account-radio:checked) .card-container { border-color: var(--teal-500); background-color: rgb(240 253 250 / 0.5); }
+        .dark .account-card[data-color="teal"]:has(.account-radio:checked) .card-container { background-color: rgb(19 78 74 / 0.2); }
         .account-card[data-color="teal"]:has(.account-radio:checked) .selection-indicator { border-color: var(--teal-500); background-color: var(--teal-500); }
         .account-card[data-color="teal"]:has(.account-radio:checked) .account-icon { background-color: var(--teal-500) !important; }
         .account-card[data-color="teal"]:has(.account-radio:checked) .account-title { color: var(--teal-700); }
+        .dark .account-card[data-color="teal"]:has(.account-radio:checked) .account-title { color: var(--teal-400); }
 
         .account-card[data-color="amber"]:has(.account-radio:checked) .card-container { border-color: var(--amber-500); background-color: rgb(255 251 235 / 0.5); }
+        .dark .account-card[data-color="amber"]:has(.account-radio:checked) .card-container { background-color: rgb(146 64 14 / 0.2); }
         .account-card[data-color="amber"]:has(.account-radio:checked) .selection-indicator { border-color: var(--amber-500); background-color: var(--amber-500); }
         .account-card[data-color="amber"]:has(.account-radio:checked) .account-icon { background-color: var(--amber-500) !important; }
         .account-card[data-color="amber"]:has(.account-radio:checked) .account-title { color: var(--amber-700); }
+        .dark .account-card[data-color="amber"]:has(.account-radio:checked) .account-title { color: var(--amber-400); }
 
         /* Animation */
         .account-card-selected {
