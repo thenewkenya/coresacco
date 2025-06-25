@@ -44,11 +44,6 @@ $summary = computed(function () {
 });
 
 // Methods
-$resetFilters = function () {
-    $this->filter = 'all';
-    $this->search = '';
-};
-
 $getStatusColor = function ($status) {
     return match($status) {
         'pending' => 'text-yellow-600 bg-yellow-50 border-yellow-200',
@@ -79,19 +74,34 @@ $formatCurrency = function ($amount) {
                 </p>
             </div>
             <div class="flex items-center space-x-2 sm:space-x-3">
-                <flux:button variant="outline" size="sm" icon="funnel" class="flex-1 sm:flex-none" wire:click="resetFilters">
-                    <span class="hidden sm:inline">Reset Filters</span>
-                    <span class="sm:hidden">Reset</span>
-                </flux:button>
-                <flux:button variant="primary" size="sm" icon="plus" :href="route('loans.create')" wire:navigate class="flex-1 sm:flex-none">
+                <flux:button variant="primary" size="sm" icon="plus" href="{{ route('loans.create') }}" wire:navigate class="flex-1 sm:flex-none">
                     <span class="hidden sm:inline">Apply for Loan</span>
                     <span class="sm:hidden">Apply</span>
                 </flux:button>
             </div>
         </div>
 
+        <!-- Flash Messages -->
+        @if (session('error'))
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <div class="flex items-center">
+                    <flux:icon.exclamation-triangle class="w-5 h-5 text-red-600 dark:text-red-400 mr-3" />
+                    <p class="text-red-700 dark:text-red-300">{{ session('error') }}</p>
+                </div>
+            </div>
+        @endif
+
+        @if (session('success'))
+            <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <div class="flex items-center">
+                    <flux:icon.check-circle class="w-5 h-5 text-green-600 dark:text-green-400 mr-3" />
+                    <p class="text-green-700 dark:text-green-300">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+
         <!-- Key Metrics Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             <!-- Total Loans -->
             <div class="bg-white dark:bg-zinc-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
                 <div class="text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">Total Loans</div>
@@ -123,19 +133,6 @@ $formatCurrency = function ($amount) {
                 </div>
                 <div class="text-xs text-zinc-500 dark:text-zinc-400">Total obligation</div>
             </div>
-
-            <!-- Quick Actions -->
-            <div class="bg-white dark:bg-zinc-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
-                <div class="text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-4">Quick Actions</div>
-                <div class="space-y-2">
-                    <flux:button variant="outline" class="w-full justify-start text-sm" icon="plus" :href="route('loans.create')" wire:navigate>
-                        Apply for Loan
-                    </flux:button>
-                    <flux:button variant="outline" class="w-full justify-start text-sm" icon="credit-card" :href="route('payments.create')" wire:navigate>
-                        Make Payment
-                    </flux:button>
-                </div>
-            </div>
         </div>
 
         <!-- Filters Section -->
@@ -161,10 +158,6 @@ $formatCurrency = function ($amount) {
                         <option value="rejected">Rejected</option>
                         <option value="defaulted">Defaulted</option>
                     </flux:select>
-                    
-                    <flux:button variant="ghost" wire:click="resetFilters">
-                        Reset
-                    </flux:button>
                 </div>
             </div>
         </div>
@@ -278,14 +271,11 @@ $formatCurrency = function ($amount) {
                             <p class="text-zinc-500 dark:text-zinc-400 mb-4">
                                 No loans match your current filters. Try adjusting your search or filter criteria.
                             </p>
-                            <flux:button variant="ghost" wire:click="resetFilters">
-                                Clear Filters
-                            </flux:button>
                         @else
                             <p class="text-zinc-500 dark:text-zinc-400 mb-4">
                                 You haven't applied for any loans yet.
                             </p>
-                            <flux:button variant="primary" :href="route('loans.create')" wire:navigate>
+                            <flux:button variant="primary" href="{{ route('loans.create') }}" wire:navigate>
                                 Apply for Your First Loan
                             </flux:button>
                         @endif
