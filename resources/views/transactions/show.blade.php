@@ -227,20 +227,23 @@
                             </div>
                             <div class="p-6 space-y-4">
                                 <!-- Approve Button -->
-                                <button type="button" 
-                                    onclick="showApproveModal({{ $transaction->id }}, '{{ strtolower($transaction->type) }}', '{{ number_format($transaction->amount, 0) }}')"
-                                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors">
-                                    <flux:icon.check class="w-5 h-5 inline mr-2" />
-                                    Approve Transaction
-                                </button>
+                                <flux:modal.trigger name="approve-transaction-modal">
+                                    <button type="button" 
+                                        onclick="setApprovalDetails({{ $transaction->id }}, '{{ strtolower($transaction->type) }}', '{{ number_format($transaction->amount, 0) }}')"
+                                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors">
+                                        <flux:icon.check class="w-5 h-5 inline mr-2" />
+                                        Approve Transaction
+                                    </button>
+                                </flux:modal.trigger>
                                 
                                 <!-- Reject Button -->
-                                <button type="button" 
-                                    onclick="showRejectModal()"
-                                    class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5">
-                                    <flux:icon.x-mark class="w-5 h-5 inline mr-2" />
-                                    Reject Transaction
-                                </button>
+                                <flux:modal.trigger name="reject-transaction-modal">
+                                    <button type="button" 
+                                        class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5">
+                                        <flux:icon.x-mark class="w-5 h-5 inline mr-2" />
+                                        Reject Transaction
+                                    </button>
+                                </flux:modal.trigger>
                             </div>
                         </div>
                     @endif
@@ -313,124 +316,99 @@
 
     <!-- Approve Modal -->
     @if($transaction->status === 'pending' && auth()->user()->can('approve', $transaction))
-        <div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
-            <div class="flex items-center justify-center min-h-screen p-4">
-                <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-xl max-w-md w-full">
-                    <div class="p-6">
-                        <div class="flex items-center mb-4">
-                            <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-full mr-4">
-                                <flux:icon.check class="w-6 h-6 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Approve Transaction</h3>
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400" id="approveTransactionDetails"></p>
-                            </div>
+        <flux:modal name="approve-transaction-modal" class="md:w-96">
+            <div class="space-y-6">
+                <div class="text-center">
+                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+                        <flux:icon.check class="h-6 w-6 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div class="mt-3">
+                        <flux:heading size="lg">Approve Transaction</flux:heading>
+                        <div class="mt-2">
+                            <flux:subheading id="approveTransactionDetails">
+                                Are you sure you want to approve this transaction?
+                            </flux:subheading>
                         </div>
-                        
-                        <form id="approveForm" method="POST">
-                            @csrf
-                            
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Approval Comments (Optional)</label>
-                                <textarea name="comments" rows="3" 
-                                    class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100" 
-                                    placeholder="Add any comments about this approval..."></textarea>
-                            </div>
-                            
-                            <div class="flex justify-end space-x-3">
-                                <button type="button" onclick="closeApproveModal()" 
-                                    class="px-4 py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200">
-                                    Cancel
-                                </button>
-                                <button type="submit" 
-                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                                    Approve Transaction
-                                </button>
-                            </div>
-                        </form>
                     </div>
                 </div>
+
+                <form id="approveForm" method="POST">
+                    @csrf
+                    
+                    <flux:field>
+                        <flux:label>Approval Comments (Optional)</flux:label>
+                        <flux:textarea name="comments" rows="3" placeholder="Add any comments about this approval..." />
+                    </flux:field>
+                    
+                    <div class="flex gap-3 mt-6">
+                        <flux:modal.close>
+                            <flux:button variant="ghost" class="flex-1">
+                                Cancel
+                            </flux:button>
+                        </flux:modal.close>
+                        <flux:button variant="primary" class="flex-1" type="submit">
+                            <flux:icon.check class="w-4 h-4 mr-2" />
+                            Approve Transaction
+                        </flux:button>
+                    </div>
+                </form>
             </div>
-        </div>
+        </flux:modal>
 
         <!-- Reject Modal -->
-        <div id="rejectModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
-            <div class="flex items-center justify-center min-h-screen p-4">
-                <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-xl max-w-md w-full">
-                    <div class="p-6">
-                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Reject Transaction</h3>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                            Please provide a reason for rejecting this transaction.
-                        </p>
-                        
-                        <form method="POST" action="{{ route('transactions.reject', $transaction) }}">
-                            @csrf
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Rejection Reason *</label>
-                                <textarea name="reason" rows="3" required 
-                                    class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100" 
-                                    placeholder="Enter reason for rejection..."></textarea>
-                            </div>
-                            
-                            <div class="flex justify-end space-x-3">
-                                <button type="button" onclick="closeRejectModal()" 
-                                    class="px-4 py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200">
-                                    Cancel
-                                </button>
-                                <button type="submit" 
-                                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                                    Reject Transaction
-                                </button>
-                            </div>
-                        </form>
+        <flux:modal name="reject-transaction-modal" class="md:w-96">
+            <div class="space-y-6">
+                <div class="text-center">
+                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+                        <flux:icon.x-mark class="h-6 w-6 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div class="mt-3">
+                        <flux:heading size="lg">Reject Transaction</flux:heading>
+                        <div class="mt-2">
+                            <flux:subheading>
+                                Please provide a reason for rejecting this transaction.
+                            </flux:subheading>
+                        </div>
                     </div>
                 </div>
+                
+                <form method="POST" action="{{ route('transactions.reject', $transaction) }}">
+                    @csrf
+                    
+                    <flux:field>
+                        <flux:label>Rejection Reason <span class="text-red-500">*</span></flux:label>
+                        <flux:textarea name="reason" rows="3" required placeholder="Enter reason for rejection..." />
+                    </flux:field>
+                    
+                    <div class="flex gap-3 mt-6">
+                        <flux:modal.close>
+                            <flux:button variant="ghost" class="flex-1">
+                                Cancel
+                            </flux:button>
+                        </flux:modal.close>
+                        <flux:button variant="danger" class="flex-1" type="submit">
+                            <flux:icon.x-mark class="w-4 h-4 mr-2" />
+                            Reject Transaction
+                        </flux:button>
+                    </div>
+                </form>
             </div>
-        </div>
+        </flux:modal>
     @endif
 
     <script>
-        function showApproveModal(transactionId, transactionType, amount) {
+        function setApprovalDetails(transactionId, transactionType, amount) {
             const form = document.getElementById('approveForm');
-            const modal = document.getElementById('approveModal');
             const details = document.getElementById('approveTransactionDetails');
             
             form.action = `/transactions/approve/${transactionId}`;
             details.textContent = `Approve this ${transactionType} of KES ${amount}`;
             
             // Clear previous comments
-            form.querySelector('textarea[name="comments"]').value = '';
-            
-            // Show modal
-            modal.classList.remove('hidden');
-        }
-
-        function closeApproveModal() {
-            document.getElementById('approveModal').classList.add('hidden');
-        }
-
-        function showRejectModal() {
-            document.getElementById('rejectModal').classList.remove('hidden');
-        }
-
-        function closeRejectModal() {
-            document.getElementById('rejectModal').classList.add('hidden');
-        }
-
-        // Close modal when clicking outside
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('fixed') && e.target.classList.contains('inset-0')) {
-                closeApproveModal();
-                closeRejectModal();
+            const commentsField = form.querySelector('textarea[name="comments"]');
+            if (commentsField) {
+                commentsField.value = '';
             }
-        });
-
-        // Close modals with Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeApproveModal();
-                closeRejectModal();
-            }
-        });
+        }
     </script>
 </x-layouts.app> 

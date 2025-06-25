@@ -544,23 +544,25 @@
     </flux:modal>
     @endrole
 
-    <!-- Simple Custom Modal (Fallback) -->
+    <!-- Simple Reverse Payment Modal (Fallback) -->
     @role('admin')
-    <div id="simple-reverse-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" onclick="hideSimpleModal(event)">
-        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md mx-4" onclick="event.stopPropagation()">
-            <div class="text-center mb-6">
-                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
-                    <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 6.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                    </svg>
+    <flux:modal name="simple-reverse-payment-modal" class="md:w-96">
+        <div class="space-y-6">
+            <div class="text-center">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+                    <flux:icon.exclamation-triangle class="h-6 w-6 text-red-600 dark:text-red-400" />
                 </div>
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ __('Reverse Payment') }}</h3>
-                <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-2">
-                    {{ __('Are you sure you want to reverse this payment? This action cannot be undone.') }}
-                </p>
+                <div class="mt-3">
+                    <flux:heading size="lg">{{ __('Reverse Payment') }}</flux:heading>
+                    <div class="mt-2">
+                        <flux:subheading>
+                            {{ __('Are you sure you want to reverse this payment? This action cannot be undone.') }}
+                        </flux:subheading>
+                    </div>
+                </div>
             </div>
 
-            <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4 mb-6">
+            <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between">
                         <span class="text-zinc-600 dark:text-zinc-400">{{ __('Transaction:') }}</span>
@@ -573,66 +575,49 @@
                 </div>
             </div>
 
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    {{ __('Reversal Reason (Optional)') }}
-                </label>
-                <textarea 
-                    id="simple-reversal-reason"
-                    class="w-full p-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
-                    placeholder="{{ __('Enter reason for reversal...') }}"
-                    rows="3"></textarea>
-            </div>
+            <flux:field>
+                <flux:label>{{ __('Reversal Reason (Optional)') }}</flux:label>
+                <flux:textarea id="simple-reversal-reason" rows="3" placeholder="{{ __('Enter reason for reversal...') }}" />
+            </flux:field>
 
             <div class="flex gap-3">
-                <button onclick="hideSimpleModal()" class="flex-1 px-4 py-2 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600">
-                    {{ __('Cancel') }}
-                </button>
-                <button onclick="submitSimpleReversalForm()" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                <flux:modal.close>
+                    <flux:button variant="ghost" class="flex-1">
+                        {{ __('Cancel') }}
+                    </flux:button>
+                </flux:modal.close>
+                <flux:button variant="danger" class="flex-1" x-on:click="submitSimpleReversalForm()">
+                    <flux:icon.arrow-uturn-left class="w-4 h-4 mr-2" />
                     {{ __('Reverse Payment') }}
-                </button>
-                         </div>
-         </div>
-     </div>
-     @endrole
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+    @endrole
 
     <script>
         function showReversalModal() {
             console.log('showReversalModal called');
             
-            // Try to show Flux modal first
+            // Try to show main Flux modal first
             document.dispatchEvent(new CustomEvent('open-modal', { 
                 detail: 'reverse-payment-modal',
                 bubbles: true
             }));
             
-            // Fallback to simple modal after a short delay
+            // Fallback to simple Flux modal
             setTimeout(() => {
                 const fluxModal = document.querySelector('[name="reverse-payment-modal"]');
                 const isFluxModalVisible = fluxModal && !fluxModal.classList.contains('hidden') && fluxModal.style.display !== 'none';
                 
                 if (!isFluxModalVisible) {
-                    console.log('Flux modal not visible, showing simple modal');
-                    showSimpleModal();
+                    console.log('Main modal not visible, showing fallback modal');
+                    document.dispatchEvent(new CustomEvent('open-modal', { 
+                        detail: 'simple-reverse-payment-modal',
+                        bubbles: true
+                    }));
                 }
             }, 100);
-        }
-
-        function showSimpleModal() {
-            const modal = document.getElementById('simple-reverse-modal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            }
-        }
-
-        function hideSimpleModal(event) {
-            if (event && event.target !== event.currentTarget) return;
-            const modal = document.getElementById('simple-reverse-modal');
-            if (modal) {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }
         }
 
         function submitSimpleReversalForm() {
@@ -648,8 +633,8 @@
                 form.appendChild(reasonInput);
             }
             
-            // Hide modal and submit
-            hideSimpleModal();
+            // Close modal and submit
+            window.dispatchEvent(new CustomEvent('close-modal', { detail: 'simple-reverse-payment-modal' }));
             form.submit();
         }
 

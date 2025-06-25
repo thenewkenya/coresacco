@@ -243,9 +243,11 @@
                                                     <flux:button variant="outline" size="sm" onclick="event.stopPropagation(); openTransactionDetails({{ $transaction->id }})">
                                                         {{ __('Review') }}
                                                     </flux:button>
-                                                    <flux:button variant="primary" size="sm" onclick="event.stopPropagation(); showProcessModal({{ $transaction->id }}, '{{ strtolower($transaction->type) }}', '{{ number_format($transaction->amount, 0) }}')">
-                                                        {{ __('Process') }}
-                                                    </flux:button>
+                                                    <flux:modal.trigger name="process-transaction-modal">
+                                                        <flux:button variant="primary" size="sm" onclick="event.stopPropagation(); setProcessDetails({{ $transaction->id }}, '{{ strtolower($transaction->type) }}', '{{ number_format($transaction->amount, 0) }}')">
+                                                            {{ __('Process') }}
+                                                        </flux:button>
+                                                    </flux:modal.trigger>
                                                 @endif
                                             </div>
                                         </div>
@@ -275,46 +277,45 @@
         </div>
     </div>
 
-    <!-- Approve Modal -->
-    <div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-xl max-w-md w-full">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-full mr-4">
-                            <flux:icon.check class="w-6 h-6 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Process Transaction</h3>
-                            <p class="text-sm text-zinc-600 dark:text-zinc-400" id="approveTransactionDetails"></p>
-                        </div>
+    <!-- Process Transaction Modal -->
+    <flux:modal name="process-transaction-modal" class="md:w-96">
+        <div class="space-y-6">
+            <div class="text-center">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+                    <flux:icon.check class="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+                <div class="mt-3">
+                    <flux:heading size="lg">Process Transaction</flux:heading>
+                    <div class="mt-2">
+                        <flux:subheading id="approveTransactionDetails">
+                            Are you sure you want to process this transaction?
+                        </flux:subheading>
                     </div>
-                    
-                    <form id="approveForm" method="POST">
-                        @csrf
-                        
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Approval Comments (Optional)</label>
-                            <textarea name="comments" rows="3" 
-                                class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100" 
-                                placeholder="Add any comments about this approval..."></textarea>
-                        </div>
-                        
-                        <div class="flex justify-end space-x-3">
-                            <button type="button" onclick="closeApproveModal()" 
-                                class="px-4 py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200">
-                                Cancel
-                            </button>
-                            <button type="submit" 
-                                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                                Process Transaction
-                            </button>
-                        </div>
-                    </form>
                 </div>
             </div>
+            
+            <form id="approveForm" method="POST">
+                @csrf
+                
+                <flux:field>
+                    <flux:label>Approval Comments (Optional)</flux:label>
+                    <flux:textarea name="comments" rows="3" placeholder="Add any comments about this approval..." />
+                </flux:field>
+                
+                <div class="flex gap-3 mt-6">
+                    <flux:modal.close>
+                        <flux:button variant="ghost" class="flex-1">
+                            Cancel
+                        </flux:button>
+                    </flux:modal.close>
+                    <flux:button variant="primary" class="flex-1" type="submit">
+                        <flux:icon.check class="w-4 h-4 mr-2" />
+                        Process Transaction
+                    </flux:button>
+                </div>
+            </form>
         </div>
-    </div>
+    </flux:modal>
 
 
 
@@ -326,37 +327,18 @@
         }
 
         // Individual transaction actions
-        function showProcessModal(transactionId, transactionType, amount) {
+        function setProcessDetails(transactionId, transactionType, amount) {
             const form = document.getElementById('approveForm');
-            const modal = document.getElementById('approveModal');
             const details = document.getElementById('approveTransactionDetails');
             
             form.action = `/transactions/approve/${transactionId}`;
             details.textContent = `Process this ${transactionType} of KES ${amount}`;
             
             // Clear previous comments
-            form.querySelector('textarea[name="comments"]').value = '';
-            
-            // Show modal
-            modal.classList.remove('hidden');
-        }
-
-        function closeApproveModal() {
-            document.getElementById('approveModal').classList.add('hidden');
-        }
-
-        // Close modals when clicking outside
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('fixed') && e.target.classList.contains('inset-0')) {
-                closeApproveModal();
+            const commentsField = form.querySelector('textarea[name="comments"]');
+            if (commentsField) {
+                commentsField.value = '';
             }
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeApproveModal();
-            }
-        });
+        }
     </script>
 </x-layouts.app> 
