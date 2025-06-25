@@ -107,6 +107,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('budget')->name('budget.')->group(function () {
         Route::get('/', [App\Http\Controllers\BudgetController::class, 'index'])->name('index');
         Volt::route('/create', 'budget.create-budget')->name('create');
+        Route::get('/smart-suggestions', [App\Http\Controllers\BudgetController::class, 'getSmartSuggestions'])->name('smart-suggestions');
         Route::get('/{budget}', [App\Http\Controllers\BudgetController::class, 'show'])->name('show');
         Route::post('/{budget}/expenses', [App\Http\Controllers\BudgetController::class, 'recordExpense'])->name('expenses.store');
         Route::delete('/{budget}/expenses/{expense}', [App\Http\Controllers\BudgetController::class, 'deleteExpense'])->name('expenses.destroy');
