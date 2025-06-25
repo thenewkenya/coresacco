@@ -126,7 +126,11 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/', function () { return view('reports.index'); })->name('index');
+        Route::get('/', [App\Http\Controllers\ReportsController::class, 'index'])->name('index');
+        Route::get('/financial', [App\Http\Controllers\ReportsController::class, 'financial'])->name('financial');
+        Route::get('/members', [App\Http\Controllers\ReportsController::class, 'members'])->name('members');
+        Route::get('/loans', [App\Http\Controllers\ReportsController::class, 'loans'])->name('loans');
+        Route::get('/operational', [App\Http\Controllers\ReportsController::class, 'operational'])->name('operational');
     });
 
     Route::prefix('branches')->name('branches.')->group(function () {
