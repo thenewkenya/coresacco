@@ -129,29 +129,36 @@
 
                     <!-- Category List -->
                     <div class="space-y-4">
-                        @foreach($currentBudget->expense_summary as $category)
-                        <div class="bg-zinc-50 dark:bg-zinc-700/50 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <div>
-                                    <h4 class="font-medium text-zinc-900 dark:text-zinc-100">{{ $category['name'] }}</h4>
-                                    <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ number_format($category['progress'], 1) }}%</p>
+                        @if($currentBudget && $currentBudget->expense_summary)
+                            @foreach($currentBudget->expense_summary as $category)
+                            <div class="bg-zinc-50 dark:bg-zinc-700/50 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div>
+                                        <h4 class="font-medium text-zinc-900 dark:text-zinc-100">{{ $category['name'] }}</h4>
+                                        <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ number_format($category['progress'], 1) }}%</p>
+                                    </div>
+                                    <p class="text-right">
+                                        <span class="block text-zinc-900 dark:text-zinc-100 font-medium">
+                                            KES {{ number_format($category['actual']) }}
+                                        </span>
+                                        <span class="block text-sm text-zinc-600 dark:text-zinc-400">
+                                            / {{ number_format($category['planned']) }}
+                                        </span>
+                                    </p>
                                 </div>
-                                <p class="text-right">
-                                    <span class="block text-zinc-900 dark:text-zinc-100 font-medium">
-                                        KES {{ number_format($category['actual']) }}
-                                    </span>
-                                    <span class="block text-sm text-zinc-600 dark:text-zinc-400">
-                                        / {{ number_format($category['planned']) }}
-                                    </span>
-                                </p>
-                            </div>
-                            <div class="w-full bg-zinc-200 dark:bg-zinc-600 rounded-full h-1">
-                                <div class="bg-blue-600 dark:bg-blue-500 h-1 rounded-full" 
-                                    style="width: {{ min(100, $category['progress']) }}%">
+                                <div class="w-full bg-zinc-200 dark:bg-zinc-600 rounded-full h-1">
+                                    <div class="bg-blue-600 dark:bg-blue-500 h-1 rounded-full" 
+                                        style="width: {{ min(100, $category['progress']) }}%">
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        @endforeach
+                            @endforeach
+                        @else
+                            <div class="text-center py-8">
+                                <flux:icon.chart-pie class="mx-auto h-12 w-12 text-zinc-400 mb-4" />
+                                <p class="text-zinc-600 dark:text-zinc-400">{{ __('No expense categories set up yet.') }}</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -182,6 +189,7 @@
             const ctx = document.getElementById('expenseDistribution');
             if (!ctx) return;
 
+            @if($currentBudget && $currentBudget->expense_summary)
             const categories = @json($currentBudget->expense_summary);
             
             new Chart(ctx, {
@@ -211,6 +219,18 @@
                     }
                 }
             });
+            @else
+            // Show empty state message in chart area
+            const chartContainer = ctx.parentElement;
+            chartContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-64 text-zinc-400">
+                    <svg class="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <p class="text-sm">{{ __('No expense data available') }}</p>
+                </div>
+            `;
+            @endif
         });
     </script>
     @endpush
