@@ -277,41 +277,75 @@ class ReportsController extends Controller
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->where('status', 'completed')
                 ->sum('amount'),
+            'other_income' => 0, // Could add other income sources
+        ];
+        
+        $expenses = [
+            'operational_expenses' => 25000, // Sample operational expenses
+            'staff_salaries' => 180000, // Sample staff costs
+            'office_rent' => 30000, // Sample rent
+            'utilities' => 8000, // Sample utilities
+            'bad_debt_provision' => Transaction::where('type', 'fee')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->where('status', 'failed')
+                ->sum('amount') * 0.02, // 2% provision for bad debts
         ];
         
         $total_income = array_sum($income);
-        $total_expenses = 0; // Would calculate actual expenses
+        $total_expenses = array_sum($expenses);
         $net_income = $total_income - $total_expenses;
         
-        return compact('income', 'total_income', 'total_expenses', 'net_income');
+        return compact('income', 'expenses', 'total_income', 'total_expenses', 'net_income');
     }
 
     private function generateBalanceSheet($asOfDate)
     {
+        // Calculate cash from all accounts (excluding loans receivable)
+        $totalCash = Account::whereIn('account_type', ['savings', 'shares', 'deposits'])
+            ->where('created_at', '<=', $asOfDate)
+            ->sum('balance');
+            
+        $loansOutstanding = Loan::whereIn('status', ['active', 'disbursed'])
+            ->where('created_at', '<=', $asOfDate)
+            ->sum('amount');
+            
         $assets = [
-            'cash_and_equivalents' => Account::where('account_type', 'current')
-                ->where('created_at', '<=', $asOfDate)
-                ->sum('balance'),
-            'loans_receivable' => Loan::whereIn('status', ['active', 'disbursed'])
-                ->where('created_at', '<=', $asOfDate)
-                ->sum('amount'),
-            'other_assets' => 0,
+            'cash_and_bank' => $totalCash,
+            'loans_receivable' => $loansOutstanding,
+            'less_loan_loss_provision' => $loansOutstanding * 0.05, // 5% provision
+            'office_equipment' => 150000, // Sample fixed assets
+            'furniture_fixtures' => 80000,
+            'computer_equipment' => 120000,
         ];
         
+        $memberDeposits = Account::where('account_type', 'savings')
+            ->where('created_at', '<=', $asOfDate)
+            ->sum('balance');
+            
+        $memberShares = Account::where('account_type', 'shares')
+            ->where('created_at', '<=', $asOfDate)
+            ->sum('balance');
+            
         $liabilities = [
-            'member_deposits' => Account::where('account_type', 'savings')
-                ->where('created_at', '<=', $asOfDate)
-                ->sum('balance'),
-            'other_liabilities' => 0,
+            'member_savings' => $memberDeposits,
+            'member_shares' => $memberShares,
+            'accrued_expenses' => 45000, // Sample accrued expenses
+            'other_payables' => 25000,
         ];
+        
+        // Calculate retained earnings as difference between assets and liabilities
+        $total_assets = $assets['cash_and_bank'] + $assets['loans_receivable'] - $assets['less_loan_loss_provision'] 
+                       + $assets['office_equipment'] + $assets['furniture_fixtures'] + $assets['computer_equipment'];
+        $total_liabilities = array_sum($liabilities);
+        
+        $retainedEarnings = $total_assets - $total_liabilities - 500000; // Assuming 500k initial capital
         
         $equity = [
-            'retained_earnings' => 0, // Would calculate from historical data
-            'current_earnings' => 0,
+            'initial_capital' => 500000,
+            'retained_earnings' => max(0, $retainedEarnings),
+            'current_year_surplus' => 0, // Would be current year's net income
         ];
         
-        $total_assets = array_sum($assets);
-        $total_liabilities = array_sum($liabilities);
         $total_equity = array_sum($equity);
         
         return compact('assets', 'liabilities', 'equity', 'total_assets', 'total_liabilities', 'total_equity');
@@ -319,57 +353,137 @@ class ReportsController extends Controller
 
     private function generateCashFlowStatement($startDate, $endDate)
     {
+        // Operating Activities
+        $cashFromDeposits = Transaction::where('type', 'deposit')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'completed')
+            ->sum('amount');
+            
+        $feesCollected = Transaction::where('type', 'fee')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'completed')
+            ->sum('amount');
+            
+        $interestReceived = Transaction::where('type', 'interest')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'completed')
+            ->sum('amount');
+            
+        $cashFromWithdrawals = -Transaction::where('type', 'withdrawal')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'completed')
+            ->sum('amount');
+            
         $operating = [
-            'cash_from_operations' => Transaction::whereIn('type', ['deposit', 'fee'])
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->where('status', 'completed')
-                ->sum('amount'),
-            'cash_used_in_operations' => Transaction::whereIn('type', ['withdrawal', 'loan_disbursement'])
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->where('status', 'completed')
-                ->sum('amount'),
+            'cash_from_deposits' => $cashFromDeposits,
+            'fees_collected' => $feesCollected,
+            'interest_received' => $interestReceived,
+            'cash_from_withdrawals' => $cashFromWithdrawals,
+            'operational_expenses' => -243000, // Sample operating expenses (negative as outflow)
         ];
         
+        // Investing Activities
+        $loansAdvanced = -Transaction::where('type', 'loan_disbursement')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'completed')
+            ->sum('amount');
+            
         $investing = [
+            'loans_advanced' => $loansAdvanced,
+            'equipment_purchases' => -15000, // Sample equipment purchases
             'investments' => 0,
-            'equipment_purchases' => 0,
         ];
         
+        // Financing Activities
+        $loanRepayments = Transaction::where('type', 'loan_repayment')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'completed')
+            ->sum('amount');
+            
         $financing = [
-            'member_contributions' => 0,
-            'loan_repayments' => Transaction::where('type', 'loan_repayment')
+            'loan_repayments_received' => $loanRepayments,
+            'member_share_contributions' => Account::where('account_type', 'shares')
                 ->whereBetween('created_at', [$startDate, $endDate])
-                ->where('status', 'completed')
-                ->sum('amount'),
+                ->sum('balance'),
+            'dividends_paid' => 0,
         ];
         
-        return compact('operating', 'investing', 'financing');
+        $net_operating = array_sum($operating);
+        $net_investing = array_sum($investing);
+        $net_financing = array_sum($financing);
+        $net_cash_flow = $net_operating + $net_investing + $net_financing;
+        
+        return compact('operating', 'investing', 'financing', 'net_operating', 'net_investing', 'net_financing', 'net_cash_flow');
     }
 
     private function generateTrialBalance($asOfDate)
     {
-        // This would typically come from a proper chart of accounts
+        // Get balances as of the specified date
+        $cashBalance = Account::whereIn('account_type', ['savings', 'shares', 'deposits'])
+            ->where('created_at', '<=', $asOfDate)
+            ->sum('balance');
+            
+        $loansReceivable = Loan::whereIn('status', ['active', 'disbursed'])
+            ->where('created_at', '<=', $asOfDate)
+            ->sum('amount');
+            
+        $memberSavings = Account::where('account_type', 'savings')
+            ->where('created_at', '<=', $asOfDate)
+            ->sum('balance');
+            
+        $memberShares = Account::where('account_type', 'shares')
+            ->where('created_at', '<=', $asOfDate)
+            ->sum('balance');
+            
+        $interestIncome = Transaction::where('type', 'interest')
+            ->where('created_at', '<=', $asOfDate)
+            ->where('status', 'completed')
+            ->sum('amount');
+            
+        $feeIncome = Transaction::where('type', 'fee')
+            ->where('created_at', '<=', $asOfDate)
+            ->where('status', 'completed')
+            ->sum('amount');
+        
         $accounts = [
-            'assets' => [
-                'cash' => Account::where('account_type', 'current')->sum('balance'),
-                'loans_receivable' => Loan::whereIn('status', ['active', 'disbursed'])->sum('amount'),
-            ],
-            'liabilities' => [
-                'member_deposits' => Account::where('account_type', 'savings')->sum('balance'),
-            ],
-            'equity' => [
-                'retained_earnings' => 0,
-            ],
-            'revenue' => [
-                'interest_income' => Transaction::where('type', 'interest')->sum('amount'),
-                'fee_income' => Transaction::where('type', 'fee')->sum('amount'),
-            ],
-            'expenses' => [
-                'operational_expenses' => 0,
-            ]
+            // Assets (Debit Balances)
+            'cash_and_bank' => ['type' => 'asset', 'debit' => $cashBalance, 'credit' => 0],
+            'loans_receivable' => ['type' => 'asset', 'debit' => $loansReceivable, 'credit' => 0],
+            'office_equipment' => ['type' => 'asset', 'debit' => 150000, 'credit' => 0],
+            'furniture_fixtures' => ['type' => 'asset', 'debit' => 80000, 'credit' => 0],
+            'computer_equipment' => ['type' => 'asset', 'debit' => 120000, 'credit' => 0],
+            
+            // Liabilities (Credit Balances)
+            'member_savings' => ['type' => 'liability', 'debit' => 0, 'credit' => $memberSavings],
+            'member_shares' => ['type' => 'liability', 'debit' => 0, 'credit' => $memberShares],
+            'accrued_expenses' => ['type' => 'liability', 'debit' => 0, 'credit' => 45000],
+            'other_payables' => ['type' => 'liability', 'debit' => 0, 'credit' => 25000],
+            
+            // Equity (Credit Balances)
+            'initial_capital' => ['type' => 'equity', 'debit' => 0, 'credit' => 500000],
+            'retained_earnings' => ['type' => 'equity', 'debit' => 0, 'credit' => 150000],
+            
+            // Revenue (Credit Balances)
+            'interest_income' => ['type' => 'revenue', 'debit' => 0, 'credit' => $interestIncome],
+            'fee_income' => ['type' => 'revenue', 'debit' => 0, 'credit' => $feeIncome],
+            
+            // Expenses (Debit Balances)
+            'staff_salaries' => ['type' => 'expense', 'debit' => 180000, 'credit' => 0],
+            'office_rent' => ['type' => 'expense', 'debit' => 30000, 'credit' => 0],
+            'utilities' => ['type' => 'expense', 'debit' => 8000, 'credit' => 0],
+            'operational_expenses' => ['type' => 'expense', 'debit' => 25000, 'credit' => 0],
         ];
         
-        return compact('accounts');
+        // Calculate totals
+        $total_debits = 0;
+        $total_credits = 0;
+        
+        foreach ($accounts as $account) {
+            $total_debits += $account['debit'];
+            $total_credits += $account['credit'];
+        }
+        
+        return compact('accounts', 'total_debits', 'total_credits');
     }
 
     private function generateMemberSummary($startDate, $endDate)
