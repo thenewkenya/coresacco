@@ -121,7 +121,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Management & Analytics
     Route::prefix('analytics')->name('analytics.')->group(function () {
-        Route::get('/', function () { return view('analytics.index'); })->name('index');
+        Route::get('/', [App\Http\Controllers\AnalyticsController::class, 'index'])->name('index');
+        Route::get('/export', [App\Http\Controllers\AnalyticsController::class, 'export'])->name('export');
     });
 
     Route::prefix('reports')->name('reports.')->group(function () {

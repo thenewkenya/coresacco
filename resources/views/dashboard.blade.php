@@ -102,6 +102,19 @@ $branchPerformance = Branch::all()->map(function($branch) {
                 </div>
             </div>
 
+            <!-- Analytics Quick Overview -->
+            @if(in_array(auth()->user()->role, ['admin', 'manager']))
+            <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ __('Quick Analytics') }}</h2>
+                    <flux:button variant="outline" size="sm" :href="route('analytics.index')" wire:navigate>
+                        {{ __('View Full Dashboard') }}
+                    </flux:button>
+                </div>
+                <livewire:analytics.quick-stats />
+            </div>
+            @endif
+
             <!-- Admin/Manager Dashboard -->
             @if(in_array(auth()->user()->role, ['admin', 'manager']))
             
