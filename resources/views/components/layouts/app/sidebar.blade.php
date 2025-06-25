@@ -128,11 +128,8 @@
                 <flux:navlist.item icon="arrows-right-left" :href="route('transactions.index')" :current="request()->routeIs('transactions.*')" wire:navigate>
                     {{ __('My Transactions') }}
                 </flux:navlist.item>
-                <flux:navlist.item icon="credit-card" :href="route('accounts.index')" :current="request()->routeIs('accounts.*')" wire:navigate>
+                <flux:navlist.item icon="credit-card" :href="route('accounts.index')" :current="request()->routeIs('accounts.*') || request()->routeIs('savings.*')" wire:navigate>
                     {{ __('My Accounts') }}
-                </flux:navlist.item>
-                <flux:navlist.item icon="banknotes" :href="route('savings.my')" :current="request()->routeIs('savings.*')" wire:navigate>
-                    {{ __('My Savings') }}
                 </flux:navlist.item>
                 <flux:navlist.item icon="credit-card" :href="route('loans.my')" :current="request()->routeIs('loans.*')" wire:navigate>
                     {{ __('My Loans') }}
