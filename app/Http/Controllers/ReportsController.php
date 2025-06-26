@@ -90,10 +90,15 @@ class ReportsController extends Controller
         $reportType = $request->get('type', 'summary');
         $startDate = $request->get('start_date', now()->startOfMonth());
         $endDate = $request->get('end_date', now()->endOfMonth());
+        $branchId = $request->get('branch_id');
+        $status = $request->get('status');
         $format = $request->get('format', 'view');
         
+        // Get branches for filter dropdown
+        $branches = \App\Models\Branch::all();
+        
         // Always generate summary for the header cards
-        $summaryData = $this->generateMemberSummary($startDate, $endDate);
+        $summaryData = $this->generateMemberSummary($startDate, $endDate, $branchId, $status);
         $data = $summaryData; // This includes 'members' and 'summary'
         
         // Generate specific report data based on type
@@ -102,22 +107,29 @@ class ReportsController extends Controller
                 // Summary data is already included above
                 break;
             case 'activity':
-                $activityData = $this->generateMemberActivity($startDate, $endDate);
+                $activityData = $this->generateMemberActivity($startDate, $endDate, $branchId, $status);
                 $data = array_merge($data, $activityData);
                 break;
             case 'demographics':
-                $demographicsData = $this->generateMemberDemographics();
+                $demographicsData = $this->generateMemberDemographics($branchId, $status);
                 $data = array_merge($data, $demographicsData);
                 break;
             case 'growth':
-                $growthData = $this->generateMemberGrowth($startDate, $endDate);
+                $growthData = $this->generateMemberGrowth($startDate, $endDate, $branchId, $status);
                 $data = array_merge($data, $growthData);
+                break;
+            case 'financial':
+                $financialData = $this->generateMemberFinancialAnalysis($startDate, $endDate, $branchId, $status);
+                $data = array_merge($data, $financialData);
                 break;
         }
         
         $data['report_type'] = $reportType;
         $data['start_date'] = $startDate;
         $data['end_date'] = $endDate;
+        $data['branch_id'] = $branchId;
+        $data['status'] = $status;
+        $data['branches'] = $branches;
         $data['generated_at'] = now();
         
         if ($format === 'pdf') {
@@ -145,22 +157,35 @@ class ReportsController extends Controller
         $startDate = $request->get('start_date', now()->startOfMonth());
         $endDate = $request->get('end_date', now()->endOfMonth());
         $loanTypeId = $request->get('loan_type_id');
+        $branchId = $request->get('branch_id');
+        $status = $request->get('status');
+        $memberId = $request->get('member_id');
         $format = $request->get('format', 'view');
+        
+        // Get filtering options for dropdowns
+        $loanTypes = LoanType::all();
+        $branches = \App\Models\Branch::all();
         
         $data = [];
         
         switch ($reportType) {
             case 'portfolio':
-                $data = $this->generateLoanPortfolio($startDate, $endDate, $loanTypeId);
+                $data = $this->generateLoanPortfolio($startDate, $endDate, $loanTypeId, $branchId, $status, $memberId);
                 break;
             case 'arrears':
-                $data = $this->generateLoanArrears();
+                $data = $this->generateLoanArrears($loanTypeId, $branchId, $memberId);
                 break;
             case 'performance':
-                $data = $this->generateLoanPerformance($startDate, $endDate);
+                $data = $this->generateLoanPerformance($startDate, $endDate, $loanTypeId, $branchId);
                 break;
             case 'collections':
-                $data = $this->generateCollectionsReport($startDate, $endDate);
+                $data = $this->generateCollectionsReport($startDate, $endDate, $loanTypeId, $branchId, $memberId);
+                break;
+            case 'risk_analysis':
+                $data = $this->generateLoanRiskAnalysis($startDate, $endDate, $loanTypeId, $branchId);
+                break;
+            case 'profitability':
+                $data = $this->generateLoanProfitabilityAnalysis($startDate, $endDate, $loanTypeId, $branchId);
                 break;
         }
         
@@ -168,7 +193,11 @@ class ReportsController extends Controller
         $data['start_date'] = $startDate;
         $data['end_date'] = $endDate;
         $data['loan_type_id'] = $loanTypeId;
-        $data['loan_types'] = LoanType::all();
+        $data['branch_id'] = $branchId;
+        $data['status'] = $status;
+        $data['member_id'] = $memberId;
+        $data['loan_types'] = $loanTypes;
+        $data['branches'] = $branches;
         $data['generated_at'] = now();
         
         if ($format === 'pdf') {
@@ -486,160 +515,580 @@ class ReportsController extends Controller
         return compact('accounts', 'total_debits', 'total_credits');
     }
 
-    private function generateMemberSummary($startDate, $endDate)
+    private function generateMemberSummary($startDate, $endDate, $branchId = null, $status = null)
     {
-        $members = User::with(['accounts', 'loans'])->get();
+        $query = User::with(['accounts', 'loans']);
+        
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+        if ($status) {
+            $query->where('membership_status', $status);
+        }
+        
+        $members = $query->get();
         
         $summary = [
             'total_members' => $members->count(),
-            'new_members' => User::whereBetween('created_at', [$startDate, $endDate])->count(),
+            'new_members' => User::whereBetween('created_at', [$startDate, $endDate])
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->when($status, fn($q) => $q->where('membership_status', $status))
+                ->count(),
             'active_members' => User::whereHas('transactions', function($query) use ($startDate, $endDate) {
                 $query->whereBetween('created_at', [$startDate, $endDate]);
-            })->count(),
+            })
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->when($status, fn($q) => $q->where('membership_status', $status))
+                ->count(),
             'members_with_loans' => User::whereHas('loans', function($query) {
                 $query->whereIn('status', ['active', 'disbursed']);
-            })->count(),
+            })
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->when($status, fn($q) => $q->where('membership_status', $status))
+                ->count(),
         ];
         
         return compact('members', 'summary');
     }
 
-    private function generateMemberActivity($startDate, $endDate)
+    private function generateMemberActivity($startDate, $endDate, $branchId = null, $status = null)
     {
-        $activity = User::with(['transactions' => function($query) use ($startDate, $endDate) {
-            $query->whereBetween('created_at', [$startDate, $endDate]);
-        }])->get()->map(function($member) {
+        $query = User::with(['transactions' => function($query) use ($startDate, $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate])
+                  ->where('status', 'completed');
+        }, 'accounts', 'loans']);
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+        if ($status) {
+            $query->where('membership_status', $status);
+        }
+        
+        $members = $query->get();
+
+        $activity = $members->map(function($member) {
+            $transactions = $member->transactions;
+            $deposits = $transactions->where('type', 'deposit');
+            $withdrawals = $transactions->where('type', 'withdrawal');
+            $loanRepayments = $transactions->where('type', 'loan_repayment');
+            
             return [
                 'member' => $member,
-                'transaction_count' => $member->transactions->count(),
-                'total_deposits' => $member->transactions->where('type', 'deposit')->sum('amount'),
-                'total_withdrawals' => $member->transactions->where('type', 'withdrawal')->sum('amount'),
-                'loan_repayments' => $member->transactions->where('type', 'loan_repayment')->sum('amount'),
+                'transaction_count' => $transactions->count(),
+                'total_deposits' => $deposits->sum('amount'),
+                'deposit_count' => $deposits->count(),
+                'total_withdrawals' => $withdrawals->sum('amount'),
+                'withdrawal_count' => $withdrawals->count(),
+                'loan_repayments' => $loanRepayments->sum('amount'),
+                'repayment_count' => $loanRepayments->count(),
+                'net_savings' => $deposits->sum('amount') - $withdrawals->sum('amount'),
+                'avg_transaction_amount' => $transactions->count() > 0 ? $transactions->avg('amount') : 0,
+                'last_transaction_date' => $transactions->max('created_at'),
+                'total_account_balance' => $member->accounts->sum('balance'),
+                'active_loans_count' => $member->loans->whereIn('status', ['active', 'disbursed'])->count(),
             ];
-        });
-        
-        return compact('activity');
+        })->sortByDesc('transaction_count');
+
+        // Activity summary
+        $activitySummary = [
+            'most_active_members' => $activity->take(10),
+            'total_active_members' => $activity->where('transaction_count', '>', 0)->count(),
+            'average_transactions_per_member' => $activity->avg('transaction_count'),
+            'total_transaction_volume' => $activity->sum('total_deposits') + $activity->sum('total_withdrawals'),
+            'top_depositors' => $activity->sortByDesc('total_deposits')->take(5),
+            'top_savers' => $activity->sortByDesc('net_savings')->take(5),
+        ];
+
+        return compact('activity', 'activitySummary');
     }
 
-    private function generateMemberDemographics()
+    private function generateMemberDemographics($branchId = null, $status = null)
     {
+        $baseQuery = User::query();
+        if ($branchId) {
+            $baseQuery->where('branch_id', $branchId);
+        }
+        if ($status) {
+            $baseQuery->where('membership_status', $status);
+        }
+        
+        $totalMembers = $baseQuery->count();
+        
         $demographics = [
             'by_status' => User::selectRaw('membership_status, COUNT(*) as count')
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->when($status, fn($q) => $q->where('membership_status', $status))
                 ->groupBy('membership_status')
-                ->get(),
+                ->get()
+                ->map(function($item) use ($totalMembers) {
+                    return [
+                        'status' => $item->membership_status ?: 'active',
+                        'count' => $item->count,
+                        'percentage' => $totalMembers > 0 ? round(($item->count / $totalMembers) * 100, 2) : 0
+                    ];
+                }),
+            
             'by_branch' => User::selectRaw('branch_id, COUNT(*) as count')
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->when($status, fn($q) => $q->where('membership_status', $status))
                 ->groupBy('branch_id')
-                ->get(),
-            'by_registration_month' => User::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as count')
+                ->with('branch')
+                ->get()
+                ->map(function($item) use ($totalMembers) {
+                    return [
+                        'branch_id' => $item->branch_id,
+                        'branch_name' => $item->branch->name ?? 'Unassigned',
+                        'count' => $item->count,
+                        'percentage' => $totalMembers > 0 ? round(($item->count / $totalMembers) * 100, 2) : 0
+                    ];
+                }),
+            
+            'by_registration_period' => User::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as count')
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->when($status, fn($q) => $q->where('membership_status', $status))
                 ->groupBy('year', 'month')
                 ->orderBy('year', 'desc')
                 ->orderBy('month', 'desc')
-                ->get(),
+                ->limit(12)
+                ->get()
+                ->map(function($item) {
+                    return [
+                        'period' => \Carbon\Carbon::create($item->year, $item->month, 1)->format('M Y'),
+                        'year' => $item->year,
+                        'month' => $item->month,
+                        'count' => $item->count
+                    ];
+                }),
+            
+            'account_distribution' => User::selectRaw('COUNT(DISTINCT users.id) as member_count, COUNT(accounts.id) as account_count')
+                ->leftJoin('accounts', 'users.id', '=', 'accounts.member_id')
+                ->when($branchId, fn($q) => $q->where('users.branch_id', $branchId))
+                ->when($status, fn($q) => $q->where('users.membership_status', $status))
+                ->selectRaw('CASE 
+                    WHEN COUNT(accounts.id) = 0 THEN "No Accounts"
+                    WHEN COUNT(accounts.id) = 1 THEN "1 Account"
+                    WHEN COUNT(accounts.id) BETWEEN 2 AND 3 THEN "2-3 Accounts"
+                    ELSE "4+ Accounts"
+                END as account_range')
+                ->groupBy('users.id')
+                ->get()
+                ->groupBy('account_range')
+                ->map(function($group, $range) use ($totalMembers) {
+                    return [
+                        'range' => $range,
+                        'count' => $group->count(),
+                        'percentage' => $totalMembers > 0 ? round(($group->count() / $totalMembers) * 100, 2) : 0
+                    ];
+                }),
+            
+            'loan_participation' => [
+                'with_loans' => User::whereHas('loans')
+                    ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                    ->when($status, fn($q) => $q->where('membership_status', $status))
+                    ->count(),
+                'without_loans' => User::whereDoesntHave('loans')
+                    ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                    ->when($status, fn($q) => $q->where('membership_status', $status))
+                    ->count(),
+                'active_borrowers' => User::whereHas('loans', function($query) {
+                    $query->whereIn('status', ['active', 'disbursed']);
+                })
+                    ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                    ->when($status, fn($q) => $q->where('membership_status', $status))
+                    ->count(),
+            ]
         ];
-        
-        return compact('demographics');
+
+        // Calculate percentages for loan participation
+        $demographics['loan_participation']['with_loans_percentage'] = $totalMembers > 0 ? 
+            round(($demographics['loan_participation']['with_loans'] / $totalMembers) * 100, 2) : 0;
+        $demographics['loan_participation']['without_loans_percentage'] = $totalMembers > 0 ? 
+            round(($demographics['loan_participation']['without_loans'] / $totalMembers) * 100, 2) : 0;
+        $demographics['loan_participation']['active_borrowers_percentage'] = $totalMembers > 0 ? 
+            round(($demographics['loan_participation']['active_borrowers'] / $totalMembers) * 100, 2) : 0;
+
+        return compact('demographics', 'totalMembers');
     }
 
-    private function generateMemberGrowth($startDate, $endDate)
+    private function generateMemberGrowth($startDate, $endDate, $branchId = null, $status = null)
     {
-        $growth = User::selectRaw('DATE(created_at) as date, COUNT(*) as new_members')
+        // Daily member registrations in the period
+        $dailyGrowth = User::selectRaw('DATE(created_at) as date, COUNT(*) as new_members')
             ->whereBetween('created_at', [$startDate, $endDate])
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->when($status, fn($q) => $q->where('membership_status', $status))
             ->groupBy('date')
             ->orderBy('date')
             ->get();
         
+        // Monthly growth over the last 12 months
+        $monthlyGrowth = User::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as new_members')
+            ->where('created_at', '>=', now()->subMonths(12))
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->when($status, fn($q) => $q->where('membership_status', $status))
+            ->groupBy('year', 'month')
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'period' => \Carbon\Carbon::create($item->year, $item->month, 1)->format('M Y'),
+                    'year' => $item->year,
+                    'month' => $item->month,
+                    'new_members' => $item->new_members,
+                    'date' => \Carbon\Carbon::create($item->year, $item->month, 1)
+                ];
+            });
+
+        // Calculate cumulative totals for the reporting period
+        $startingTotal = User::where('created_at', '<', $startDate)
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->when($status, fn($q) => $q->where('membership_status', $status))
+            ->count();
         $cumulative = [];
-        $total = User::where('created_at', '<', $startDate)->count();
+        $runningTotal = $startingTotal;
         
-        foreach ($growth as $day) {
-            $total += $day->new_members;
+        foreach ($dailyGrowth as $day) {
+            $runningTotal += $day->new_members;
             $cumulative[] = [
                 'date' => $day->date,
                 'new_members' => $day->new_members,
-                'total_members' => $total
+                'total_members' => $runningTotal
             ];
         }
+
+        // Growth metrics
+        $periodStart = \Carbon\Carbon::parse($startDate);
+        $periodEnd = \Carbon\Carbon::parse($endDate);
+        $totalNewInPeriod = $dailyGrowth->sum('new_members');
+        $totalAtStart = $startingTotal;
+        $totalAtEnd = $runningTotal;
         
-        return compact('growth', 'cumulative');
+        $growthMetrics = [
+            'new_members_period' => $totalNewInPeriod,
+            'growth_rate' => $totalAtStart > 0 ? round((($totalAtEnd - $totalAtStart) / $totalAtStart) * 100, 2) : 0,
+            'avg_daily_growth' => $periodStart->diffInDays($periodEnd) > 0 ? 
+                round($totalNewInPeriod / $periodStart->diffInDays($periodEnd), 2) : 0,
+            'total_at_start' => $totalAtStart,
+            'total_at_end' => $totalAtEnd,
+            'peak_registration_day' => $dailyGrowth->sortByDesc('new_members')->first(),
+            'days_with_registrations' => $dailyGrowth->where('new_members', '>', 0)->count(),
+        ];
+
+        // Branch-wise growth analysis
+        $branchGrowth = User::selectRaw('branch_id, COUNT(*) as new_members')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->when($status, fn($q) => $q->where('membership_status', $status))
+            ->groupBy('branch_id')
+            ->with('branch')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'branch_id' => $item->branch_id,
+                    'branch_name' => $item->branch->name ?? 'Unassigned',
+                    'new_members' => $item->new_members
+                ];
+            });
+
+        return compact('dailyGrowth', 'monthlyGrowth', 'cumulative', 'growthMetrics', 'branchGrowth');
     }
 
-    private function generateLoanPortfolio($startDate, $endDate, $loanTypeId = null)
+    private function generateMemberFinancialAnalysis($startDate, $endDate, $branchId = null, $status = null)
+    {
+        $query = User::with(['accounts', 'loans', 'transactions' => function($q) use ($startDate, $endDate) {
+            $q->whereBetween('created_at', [$startDate, $endDate])->where('status', 'completed');
+        }]);
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+        if ($status) {
+            $query->where('membership_status', $status);
+        }
+        
+        $members = $query->get();
+
+        // Financial analysis per member
+        $financialProfiles = $members->map(function($member) {
+            $accounts = $member->accounts;
+            $loans = $member->loans;
+            $transactions = $member->transactions;
+            
+            $totalBalance = $accounts->sum('balance');
+            $totalLoanAmount = $loans->sum('amount');
+            $activeLoanAmount = $loans->whereIn('status', ['active', 'disbursed'])->sum('amount');
+            
+            $deposits = $transactions->where('type', 'deposit');
+            $withdrawals = $transactions->where('type', 'withdrawal');
+            $loanRepayments = $transactions->where('type', 'loan_repayment');
+            
+            $savings_rate = $deposits->sum('amount') > 0 ? 
+                (($deposits->sum('amount') - $withdrawals->sum('amount')) / $deposits->sum('amount')) * 100 : 0;
+            
+            return [
+                'member' => $member,
+                'total_balance' => $totalBalance,
+                'total_loan_amount' => $totalLoanAmount,
+                'active_loan_amount' => $activeLoanAmount,
+                'loan_to_savings_ratio' => $totalBalance > 0 ? ($activeLoanAmount / $totalBalance) * 100 : 0,
+                'total_deposits' => $deposits->sum('amount'),
+                'total_withdrawals' => $withdrawals->sum('amount'),
+                'net_savings' => $deposits->sum('amount') - $withdrawals->sum('amount'),
+                'savings_rate' => $savings_rate,
+                'loan_repayments' => $loanRepayments->sum('amount'),
+                'transaction_frequency' => $transactions->count(),
+                'avg_transaction_amount' => $transactions->avg('amount') ?: 0,
+                'account_count' => $accounts->count(),
+                'loan_count' => $loans->count(),
+                'risk_score' => $this->calculateMemberRiskScore($member, $totalBalance, $activeLoanAmount),
+            ];
+        });
+
+        // Financial summary metrics
+        $financialSummary = [
+            'total_member_savings' => $financialProfiles->sum('total_balance'),
+            'total_loan_portfolio' => $financialProfiles->sum('active_loan_amount'),
+            'average_member_balance' => $financialProfiles->avg('total_balance'),
+            'average_loan_amount' => $financialProfiles->avg('active_loan_amount'),
+            'portfolio_loan_ratio' => $financialProfiles->sum('total_balance') > 0 ? 
+                ($financialProfiles->sum('active_loan_amount') / $financialProfiles->sum('total_balance')) * 100 : 0,
+            'high_savers_count' => $financialProfiles->where('total_balance', '>', 10000)->count(),
+            'high_risk_borrowers' => $financialProfiles->where('risk_score', '>', 70)->count(),
+            'inactive_savers' => $financialProfiles->where('transaction_frequency', 0)->count(),
+        ];
+
+        // Categorize members by financial behavior
+        $memberCategories = [
+            'high_value_savers' => $financialProfiles->sortByDesc('total_balance')->take(10),
+            'high_risk_borrowers' => $financialProfiles->where('risk_score', '>', 70)->sortByDesc('risk_score')->take(10),
+            'most_active_investors' => $financialProfiles->sortByDesc('transaction_frequency')->take(10),
+            'growth_potential' => $financialProfiles->where('total_balance', '>', 1000)
+                ->where('total_balance', '<', 10000)->sortByDesc('savings_rate')->take(10),
+        ];
+
+        // Savings patterns analysis
+        $savingsPatterns = [
+            'consistent_savers' => $financialProfiles->where('savings_rate', '>', 50)->count(),
+            'moderate_savers' => $financialProfiles->whereBetween('savings_rate', [20, 50])->count(),
+            'low_savers' => $financialProfiles->where('savings_rate', '<', 20)->where('savings_rate', '>', 0)->count(),
+            'net_withdrawers' => $financialProfiles->where('net_savings', '<', 0)->count(),
+        ];
+
+        return compact('financialProfiles', 'financialSummary', 'memberCategories', 'savingsPatterns');
+    }
+
+    private function calculateMemberRiskScore($member, $totalBalance, $activeLoanAmount)
+    {
+        $score = 0;
+        
+        // Loan to savings ratio (40% weight)
+        if ($totalBalance > 0) {
+            $loanRatio = ($activeLoanAmount / $totalBalance) * 100;
+            if ($loanRatio > 80) $score += 40;
+            elseif ($loanRatio > 60) $score += 30;
+            elseif ($loanRatio > 40) $score += 20;
+            elseif ($loanRatio > 20) $score += 10;
+        } else if ($activeLoanAmount > 0) {
+            $score += 40; // No savings but has loans
+        }
+        
+        // Account balance stability (30% weight)
+        if ($totalBalance < 100) $score += 30;
+        elseif ($totalBalance < 500) $score += 20;
+        elseif ($totalBalance < 1000) $score += 10;
+        
+        // Transaction activity (20% weight)
+        $recentTransactions = $member->transactions()->where('created_at', '>', now()->subMonths(3))->count();
+        if ($recentTransactions == 0) $score += 20;
+        elseif ($recentTransactions < 3) $score += 15;
+        elseif ($recentTransactions < 6) $score += 10;
+        
+        // Loan payment history (10% weight)
+        $overdueLoans = $member->loans()->where('status', 'active')->where('due_date', '<', now())->count();
+        if ($overdueLoans > 0) $score += 10;
+        
+        return min($score, 100); // Cap at 100
+    }
+
+    private function generateLoanPortfolio($startDate, $endDate, $loanTypeId = null, $branchId = null, $status = null, $memberId = null)
     {
         $query = Loan::with(['member', 'loanType']);
         
         if ($loanTypeId) {
             $query->where('loan_type_id', $loanTypeId);
         }
+        if ($branchId) {
+            $query->whereHas('member', fn($q) => $q->where('branch_id', $branchId));
+        }
+        if ($status) {
+            $query->where('status', $status);
+        }
+        if ($memberId) {
+            $query->where('member_id', $memberId);
+        }
         
         $loans = $query->get();
         $periodicLoans = $query->whereBetween('created_at', [$startDate, $endDate])->get();
         
+        // Enhanced portfolio analytics
         $portfolio = [
             'total_loans' => $loans->count(),
             'active_loans' => $loans->whereIn('status', ['active', 'disbursed'])->count(),
             'completed_loans' => $loans->where('status', 'completed')->count(),
+            'defaulted_loans' => $loans->where('status', 'defaulted')->count(),
+            'pending_loans' => $loans->where('status', 'pending')->count(),
             'total_portfolio_value' => $loans->sum('amount'),
+            'active_portfolio_value' => $loans->whereIn('status', ['active', 'disbursed'])->sum('amount'),
             'new_loans_period' => $periodicLoans->count(),
+            'new_loans_value' => $periodicLoans->sum('amount'),
+            'average_loan_amount' => $loans->avg('amount'),
+            'largest_loan' => $loans->max('amount'),
+            'smallest_loan' => $loans->min('amount'),
         ];
-        
-        return compact('loans', 'portfolio');
+
+        // Loan status distribution
+        $statusDistribution = $loans->groupBy('status')->map(function($statusLoans, $status) use ($loans) {
+            return [
+                'count' => $statusLoans->count(),
+                'amount' => $statusLoans->sum('amount'),
+                'percentage' => $loans->count() > 0 ? round(($statusLoans->count() / $loans->count()) * 100, 2) : 0
+            ];
+        });
+
+        // Loan type analysis
+        $typeAnalysis = $loans->groupBy('loanType.name')->map(function($typeLoans, $typeName) use ($loans) {
+            return [
+                'count' => $typeLoans->count(),
+                'amount' => $typeLoans->sum('amount'),
+                'percentage' => $loans->count() > 0 ? round(($typeLoans->count() / $loans->count()) * 100, 2) : 0,
+                'avg_amount' => $typeLoans->avg('amount'),
+                'active_count' => $typeLoans->whereIn('status', ['active', 'disbursed'])->count()
+            ];
+        });
+
+        return compact('loans', 'portfolio', 'statusDistribution', 'typeAnalysis');
     }
 
-    private function generateLoanArrears()
+    private function generateLoanArrears($loanTypeId = null, $branchId = null, $memberId = null)
     {
         $overdue = Loan::where('status', 'active')
             ->where('due_date', '<', now())
-            ->with(['member'])
+            ->with(['member', 'loanType'])
+            ->when($loanTypeId, fn($q) => $q->where('loan_type_id', $loanTypeId))
+            ->when($branchId, fn($q) => $q->whereHas('member', fn($sq) => $sq->where('branch_id', $branchId)))
+            ->when($memberId, fn($q) => $q->where('member_id', $memberId))
             ->get();
         
+        // Enhanced arrears analysis
         $arrears = [
             'total_overdue' => $overdue->count(),
             'total_overdue_amount' => $overdue->sum('amount'),
             'by_days_overdue' => [
-                '1-30' => $overdue->filter(function($loan) {
-                    return $loan->due_date->diffInDays(now()) <= 30;
-                })->count(),
-                '31-60' => $overdue->filter(function($loan) {
-                    $days = $loan->due_date->diffInDays(now());
-                    return $days > 30 && $days <= 60;
-                })->count(),
-                '61-90' => $overdue->filter(function($loan) {
-                    $days = $loan->due_date->diffInDays(now());
-                    return $days > 60 && $days <= 90;
-                })->count(),
-                '90+' => $overdue->filter(function($loan) {
-                    return $loan->due_date->diffInDays(now()) > 90;
-                })->count(),
-            ]
+                '1-30' => [
+                    'count' => $overdue->filter(function($loan) {
+                        $days = $loan->due_date->diffInDays(now());
+                        return $days <= 30;
+                    })->count(),
+                    'amount' => $overdue->filter(function($loan) {
+                        return $loan->due_date->diffInDays(now()) <= 30;
+                    })->sum('amount')
+                ],
+                '31-60' => [
+                    'count' => $overdue->filter(function($loan) {
+                        $days = $loan->due_date->diffInDays(now());
+                        return $days > 30 && $days <= 60;
+                    })->count(),
+                    'amount' => $overdue->filter(function($loan) {
+                        $days = $loan->due_date->diffInDays(now());
+                        return $days > 30 && $days <= 60;
+                    })->sum('amount')
+                ],
+                '61-90' => [
+                    'count' => $overdue->filter(function($loan) {
+                        $days = $loan->due_date->diffInDays(now());
+                        return $days > 60 && $days <= 90;
+                    })->count(),
+                    'amount' => $overdue->filter(function($loan) {
+                        $days = $loan->due_date->diffInDays(now());
+                        return $days > 60 && $days <= 90;
+                    })->sum('amount')
+                ],
+                '90+' => [
+                    'count' => $overdue->filter(function($loan) {
+                        return $loan->due_date->diffInDays(now()) > 90;
+                    })->count(),
+                    'amount' => $overdue->filter(function($loan) {
+                        return $loan->due_date->diffInDays(now()) > 90;
+                    })->sum('amount')
+                ]
+            ],
+            'by_loan_type' => $overdue->groupBy('loanType.name')->map(function($typeOverdue) {
+                return [
+                    'count' => $typeOverdue->count(),
+                    'amount' => $typeOverdue->sum('amount')
+                ];
+            }),
+            'worst_performers' => $overdue->sortBy('due_date')->take(10)
         ];
         
         return compact('overdue', 'arrears');
     }
 
-    private function generateLoanPerformance($startDate, $endDate)
+    private function generateLoanPerformance($startDate, $endDate, $loanTypeId = null, $branchId = null)
     {
         $performance = [
-            'repayment_rate' => $this->calculateRepaymentRate($startDate, $endDate),
-            'default_rate' => $this->calculateDefaultRate($startDate, $endDate),
-            'portfolio_at_risk' => $this->calculatePortfolioAtRisk(),
-            'collection_efficiency' => $this->calculateCollectionEfficiency($startDate, $endDate),
+            'repayment_rate' => $this->calculateRepaymentRate($startDate, $endDate, $loanTypeId, $branchId),
+            'default_rate' => $this->calculateDefaultRate($startDate, $endDate, $loanTypeId, $branchId),
+            'portfolio_at_risk' => $this->calculatePortfolioAtRisk($loanTypeId, $branchId),
+            'collection_efficiency' => $this->calculateCollectionEfficiency($startDate, $endDate, $loanTypeId, $branchId),
         ];
+
+        // Additional performance metrics
+        $totalLoans = Loan::when($loanTypeId, fn($q) => $q->where('loan_type_id', $loanTypeId))
+            ->when($branchId, fn($q) => $q->whereHas('member', fn($sq) => $sq->where('branch_id', $branchId)))
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+
+        $approvedLoans = Loan::whereIn('status', ['approved', 'disbursed', 'active', 'completed'])
+            ->when($loanTypeId, fn($q) => $q->where('loan_type_id', $loanTypeId))
+            ->when($branchId, fn($q) => $q->whereHas('member', fn($sq) => $sq->where('branch_id', $branchId)))
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+
+        $disbursedLoans = Loan::whereIn('status', ['disbursed', 'active', 'completed'])
+            ->when($loanTypeId, fn($q) => $q->where('loan_type_id', $loanTypeId))
+            ->when($branchId, fn($q) => $q->whereHas('member', fn($sq) => $sq->where('branch_id', $branchId)))
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+
+        $performance['approval_rate'] = $totalLoans > 0 ? round(($approvedLoans / $totalLoans) * 100, 2) : 0;
+        $performance['disbursement_rate'] = $approvedLoans > 0 ? round(($disbursedLoans / $approvedLoans) * 100, 2) : 0;
+        $performance['total_applications'] = $totalLoans;
+        $performance['approved_applications'] = $approvedLoans;
+        $performance['disbursed_applications'] = $disbursedLoans;
         
         return compact('performance');
     }
 
-    private function generateCollectionsReport($startDate, $endDate)
+    private function generateCollectionsReport($startDate, $endDate, $loanTypeId = null, $branchId = null, $memberId = null)
     {
         $collections = Transaction::where('type', 'loan_repayment')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->where('status', 'completed')
-            ->with(['loan.member'])
+            ->with(['loan.member', 'loan.loanType'])
+            ->when($loanTypeId, fn($q) => $q->whereHas('loan', fn($sq) => $sq->where('loan_type_id', $loanTypeId)))
+            ->when($branchId, fn($q) => $q->whereHas('loan.member', fn($sq) => $sq->where('branch_id', $branchId)))
+            ->when($memberId, fn($q) => $q->where('member_id', $memberId))
             ->get();
         
         $summary = [
             'total_collected' => $collections->sum('amount'),
             'collection_count' => $collections->count(),
             'average_collection' => $collections->avg('amount'),
+            'largest_collection' => $collections->max('amount'),
+            'smallest_collection' => $collections->min('amount'),
             'collections_by_day' => $collections->groupBy(function($item) {
                 return $item->created_at->format('Y-m-d');
             })->map(function($dayCollections) {
@@ -647,10 +1096,241 @@ class ReportsController extends Controller
                     'count' => $dayCollections->count(),
                     'amount' => $dayCollections->sum('amount')
                 ];
-            })
+            }),
+            'collections_by_loan_type' => $collections->groupBy('loan.loanType.name')->map(function($typeCollections) {
+                return [
+                    'count' => $typeCollections->count(),
+                    'amount' => $typeCollections->sum('amount'),
+                    'avg_amount' => $typeCollections->avg('amount')
+                ];
+            }),
+            'top_paying_members' => $collections->groupBy('member_id')->map(function($memberCollections) {
+                return [
+                    'member' => $memberCollections->first()->loan->member ?? null,
+                    'total_paid' => $memberCollections->sum('amount'),
+                    'payment_count' => $memberCollections->count()
+                ];
+            })->sortByDesc('total_paid')->take(10)
         ];
         
         return compact('collections', 'summary');
+    }
+
+    private function generateLoanRiskAnalysis($startDate, $endDate, $loanTypeId = null, $branchId = null)
+    {
+        $loans = Loan::with(['member', 'loanType', 'transactions'])
+            ->when($loanTypeId, fn($q) => $q->where('loan_type_id', $loanTypeId))
+            ->when($branchId, fn($q) => $q->whereHas('member', fn($sq) => $sq->where('branch_id', $branchId)))
+            ->get();
+
+        // Risk scoring for each loan
+        $riskAnalysis = $loans->map(function($loan) {
+            $riskScore = $this->calculateLoanRiskScore($loan);
+            $daysOverdue = $loan->status === 'active' && $loan->due_date < now() ? 
+                $loan->due_date->diffInDays(now()) : 0;
+            
+            return [
+                'loan' => $loan,
+                'risk_score' => $riskScore,
+                'days_overdue' => $daysOverdue,
+                'member_credit_score' => $this->calculateMemberCreditScore($loan->member),
+                'loan_performance' => $this->calculateLoanPerformanceScore($loan)
+            ];
+        });
+
+        // Risk categories
+        $riskCategories = [
+            'low_risk' => $riskAnalysis->where('risk_score', '<=', 30)->count(),
+            'medium_risk' => $riskAnalysis->whereBetween('risk_score', [31, 70])->count(),
+            'high_risk' => $riskAnalysis->where('risk_score', '>', 70)->count(),
+        ];
+
+        // Risk by loan type
+        $riskByType = $riskAnalysis->groupBy('loan.loanType.name')->map(function($typeLoans, $typeName) {
+            return [
+                'type_name' => $typeName,
+                'average_risk' => $typeLoans->avg('risk_score'),
+                'high_risk_count' => $typeLoans->where('risk_score', '>', 70)->count(),
+                'total_count' => $typeLoans->count(),
+                'total_amount' => $typeLoans->sum('loan.amount')
+            ];
+        });
+
+        // Early warning indicators
+        $earlyWarnings = [
+            'loans_30_days_overdue' => $riskAnalysis->where('days_overdue', '>', 30)->where('days_overdue', '<=', 60)->count(),
+            'loans_with_declining_payments' => $this->getLoansWithDecliningPayments($loans),
+            'members_with_multiple_overdue' => $this->getMembersWithMultipleOverdue($loans),
+        ];
+
+        return compact('riskAnalysis', 'riskCategories', 'riskByType', 'earlyWarnings');
+    }
+
+    private function generateLoanProfitabilityAnalysis($startDate, $endDate, $loanTypeId = null, $branchId = null)
+    {
+        $loans = Loan::with(['member', 'loanType', 'transactions'])
+            ->when($loanTypeId, fn($q) => $q->where('loan_type_id', $loanTypeId))
+            ->when($branchId, fn($q) => $q->whereHas('member', fn($sq) => $sq->where('branch_id', $branchId)))
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->get();
+
+        $profitabilityAnalysis = $loans->map(function($loan) {
+            $totalRepayments = $loan->transactions()
+                ->where('type', 'loan_repayment')
+                ->where('status', 'completed')
+                ->sum('amount');
+            
+            $expectedInterest = method_exists($loan, 'calculateInterest') ? $loan->calculateInterest() : ($loan->amount * 0.12);
+            $actualInterest = $totalRepayments - $loan->amount;
+            $roi = $loan->amount > 0 ? ($actualInterest / $loan->amount) * 100 : 0;
+            
+            return [
+                'member_name' => $loan->member->name ?? 'N/A',
+                'member_number' => $loan->member->member_number ?? '',
+                'loan_type' => $loan->loanType->name ?? 'Unassigned',
+                'principal' => $loan->amount,
+                'interest_earned' => max(0, $actualInterest),
+                'expected_interest' => $expectedInterest,
+                'roi' => $roi,
+                'status' => $loan->status,
+                'completion_percentage' => $loan->amount > 0 ? min(100, ($totalRepayments / ($loan->amount + $expectedInterest)) * 100) : 0,
+                'is_profitable' => $actualInterest > 0
+            ];
+        });
+
+        // Profitability metrics for overview cards
+        $profitabilityMetrics = [
+            'total_interest_income' => $profitabilityAnalysis->sum('interest_earned'),
+            'expected_roi' => $profitabilityAnalysis->avg('roi'),
+            'actual_roi' => $profitabilityAnalysis->where('is_profitable', true)->avg('roi'),
+            'profit_margin' => $profitabilityAnalysis->avg('completion_percentage'),
+        ];
+
+        // Profitability by loan type
+        $profitabilityByType = $profitabilityAnalysis->groupBy('loan_type')->map(function($typeLoans, $typeName) {
+            return [
+                'type_name' => $typeName ?: 'Unassigned',
+                'total_count' => $typeLoans->count(),
+                'interest_income' => $typeLoans->sum('interest_earned'),
+                'expected_roi' => $typeLoans->avg('roi'),
+                'actual_roi' => $typeLoans->where('is_profitable', true)->avg('roi') ?: 0,
+                'completion_rate' => $typeLoans->avg('completion_percentage'),
+                'profit_margin' => $typeLoans->avg('roi')
+            ];
+        });
+
+        // Top and poor performers
+        $topPerformers = $profitabilityAnalysis->sortByDesc('roi')->take(10)->map(function($item) {
+            return [
+                'member_name' => $item['member_name'],
+                'loan_type' => $item['loan_type'],
+                'amount' => $item['principal'],
+                'roi' => $item['roi'],
+                'profit' => $item['interest_earned']
+            ];
+        });
+
+        $poorPerformers = $profitabilityAnalysis->sortBy('roi')->take(10)->map(function($item) {
+            return [
+                'member_name' => $item['member_name'],
+                'loan_type' => $item['loan_type'],
+                'amount' => $item['principal'],
+                'roi' => $item['roi'],
+                'days_overdue' => 0 // This would need to be calculated from loan data
+            ];
+        });
+
+        return compact('profitabilityAnalysis', 'profitabilityMetrics', 'profitabilityByType', 'topPerformers', 'poorPerformers');
+    }
+
+    // Helper methods for risk and profitability analysis
+    private function calculateLoanRiskScore($loan)
+    {
+        $score = 0;
+        
+        // Days overdue (40% weight)
+        if ($loan->status === 'active' && $loan->due_date < now()) {
+            $daysOverdue = $loan->due_date->diffInDays(now());
+            if ($daysOverdue > 90) $score += 40;
+            elseif ($daysOverdue > 60) $score += 30;
+            elseif ($daysOverdue > 30) $score += 20;
+            elseif ($daysOverdue > 0) $score += 10;
+        }
+        
+        // Loan to member savings ratio (30% weight)
+        $memberBalance = $loan->member->accounts->sum('balance');
+        if ($memberBalance > 0) {
+            $ratio = ($loan->amount / $memberBalance) * 100;
+            if ($ratio > 200) $score += 30;
+            elseif ($ratio > 150) $score += 20;
+            elseif ($ratio > 100) $score += 15;
+            elseif ($ratio > 50) $score += 10;
+        } else {
+            $score += 30; // No savings is high risk
+        }
+        
+        // Payment history (30% weight)
+        $totalPayments = $loan->transactions()->where('type', 'loan_repayment')->where('status', 'completed')->count();
+        $expectedPayments = max(1, $loan->term_period ?? 12);
+        $paymentRate = ($totalPayments / $expectedPayments) * 100;
+        
+        if ($paymentRate < 25) $score += 30;
+        elseif ($paymentRate < 50) $score += 20;
+        elseif ($paymentRate < 75) $score += 10;
+        
+        return min($score, 100);
+    }
+
+    private function calculateMemberCreditScore($member)
+    {
+        $score = 100; // Start with perfect score
+        
+        // Deduct for overdue loans
+        $overdueLoans = $member->loans()->where('status', 'active')->where('due_date', '<', now())->count();
+        $score -= $overdueLoans * 20;
+        
+        // Deduct for defaulted loans
+        $defaultedLoans = $member->loans()->where('status', 'defaulted')->count();
+        $score -= $defaultedLoans * 30;
+        
+        // Add points for completed loans
+        $completedLoans = $member->loans()->where('status', 'completed')->count();
+        $score += $completedLoans * 5;
+        
+        return max(0, min(100, $score));
+    }
+
+    private function calculateLoanPerformanceScore($loan)
+    {
+        if ($loan->status === 'completed') return 100;
+        if ($loan->status === 'defaulted') return 0;
+        
+        $totalRepayments = $loan->transactions()->where('type', 'loan_repayment')->where('status', 'completed')->sum('amount');
+        $expectedTotal = $loan->amount + $loan->calculateInterest();
+        
+        return $expectedTotal > 0 ? min(100, ($totalRepayments / $expectedTotal) * 100) : 0;
+    }
+
+    private function getLoansWithDecliningPayments($loans)
+    {
+        // This would require more complex analysis of payment patterns
+        return $loans->filter(function($loan) {
+            $recentPayments = $loan->transactions()
+                ->where('type', 'loan_repayment')
+                ->where('created_at', '>', now()->subMonths(3))
+                ->count();
+            return $recentPayments < 2; // Less than 2 payments in 3 months
+        })->count();
+    }
+
+    private function getMembersWithMultipleOverdue($loans)
+    {
+        return $loans->filter(function($loan) {
+            return $loan->member->loans()
+                ->where('status', 'active')
+                ->where('due_date', '<', now())
+                ->count() > 1;
+        })->unique('member_id')->count();
     }
 
     private function generateTransactionReport($startDate, $endDate)
@@ -799,51 +1479,71 @@ class ReportsController extends Controller
     }
 
     // Helper calculation methods
-    private function calculateRepaymentRate($startDate, $endDate)
+    private function calculateRepaymentRate($startDate, $endDate, $loanTypeId = null, $branchId = null)
     {
         $duePayments = Loan::where('due_date', '>=', $startDate)
             ->where('due_date', '<=', $endDate)
+            ->when($loanTypeId, fn($q) => $q->where('loan_type_id', $loanTypeId))
+            ->when($branchId, fn($q) => $q->whereHas('member', fn($sq) => $sq->where('branch_id', $branchId)))
             ->sum('amount');
         
         $actualPayments = Transaction::where('type', 'loan_repayment')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->where('status', 'completed')
+            ->when($loanTypeId, fn($q) => $q->whereHas('loan', fn($sq) => $sq->where('loan_type_id', $loanTypeId)))
+            ->when($branchId, fn($q) => $q->whereHas('loan.member', fn($sq) => $sq->where('branch_id', $branchId)))
             ->sum('amount');
         
-        return $duePayments > 0 ? ($actualPayments / $duePayments) * 100 : 0;
+        return $duePayments > 0 ? round(($actualPayments / $duePayments) * 100, 2) : 0;
     }
 
-    private function calculateDefaultRate($startDate, $endDate)
+    private function calculateDefaultRate($startDate, $endDate, $loanTypeId = null, $branchId = null)
     {
-        $totalLoans = Loan::whereBetween('created_at', [$startDate, $endDate])->count();
-        $defaultedLoans = Loan::where('status', 'defaulted')
-            ->whereBetween('created_at', [$startDate, $endDate])
+        $totalLoans = Loan::whereBetween('created_at', [$startDate, $endDate])
+            ->when($loanTypeId, fn($q) => $q->where('loan_type_id', $loanTypeId))
+            ->when($branchId, fn($q) => $q->whereHas('member', fn($sq) => $sq->where('branch_id', $branchId)))
             ->count();
         
-        return $totalLoans > 0 ? ($defaultedLoans / $totalLoans) * 100 : 0;
+        $defaultedLoans = Loan::where('status', 'defaulted')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->when($loanTypeId, fn($q) => $q->where('loan_type_id', $loanTypeId))
+            ->when($branchId, fn($q) => $q->whereHas('member', fn($sq) => $sq->where('branch_id', $branchId)))
+            ->count();
+        
+        return $totalLoans > 0 ? round(($defaultedLoans / $totalLoans) * 100, 2) : 0;
     }
 
-    private function calculatePortfolioAtRisk()
+    private function calculatePortfolioAtRisk($loanTypeId = null, $branchId = null)
     {
-        $totalPortfolio = Loan::whereIn('status', ['active', 'disbursed'])->sum('amount');
-        $overdueLoans = Loan::where('status', 'active')
-            ->where('due_date', '<', now())
+        $totalPortfolio = Loan::whereIn('status', ['active', 'disbursed'])
+            ->when($loanTypeId, fn($q) => $q->where('loan_type_id', $loanTypeId))
+            ->when($branchId, fn($q) => $q->whereHas('member', fn($sq) => $sq->where('branch_id', $branchId)))
             ->sum('amount');
         
-        return $totalPortfolio > 0 ? ($overdueLoans / $totalPortfolio) * 100 : 0;
+        $overdueLoans = Loan::where('status', 'active')
+            ->where('due_date', '<', now())
+            ->when($loanTypeId, fn($q) => $q->where('loan_type_id', $loanTypeId))
+            ->when($branchId, fn($q) => $q->whereHas('member', fn($sq) => $sq->where('branch_id', $branchId)))
+            ->sum('amount');
+        
+        return $totalPortfolio > 0 ? round(($overdueLoans / $totalPortfolio) * 100, 2) : 0;
     }
 
-    private function calculateCollectionEfficiency($startDate, $endDate)
+    private function calculateCollectionEfficiency($startDate, $endDate, $loanTypeId = null, $branchId = null)
     {
         $expectedCollections = Loan::where('due_date', '>=', $startDate)
             ->where('due_date', '<=', $endDate)
+            ->when($loanTypeId, fn($q) => $q->where('loan_type_id', $loanTypeId))
+            ->when($branchId, fn($q) => $q->whereHas('member', fn($sq) => $sq->where('branch_id', $branchId)))
             ->sum('amount');
         
         $actualCollections = Transaction::where('type', 'loan_repayment')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->where('status', 'completed')
+            ->when($loanTypeId, fn($q) => $q->whereHas('loan', fn($sq) => $sq->where('loan_type_id', $loanTypeId)))
+            ->when($branchId, fn($q) => $q->whereHas('loan.member', fn($sq) => $sq->where('branch_id', $branchId)))
             ->sum('amount');
         
-        return $expectedCollections > 0 ? ($actualCollections / $expectedCollections) * 100 : 0;
+        return $expectedCollections > 0 ? round(($actualCollections / $expectedCollections) * 100, 2) : 0;
     }
 } 
