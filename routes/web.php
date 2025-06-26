@@ -134,7 +134,17 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('branches')->name('branches.')->group(function () {
-        Route::get('/', function () { return view('branches.index'); })->name('index');
+        Route::get('/', [App\Http\Controllers\BranchController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\BranchController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\BranchController::class, 'store'])->name('store');
+        Route::get('/{branch}', [App\Http\Controllers\BranchController::class, 'show'])->name('show');
+        Route::get('/{branch}/edit', [App\Http\Controllers\BranchController::class, 'edit'])->name('edit');
+        Route::put('/{branch}', [App\Http\Controllers\BranchController::class, 'update'])->name('update');
+        Route::delete('/{branch}', [App\Http\Controllers\BranchController::class, 'destroy'])->name('destroy');
+        Route::get('/{branch}/staff', [App\Http\Controllers\BranchController::class, 'staff'])->name('staff');
+        Route::post('/{branch}/staff/assign', [App\Http\Controllers\BranchController::class, 'assignStaff'])->name('staff.assign');
+        Route::delete('/{branch}/staff/remove', [App\Http\Controllers\BranchController::class, 'removeStaff'])->name('staff.remove');
+        Route::get('/{branch}/analytics', [App\Http\Controllers\BranchController::class, 'analytics'])->name('analytics');
     });
 
     Route::prefix('roles')->name('roles.')->group(function () {
