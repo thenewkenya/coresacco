@@ -1373,13 +1373,195 @@ class ReportsController extends Controller
 
     private function generateBranchPerformance($startDate, $endDate)
     {
-        // This would need a branches table with proper relationships
-        $branches = collect([
-            ['id' => 1, 'name' => 'Main Branch', 'members' => 0, 'deposits' => 0, 'loans' => 0],
-            ['id' => 2, 'name' => 'Secondary Branch', 'members' => 0, 'deposits' => 0, 'loans' => 0],
-        ]);
+        $branches = \App\Models\Branch::with(['manager', 'staff'])->get();
         
-        return compact('branches');
+        $branchPerformance = $branches->map(function($branch) use ($startDate, $endDate) {
+            // Get branch members
+            $branchMembers = User::where('branch_id', $branch->id)->where('role', 'member')->get();
+            $memberIds = $branchMembers->pluck('id');
+            
+            // Account balances for branch members
+            $accounts = Account::whereIn('member_id', $memberIds)->get();
+            $totalDeposits = $accounts->sum('balance');
+            
+            // Transaction analysis for the period
+            $transactions = Transaction::whereHas('account', function($q) use ($memberIds) {
+                $q->whereIn('member_id', $memberIds);
+            })->whereBetween('created_at', [$startDate, $endDate])->get();
+            
+            $deposits = $transactions->where('type', 'deposit')->where('status', 'completed');
+            $withdrawals = $transactions->where('type', 'withdrawal')->where('status', 'completed');
+            $loanRepayments = $transactions->where('type', 'loan_repayment')->where('status', 'completed');
+            
+            // Loan analysis for branch members
+            $loans = Loan::whereIn('member_id', $memberIds)->get();
+            $activeLoans = $loans->whereIn('status', ['active', 'disbursed']);
+            $completedLoans = $loans->where('status', 'completed');
+            $overdueLoans = $loans->where('status', 'active')->filter(function($loan) {
+                return $loan->due_date < now();
+            });
+            
+            // Period-specific loan disbursements
+            $periodLoans = Loan::whereIn('member_id', $memberIds)
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->get();
+            
+            // Growth metrics
+            $newMembers = User::where('branch_id', $branch->id)
+                ->where('role', 'member')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+            
+            // Calculate performance score (0-100)
+            $performanceScore = $this->calculateBranchPerformanceScore([
+                'total_deposits' => $totalDeposits,
+                'transaction_volume' => $transactions->where('status', 'completed')->sum('amount'),
+                'active_loans_count' => $activeLoans->count(),
+                'overdue_rate' => $loans->count() > 0 ? ($overdueLoans->count() / $loans->count()) * 100 : 0,
+                'member_growth' => $newMembers,
+                'collection_rate' => $this->calculateBranchCollectionRate($memberIds, $startDate, $endDate)
+            ]);
+            
+            return [
+                'branch' => $branch,
+                'total_members' => $branchMembers->count(),
+                'new_members' => $newMembers,
+                'total_deposits' => $totalDeposits,
+                'total_accounts' => $accounts->count(),
+                'transaction_volume' => $transactions->where('status', 'completed')->sum('amount'),
+                'transaction_count' => $transactions->where('status', 'completed')->count(),
+                'deposits' => [
+                    'count' => $deposits->count(),
+                    'amount' => $deposits->sum('amount'),
+                    'avg_amount' => $deposits->avg('amount') ?: 0
+                ],
+                'withdrawals' => [
+                    'count' => $withdrawals->count(),
+                    'amount' => $withdrawals->sum('amount'),
+                    'avg_amount' => $withdrawals->avg('amount') ?: 0
+                ],
+                'loan_repayments' => [
+                    'count' => $loanRepayments->count(),
+                    'amount' => $loanRepayments->sum('amount'),
+                    'avg_amount' => $loanRepayments->avg('amount') ?: 0
+                ],
+                'loans' => [
+                    'total_portfolio' => $loans->sum('amount'),
+                    'active_loans' => $activeLoans->count(),
+                    'active_amount' => $activeLoans->sum('amount'),
+                    'completed_loans' => $completedLoans->count(),
+                    'overdue_loans' => $overdueLoans->count(),
+                    'overdue_amount' => $overdueLoans->sum('amount'),
+                    'period_disbursements' => $periodLoans->sum('amount'),
+                    'period_count' => $periodLoans->count()
+                ],
+                'net_cash_flow' => $deposits->sum('amount') - $withdrawals->sum('amount'),
+                'performance_score' => $performanceScore,
+                'performance_rating' => $this->getBranchPerformanceRating($performanceScore),
+                'staff_count' => $branch->staff->count(),
+                'manager' => $branch->manager,
+                'is_active' => $branch->status === 'active'
+            ];
+        });
+        
+        // Overall statistics
+        $overallStats = [
+            'total_branches' => $branches->count(),
+            'active_branches' => $branches->where('status', 'active')->count(),
+            'total_members' => $branchPerformance->sum('total_members'),
+            'total_deposits' => $branchPerformance->sum('total_deposits'),
+            'total_transaction_volume' => $branchPerformance->sum('transaction_volume'),
+            'avg_performance_score' => $branchPerformance->avg('performance_score'),
+            'top_performing_branch' => $branchPerformance->sortByDesc('performance_score')->first(),
+            'most_deposits_branch' => $branchPerformance->sortByDesc('total_deposits')->first(),
+            'most_active_branch' => $branchPerformance->sortByDesc('transaction_count')->first(),
+            'fastest_growing_branch' => $branchPerformance->sortByDesc('new_members')->first()
+        ];
+        
+        // Rankings
+        $rankings = [
+            'by_performance' => $branchPerformance->sortByDesc('performance_score')->values(),
+            'by_deposits' => $branchPerformance->sortByDesc('total_deposits')->values(),
+            'by_members' => $branchPerformance->sortByDesc('total_members')->values(),
+            'by_growth' => $branchPerformance->sortByDesc('new_members')->values(),
+            'by_loan_portfolio' => $branchPerformance->sortByDesc('loans.total_portfolio')->values()
+        ];
+        
+        return compact('branchPerformance', 'overallStats', 'rankings');
+    }
+    
+    private function calculateBranchPerformanceScore($metrics)
+    {
+        $score = 0;
+        
+        // Deposit volume (25%)
+        if ($metrics['total_deposits'] > 1000000) $score += 25;
+        elseif ($metrics['total_deposits'] > 500000) $score += 20;
+        elseif ($metrics['total_deposits'] > 100000) $score += 15;
+        elseif ($metrics['total_deposits'] > 50000) $score += 10;
+        else $score += 5;
+        
+        // Transaction volume (20%)
+        if ($metrics['transaction_volume'] > 500000) $score += 20;
+        elseif ($metrics['transaction_volume'] > 250000) $score += 16;
+        elseif ($metrics['transaction_volume'] > 100000) $score += 12;
+        elseif ($metrics['transaction_volume'] > 50000) $score += 8;
+        else $score += 4;
+        
+        // Loan portfolio performance (20%)
+        if ($metrics['active_loans_count'] > 50) $score += 15;
+        elseif ($metrics['active_loans_count'] > 25) $score += 12;
+        elseif ($metrics['active_loans_count'] > 10) $score += 8;
+        else $score += 4;
+        
+        // Overdue rate penalty (15%)
+        if ($metrics['overdue_rate'] < 5) $score += 15;
+        elseif ($metrics['overdue_rate'] < 10) $score += 12;
+        elseif ($metrics['overdue_rate'] < 20) $score += 8;
+        elseif ($metrics['overdue_rate'] < 30) $score += 4;
+        else $score += 0;
+        
+        // Member growth (10%)
+        if ($metrics['member_growth'] > 20) $score += 10;
+        elseif ($metrics['member_growth'] > 10) $score += 8;
+        elseif ($metrics['member_growth'] > 5) $score += 6;
+        elseif ($metrics['member_growth'] > 0) $score += 4;
+        else $score += 0;
+        
+        // Collection rate (10%)
+        if ($metrics['collection_rate'] > 95) $score += 10;
+        elseif ($metrics['collection_rate'] > 90) $score += 8;
+        elseif ($metrics['collection_rate'] > 85) $score += 6;
+        elseif ($metrics['collection_rate'] > 80) $score += 4;
+        else $score += 2;
+        
+        return min(100, $score);
+    }
+    
+    private function getBranchPerformanceRating($score)
+    {
+        if ($score >= 90) return 'Excellent';
+        if ($score >= 80) return 'Very Good';
+        if ($score >= 70) return 'Good';
+        if ($score >= 60) return 'Average';
+        if ($score >= 50) return 'Below Average';
+        return 'Poor';
+    }
+    
+    private function calculateBranchCollectionRate($memberIds, $startDate, $endDate)
+    {
+        $expectedCollections = Loan::whereIn('member_id', $memberIds)
+            ->where('due_date', '>=', $startDate)
+            ->where('due_date', '<=', $endDate)
+            ->sum('amount');
+        
+        $actualCollections = Transaction::where('type', 'loan_repayment')
+            ->where('status', 'completed')
+            ->whereIn('member_id', $memberIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->sum('amount');
+        
+        return $expectedCollections > 0 ? round(($actualCollections / $expectedCollections) * 100, 2) : 0;
     }
 
     private function generateDailySummary($startDate, $endDate)

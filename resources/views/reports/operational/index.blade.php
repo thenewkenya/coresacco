@@ -40,6 +40,7 @@
                             <option value="transactions" {{ ($report_type ?? '') === 'transactions' ? 'selected' : '' }}>{{ __('Transaction Details') }}</option>
                             <option value="hourly_analysis" {{ ($report_type ?? '') === 'hourly_analysis' ? 'selected' : '' }}>{{ __('Hourly Analysis') }}</option>
                             <option value="transaction_types" {{ ($report_type ?? '') === 'transaction_types' ? 'selected' : '' }}>{{ __('Transaction Types') }}</option>
+                            <option value="branch_performance" {{ ($report_type ?? '') === 'branch_performance' ? 'selected' : '' }}>{{ __('Branch Performance') }}</option>
                         </flux:select>
                     </div>
 
@@ -80,6 +81,8 @@
                     @include('reports.operational.partials.hourly-analysis')
                 @elseif($report_type === 'transaction_types' && isset($typeAnalysis))
                     @include('reports.operational.partials.transaction-types')
+                @elseif($report_type === 'branch_performance' && isset($branchPerformance))
+                    @include('reports.operational.partials.branch-performance')
                 @endif
             @else
                 <!-- Default Dashboard -->
@@ -160,6 +163,10 @@
                         <a href="?type=transaction_types&start_date={{ now()->startOfWeek()->format('Y-m-d') }}&end_date={{ now()->endOfWeek()->format('Y-m-d') }}" class="p-4 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors">
                             <h4 class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Transaction Types') }}</h4>
                             <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{{ __('Analysis by transaction type breakdown') }}</p>
+                        </a>
+                        <a href="?type=branch_performance&start_date={{ now()->startOfMonth()->format('Y-m-d') }}&end_date={{ now()->endOfMonth()->format('Y-m-d') }}" class="p-4 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors">
+                            <h4 class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Branch Performance') }}</h4>
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{{ __('Comprehensive branch analytics and rankings') }}</p>
                         </a>
                     </div>
                 </div>
