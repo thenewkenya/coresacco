@@ -135,6 +135,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('branches')->name('branches.')->group(function () {
         Route::get('/', [App\Http\Controllers\BranchController::class, 'index'])->name('index');
+        Route::get('/map', [App\Http\Controllers\BranchController::class, 'mapView'])->name('map');
         Route::get('/create', [App\Http\Controllers\BranchController::class, 'create'])->name('create');
         Route::post('/', [App\Http\Controllers\BranchController::class, 'store'])->name('store');
         Route::get('/{branch}', [App\Http\Controllers\BranchController::class, 'show'])->name('show');

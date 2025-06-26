@@ -322,6 +322,108 @@ class BranchController extends Controller
     }
 
     /**
+     * Display branches on map view
+     */
+    public function mapView(Request $request)
+    {
+        // Check if user has permission to view branches
+        if (!Auth::user()->hasAnyRole(['admin', 'manager'])) {
+            abort(403, 'Unauthorized to access branch map.');
+        }
+
+        $search = $request->get('search');
+        $status = $request->get('status');
+        $city = $request->get('city');
+
+        // Build query with eager loading
+        $query = Branch::with(['manager', 'staff'])
+            ->when($search, function ($q) use ($search) {
+                $q->where(function($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                          ->orWhere('code', 'like', "%{$search}%")
+                          ->orWhere('city', 'like', "%{$search}%")
+                          ->orWhere('address', 'like', "%{$search}%");
+                });
+            })
+            ->when($status, function ($q) use ($status) {
+                $q->where('status', $status);
+            })
+            ->when($city, function ($q) use ($city) {
+                $q->where('city', $city);
+            });
+
+        $branches = $query->whereNotNull('coordinates')->latest()->get();
+
+        // Calculate analytics for each branch with coordinates
+        $branchesWithAnalytics = $branches->map(function($branch) {
+            return $this->calculateBranchAnalytics($branch);
+        });
+
+        // Calculate map center (Kenya's center)
+        $mapCenter = [
+            'lat' => -1.0232,
+            'lng' => 37.9062
+        ];
+
+        // If we have branches, calculate center based on branch locations
+        if ($branchesWithAnalytics->count() > 0) {
+            $validBranches = $branchesWithAnalytics->filter(function($data) {
+                return isset($data['branch']->coordinates['latitude']) && 
+                       isset($data['branch']->coordinates['longitude']);
+            });
+
+            if ($validBranches->count() > 0) {
+                $avgLat = $validBranches->avg(function($data) {
+                    return $data['branch']->coordinates['latitude'];
+                });
+                $avgLng = $validBranches->avg(function($data) {
+                    return $data['branch']->coordinates['longitude'];
+                });
+                
+                $mapCenter = [
+                    'lat' => $avgLat,
+                    'lng' => $avgLng
+                ];
+            }
+        }
+
+        // Overall statistics
+        $stats = [
+            'total_branches' => Branch::count(),
+            'mapped_branches' => Branch::whereNotNull('coordinates')->count(),
+            'active_branches' => Branch::where('status', 'active')->count(),
+            'total_members' => User::where('role', 'member')->count(),
+            'top_performer' => $this->getTopPerformingBranch(),
+        ];
+
+        // Get filter options
+        $cities = Branch::select('city')->distinct()->pluck('city');
+
+        // Check if debug view is requested
+        if ($request->get('debug') === 'static') {
+            return view('branches.map-static', compact(
+                'branchesWithAnalytics', 
+                'stats', 
+                'cities', 
+                'mapCenter',
+                'search',
+                'status',
+                'city'
+            ));
+        }
+
+        return view('branches.map', compact(
+            'branchesWithAnalytics', 
+            'stats', 
+            'cities', 
+            'mapCenter',
+            'search',
+            'status',
+            'city'
+        ));
+    }
+
+    /**
      * Branch performance analytics
      */
     public function analytics(Branch $branch, Request $request)

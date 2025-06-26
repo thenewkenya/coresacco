@@ -132,7 +132,7 @@
                             {{ __('All Branches') }} ({{ $branchesWithAnalytics->count() }})
                         </h3>
                         <div class="flex items-center space-x-2">
-                            <flux:button variant="ghost" size="sm" icon="map">
+                            <flux:button variant="ghost" size="sm" icon="map" :href="route('branches.map')" wire:navigate>
                                 {{ __('Map View') }}
                             </flux:button>
                             <flux:button variant="ghost" size="sm" icon="chart-bar" :href="route('reports.operational', ['type' => 'branch_performance'])" wire:navigate>
