@@ -93,12 +93,27 @@ $branchPerformance = Branch::all()->map(function($branch) {
                         <span class="hidden sm:inline">Filters</span>
                         <span class="sm:hidden">Filter</span>
                     </flux:button>
-                    <flux:button variant="primary" size="sm" icon="plus" onclick="showAddWidgetModal()" class="flex-1 sm:flex-none">
-                        <span class="hidden sm:inline">Add Widget</span>
-                        <span class="sm:hidden">Add</span>
-                    </flux:button>
+                    <flux:modal.trigger name="add-widget-modal">
+                        <flux:button variant="primary" size="sm" icon="plus" class="flex-1 sm:flex-none">
+                            <span class="hidden sm:inline">Add Widget</span>
+                            <span class="sm:hidden">Add</span>
+                        </flux:button>
+                    </flux:modal.trigger>
                 </div>
             </div>
+
+            <!-- Analytics Quick Overview -->
+            @if(in_array(auth()->user()->role, ['admin', 'manager']))
+            <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ __('Quick Analytics') }}</h2>
+                    <flux:button variant="outline" size="sm" :href="route('analytics.index')" wire:navigate>
+                        {{ __('View Full Dashboard') }}
+                    </flux:button>
+                </div>
+                <livewire:analytics.quick-stats />
+            </div>
+            @endif
 
             <!-- Admin/Manager Dashboard -->
             @if(in_array(auth()->user()->role, ['admin', 'manager']))
@@ -489,15 +504,20 @@ $branchPerformance = Branch::all()->map(function($branch) {
     </div>
 
     <!-- Add Widget Modal -->
-    <div id="addWidgetModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-3 sm:p-4">
-        <div class="bg-white dark:bg-zinc-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-4 sm:mb-6">
-                <h2 class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white">Add Widget</h2>
-                <button onclick="hideAddWidgetModal()" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 p-1">
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+    <flux:modal name="add-widget-modal" class="max-w-4xl">
+        <div class="space-y-6">
+            <div class="text-center">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
+                    <flux:icon.plus class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div class="mt-3">
+                    <flux:heading size="lg">Add Widget</flux:heading>
+                    <div class="mt-2">
+                        <flux:subheading>
+                            Customize your dashboard with additional widgets
+                        </flux:subheading>
+                    </div>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
@@ -602,16 +622,18 @@ $branchPerformance = Branch::all()->map(function($branch) {
                 </div>
             </div>
 
-            <div class="mt-6 flex justify-end space-x-3">
-                <flux:button variant="outline" onclick="hideAddWidgetModal()">
-                    Cancel
-                </flux:button>
-                <flux:button variant="primary" onclick="resetWidgets()">
+            <div class="flex gap-3">
+                <flux:modal.close>
+                    <flux:button variant="ghost" class="flex-1">
+                        Cancel
+                    </flux:button>
+                </flux:modal.close>
+                <flux:button variant="outline" class="flex-1" onclick="resetWidgets()">
                     Reset to Default
                 </flux:button>
             </div>
         </div>
-    </div>
+    </flux:modal>
 
     <!-- Pass data to JavaScript -->
     <script>
@@ -653,16 +675,6 @@ $branchPerformance = Branch::all()->map(function($branch) {
         // Load saved widgets from localStorage
         loadSavedWidgets();
 
-        function showAddWidgetModal() {
-            document.getElementById('addWidgetModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function hideAddWidgetModal() {
-            document.getElementById('addWidgetModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
         function addWidget(widgetType) {
             if (window.dashboardWidgets.includes(widgetType)) {
                 showNotification('This widget is already added to your dashboard!', 'warning');
@@ -673,7 +685,9 @@ $branchPerformance = Branch::all()->map(function($branch) {
             renderWidget(widgetType);
             saveWidgetsToStorage();
             showCustomWidgetsContainer();
-            hideAddWidgetModal();
+            
+            // Close modal
+            window.dispatchEvent(new CustomEvent('close-modal', { detail: 'add-widget-modal' }));
 
             // Show success message
             showNotification(`Widget "${getWidgetTitle(widgetType)}" added successfully!`, 'success');
@@ -923,7 +937,10 @@ $branchPerformance = Branch::all()->map(function($branch) {
                 document.getElementById('customWidgetsContainer').innerHTML = '';
                 hideCustomWidgetsContainer();
                 saveWidgetsToStorage();
-                hideAddWidgetModal();
+                
+                // Close modal
+                window.dispatchEvent(new CustomEvent('close-modal', { detail: 'add-widget-modal' }));
+                
                 showNotification('Widgets reset to default!', 'info');
             }
         }
@@ -960,16 +977,7 @@ $branchPerformance = Branch::all()->map(function($branch) {
             }, 3000);
         }
 
-        // Close modal when clicking outside
-        document.getElementById('addWidgetModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                hideAddWidgetModal();
-            }
-        });
-
         // Make functions global
-        window.showAddWidgetModal = showAddWidgetModal;
-        window.hideAddWidgetModal = hideAddWidgetModal;
         window.addWidget = addWidget;
         window.removeWidget = removeWidget;
         window.resetWidgets = resetWidgets;

@@ -42,12 +42,29 @@
                                 <div class="flex items-start space-x-3">
                                     <div class="flex-shrink-0">
                                         @php
-                                            $iconColorClass = match($notification['color'] ?? 'zinc') {
+                                            $color = $notification['color'] ?? 'zinc';
+                                            $iconColorClass = match($color) {
                                                 'blue' => 'text-blue-500',
                                                 'green' => 'text-green-500',
                                                 'red' => 'text-red-500',
                                                 'amber' => 'text-amber-500',
+                                                'yellow' => 'text-yellow-500',
                                                 'emerald' => 'text-emerald-500',
+                                                'indigo' => 'text-indigo-500',
+                                                'purple' => 'text-purple-500',
+                                                'pink' => 'text-pink-500',
+                                                'gray' => 'text-gray-500',
+                                                'slate' => 'text-slate-500',
+                                                'neutral' => 'text-neutral-500',
+                                                'orange' => 'text-orange-500',
+                                                'lime' => 'text-lime-500',
+                                                'teal' => 'text-teal-500',
+                                                'cyan' => 'text-cyan-500',
+                                                'sky' => 'text-sky-500',
+                                                'violet' => 'text-violet-500',
+                                                'fuchsia' => 'text-fuchsia-500',
+                                                'rose' => 'text-rose-500',
+                                                'zinc' => 'text-zinc-500',
                                                 default => 'text-zinc-500'
                                             };
                                         @endphp

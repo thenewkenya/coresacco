@@ -107,6 +107,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('budget')->name('budget.')->group(function () {
         Route::get('/', [App\Http\Controllers\BudgetController::class, 'index'])->name('index');
         Volt::route('/create', 'budget.create-budget')->name('create');
+        Route::get('/smart-suggestions', [App\Http\Controllers\BudgetController::class, 'getSmartSuggestions'])->name('smart-suggestions');
         Route::get('/{budget}', [App\Http\Controllers\BudgetController::class, 'show'])->name('show');
         Route::post('/{budget}/expenses', [App\Http\Controllers\BudgetController::class, 'recordExpense'])->name('expenses.store');
         Route::delete('/{budget}/expenses/{expense}', [App\Http\Controllers\BudgetController::class, 'deleteExpense'])->name('expenses.destroy');
@@ -120,11 +121,16 @@ Route::middleware(['auth'])->group(function () {
 
     // Management & Analytics
     Route::prefix('analytics')->name('analytics.')->group(function () {
-        Route::get('/', function () { return view('analytics.index'); })->name('index');
+        Route::get('/', [App\Http\Controllers\AnalyticsController::class, 'index'])->name('index');
+        Route::get('/export', [App\Http\Controllers\AnalyticsController::class, 'export'])->name('export');
     });
 
     Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/', function () { return view('reports.index'); })->name('index');
+        Route::get('/', [App\Http\Controllers\ReportsController::class, 'index'])->name('index');
+        Route::get('/financial', [App\Http\Controllers\ReportsController::class, 'financial'])->name('financial');
+        Route::get('/members', [App\Http\Controllers\ReportsController::class, 'members'])->name('members');
+        Route::get('/loans', [App\Http\Controllers\ReportsController::class, 'loans'])->name('loans');
+        Route::get('/operational', [App\Http\Controllers\ReportsController::class, 'operational'])->name('operational');
     });
 
     Route::prefix('branches')->name('branches.')->group(function () {
