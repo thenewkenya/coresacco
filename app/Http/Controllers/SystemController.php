@@ -79,15 +79,14 @@ class SystemController extends Controller
     {
         $this->authorize('updateSettings');
         
-        $activeTab = $request->input('active_tab', 'general');
         $settingsStructure = $this->getSettingsStructure();
         $rules = [];
         $messages = [];
 
-        // Only build validation rules for the active tab
-        if (isset($settingsStructure[$activeTab])) {
-            foreach ($settingsStructure[$activeTab] as $key => $config) {
-                $fieldName = "{$activeTab}.{$key}";
+        // Build validation rules for all tabs
+        foreach ($settingsStructure as $tab => $tabSettings) {
+            foreach ($tabSettings as $key => $config) {
+                $fieldName = "{$tab}.{$key}";
                 $rules[$fieldName] = $config['validation'] ?? 'nullable';
                 
                 if (isset($config['validation_message'])) {
@@ -104,11 +103,11 @@ class SystemController extends Controller
 
         $updated = 0;
 
-        // Only process settings for the active tab
-        if (isset($settingsStructure[$activeTab])) {
-            foreach ($settingsStructure[$activeTab] as $key => $config) {
-                $fieldName = "{$activeTab}.{$key}";
-                $arrayFieldName = "{$activeTab}[{$key}]";
+        // Process settings for all tabs
+        foreach ($settingsStructure as $tab => $tabSettings) {
+            foreach ($tabSettings as $key => $config) {
+                $fieldName = "{$tab}.{$key}";
+                $arrayFieldName = "{$tab}[{$key}]";
                 
                 // For boolean fields, check if the field exists in request
                 if ($config['type'] === 'boolean') {
@@ -127,7 +126,7 @@ class SystemController extends Controller
                     [
                         'value' => $value,
                         'type' => $config['type'],
-                        'group' => $activeTab,
+                        'group' => $tab,
                         'label' => $config['label'],
                         'description' => $config['description']
                     ]
@@ -139,7 +138,7 @@ class SystemController extends Controller
 
         Setting::clearCache();
 
-        return back()->with('success', "Updated {$updated} {$activeTab} settings successfully.");
+        return back()->with('success', "Updated {$updated} settings successfully.");
     }
 
     /**
