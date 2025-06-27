@@ -51,10 +51,13 @@ test('admin can update system settings', function () {
     
     $this->actingAs($admin)
         ->post(route('system.settings.update'), [
+            'active_tab' => 'general',
             'general' => [
                 'organization_name' => 'Test SACCO',
+                'registration_number' => 'SACCO-TEST-2024',
                 'contact_email' => 'test@sacco.com',
-                'default_currency' => 'USD'
+                'default_currency' => 'USD',
+                'timezone' => 'Africa/Nairobi'
             ],
             'financial' => [
                 'savings_interest_rate' => 10.5,
@@ -71,6 +74,8 @@ test('admin can update system settings', function () {
     expect(setting('organization_name'))->toBe('Test SACCO');
     expect(setting('contact_email'))->toBe('test@sacco.com');
     expect(setting('default_currency'))->toBe('USD');
+    expect(setting('registration_number'))->toBe('SACCO-TEST-2024');
+    expect(setting('timezone'))->toBe('Africa/Nairobi');
     expect(setting('savings_interest_rate'))->toBe(10.5);
     expect(setting('enable_sms_notifications'))->toBe(true);
 });
@@ -169,5 +174,5 @@ test('organization name helper works', function () {
     // Test default when setting doesn't exist
     Setting::where('key', 'organization_name')->delete();
     Setting::clearCache();
-    expect(organization_name())->toBe('SACCO');
+    expect(organization_name())->toBe('Kenya SACCO Limited');
 });

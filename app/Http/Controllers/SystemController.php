@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
 
 class SystemController extends Controller
 {
@@ -151,16 +152,52 @@ class SystemController extends Controller
         $group = $request->get('group');
         
         if ($group && $group !== 'all') {
+            // Get all keys for the group before deletion
+            $keys = Setting::where('group', $group)->pluck('key');
+            
+            // Delete settings
             Setting::where('group', $group)->delete();
+            
+            // Clear cache for each deleted key
+            foreach ($keys as $key) {
+                Cache::forget("setting.{$key}");
+            }
+            
             $message = "Reset {$group} settings to defaults.";
         } else {
+            // Get all keys before deletion
+            $keys = Setting::pluck('key');
+            
+            // Delete all settings
             Setting::truncate();
+            
+            // Clear cache for each deleted key
+            foreach ($keys as $key) {
+                Cache::forget("setting.{$key}");
+            }
+            
             $message = "Reset all settings to defaults.";
         }
 
-        Setting::clearCache();
+        // Clear the grouped settings cache
+        Cache::forget('settings.all');
 
         return back()->with('success', $message);
+    }
+
+    /**
+     * Export settings as JSON
+     */
+    public function exportSettings(Request $request)
+    {
+        $this->authorize('viewSettings');
+        
+        $settings = Setting::getAllGrouped();
+        $filename = 'sacco-settings-' . now()->format('Y-m-d') . '.json';
+        
+        return response()->json($settings)
+            ->header('Content-Disposition', 'attachment; filename=' . $filename)
+            ->header('Content-Type', 'application/json');
     }
 
     /**
