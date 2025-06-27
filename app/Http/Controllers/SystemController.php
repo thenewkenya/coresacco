@@ -23,7 +23,12 @@ class SystemController extends Controller
         $activeTab = $request->get('tab', 'general');
         
         // Get all settings grouped by category
-        $settings = Setting::getAllGrouped();
+        try {
+            $settings = Setting::getAllGrouped();
+        } catch (\Exception $e) {
+            // If database connection fails, use empty settings
+            $settings = [];
+        }
         
         // Define setting structure with defaults if not in database
         $settingsStructure = $this->getSettingsStructure();
@@ -32,8 +37,24 @@ class SystemController extends Controller
         foreach ($settingsStructure as $group => $groupSettings) {
             foreach ($groupSettings as $key => $config) {
                 if (!isset($settings[$group][$key])) {
+                    // Try to create the setting in the database if it doesn't exist
+                    try {
+                        Setting::updateOrCreate(
+                            ['key' => $key],
+                            [
+                                'value' => $config['type'] === 'boolean' ? ($config['default'] ? 'true' : 'false') : $config['default'],
+                                'type' => $config['type'],
+                                'group' => $group,
+                                'label' => $config['label'],
+                                'description' => $config['description']
+                            ]
+                        );
+                    } catch (\Exception $e) {
+                        // If database operation fails, just use the default in memory
+                    }
+                    
                     $settings[$group][$key] = [
-                        'value' => $config['default'],
+                        'value' => $config['type'] === 'boolean' ? ($config['default'] ? 'true' : 'false') : $config['default'],
                         'label' => $config['label'],
                         'description' => $config['description'],
                         'type' => $config['type'],
@@ -86,16 +107,18 @@ class SystemController extends Controller
         if (isset($settingsStructure[$activeTab])) {
             foreach ($settingsStructure[$activeTab] as $key => $config) {
                 $fieldName = "{$activeTab}.{$key}";
+                $arrayFieldName = "{$activeTab}[{$key}]";
                 
                 // For boolean fields, check if the field exists in request
                 if ($config['type'] === 'boolean') {
-                    $value = $request->has($fieldName) ? 'true' : 'false';
+                    // Check both dot notation and array notation
+                    $value = ($request->has($fieldName) || $request->has($arrayFieldName)) ? 'true' : 'false';
                 } else {
-                    // Only process non-boolean fields if they exist in the request
-                    if (!$request->has($fieldName)) {
+                    // For non-boolean fields, check if they exist in the request
+                    if (!$request->has($fieldName) && !$request->has($arrayFieldName)) {
                         continue;
                     }
-                    $value = $request->input($fieldName);
+                    $value = $request->input($fieldName) ?? $request->input($arrayFieldName);
                 }
                 
                 Setting::updateOrCreate(
