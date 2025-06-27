@@ -9,10 +9,12 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Account;
 use App\Models\Loan;
+use App\Models\Role;
 use App\Policies\TransactionPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\AccountPolicy;
 use App\Policies\LoanPolicy;
+use App\Policies\RolePolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Account::class, AccountPolicy::class);
         Gate::policy(Loan::class, LoanPolicy::class);
+        Gate::policy(Role::class, RolePolicy::class);
         
         // Custom Blade directives for permissions
         Blade::if('can', function ($permission) {

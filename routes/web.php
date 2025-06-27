@@ -149,7 +149,23 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('roles')->name('roles.')->group(function () {
-        Route::get('/', function () { return view('roles.index'); })->name('index');
+        Route::get('/', [App\Http\Controllers\RoleController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\RoleController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\RoleController::class, 'store'])->name('store');
+        Route::get('/{role}', [App\Http\Controllers\RoleController::class, 'show'])->name('show');
+        Route::get('/{role}/edit', [App\Http\Controllers\RoleController::class, 'edit'])->name('edit');
+        Route::put('/{role}', [App\Http\Controllers\RoleController::class, 'update'])->name('update');
+        Route::delete('/{role}', [App\Http\Controllers\RoleController::class, 'destroy'])->name('destroy');
+        
+        // Role assignment routes
+        Route::post('/assign', [App\Http\Controllers\RoleController::class, 'assignRole'])->name('assign');
+        Route::post('/remove', [App\Http\Controllers\RoleController::class, 'removeRole'])->name('remove');
+        Route::post('/bulk-assign', [App\Http\Controllers\RoleController::class, 'bulkAssign'])->name('bulk-assign');
+        
+        // AJAX routes
+        Route::get('/{role}/permissions', [App\Http\Controllers\RoleController::class, 'permissions'])->name('permissions');
+        Route::post('/{role}/permissions', [App\Http\Controllers\RoleController::class, 'updatePermissions'])->name('permissions.update');
+        Route::get('/{role}/available-users', [App\Http\Controllers\RoleController::class, 'availableUsers'])->name('available-users');
     });
 
     Route::prefix('system')->name('system.')->group(function () {
