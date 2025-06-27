@@ -37,20 +37,4 @@ class SystemPolicy
     {
         return $user->hasRole('admin');
     }
-
-    /**
-     * Determine whether the user can export system settings.
-     */
-    public function exportSettings(User $user): bool
-    {
-        return $user->hasRole('admin');
-    }
-
-    /**
-     * Determine whether the user can import system settings.
-     */
-    public function importSettings(User $user): bool
-    {
-        return $user->hasRole('admin');
-    }
 }

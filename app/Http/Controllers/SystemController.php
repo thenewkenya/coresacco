@@ -23,7 +23,12 @@ class SystemController extends Controller
         $activeTab = $request->get('tab', 'general');
         
         // Get all settings grouped by category
-        $settings = Setting::getAllGrouped();
+        try {
+            $settings = Setting::getAllGrouped();
+        } catch (\Exception $e) {
+            // If database connection fails, use empty settings
+            $settings = [];
+        }
         
         // Define setting structure with defaults if not in database
         $settingsStructure = $this->getSettingsStructure();
@@ -32,8 +37,24 @@ class SystemController extends Controller
         foreach ($settingsStructure as $group => $groupSettings) {
             foreach ($groupSettings as $key => $config) {
                 if (!isset($settings[$group][$key])) {
+                    // Try to create the setting in the database if it doesn't exist
+                    try {
+                        Setting::updateOrCreate(
+                            ['key' => $key],
+                            [
+                                'value' => $config['type'] === 'boolean' ? ($config['default'] ? 'true' : 'false') : $config['default'],
+                                'type' => $config['type'],
+                                'group' => $group,
+                                'label' => $config['label'],
+                                'description' => $config['description']
+                            ]
+                        );
+                    } catch (\Exception $e) {
+                        // If database operation fails, just use the default in memory
+                    }
+                    
                     $settings[$group][$key] = [
-                        'value' => $config['default'],
+                        'value' => $config['type'] === 'boolean' ? ($config['default'] ? 'true' : 'false') : $config['default'],
                         'label' => $config['label'],
                         'description' => $config['description'],
                         'type' => $config['type'],
@@ -57,14 +78,15 @@ class SystemController extends Controller
     {
         $this->authorize('updateSettings');
         
+        $activeTab = $request->input('active_tab', 'general');
         $settingsStructure = $this->getSettingsStructure();
         $rules = [];
         $messages = [];
 
-        // Build validation rules dynamically
-        foreach ($settingsStructure as $group => $groupSettings) {
-            foreach ($groupSettings as $key => $config) {
-                $fieldName = "{$group}.{$key}";
+        // Only build validation rules for the active tab
+        if (isset($settingsStructure[$activeTab])) {
+            foreach ($settingsStructure[$activeTab] as $key => $config) {
+                $fieldName = "{$activeTab}.{$key}";
                 $rules[$fieldName] = $config['validation'] ?? 'nullable';
                 
                 if (isset($config['validation_message'])) {
@@ -81,38 +103,42 @@ class SystemController extends Controller
 
         $updated = 0;
 
-        // Process each setting group
-        foreach ($settingsStructure as $group => $groupSettings) {
-            foreach ($groupSettings as $key => $config) {
-                $fieldName = "{$group}.{$key}";
+        // Only process settings for the active tab
+        if (isset($settingsStructure[$activeTab])) {
+            foreach ($settingsStructure[$activeTab] as $key => $config) {
+                $fieldName = "{$activeTab}.{$key}";
+                $arrayFieldName = "{$activeTab}[{$key}]";
                 
-                if ($request->has($fieldName)) {
-                    $value = $request->input($fieldName);
-                    
-                    // Handle boolean values from checkboxes
-                    if ($config['type'] === 'boolean') {
-                        $value = $request->has($fieldName) ? 'true' : 'false';
+                // For boolean fields, check if the field exists in request
+                if ($config['type'] === 'boolean') {
+                    // Check both dot notation and array notation
+                    $value = ($request->has($fieldName) || $request->has($arrayFieldName)) ? 'true' : 'false';
+                } else {
+                    // For non-boolean fields, check if they exist in the request
+                    if (!$request->has($fieldName) && !$request->has($arrayFieldName)) {
+                        continue;
                     }
-                    
-                    Setting::updateOrCreate(
-                        ['key' => $key],
-                        [
-                            'value' => $value,
-                            'type' => $config['type'],
-                            'group' => $group,
-                            'label' => $config['label'],
-                            'description' => $config['description']
-                        ]
-                    );
-                    
-                    $updated++;
+                    $value = $request->input($fieldName) ?? $request->input($arrayFieldName);
                 }
+                
+                Setting::updateOrCreate(
+                    ['key' => $key],
+                    [
+                        'value' => $value,
+                        'type' => $config['type'],
+                        'group' => $activeTab,
+                        'label' => $config['label'],
+                        'description' => $config['description']
+                    ]
+                );
+                
+                $updated++;
             }
         }
 
         Setting::clearCache();
 
-        return back()->with('success', "Updated {$updated} settings successfully.");
+        return back()->with('success', "Updated {$updated} {$activeTab} settings successfully.");
     }
 
     /**
@@ -135,63 +161,6 @@ class SystemController extends Controller
         Setting::clearCache();
 
         return back()->with('success', $message);
-    }
-
-    /**
-     * Export settings as JSON
-     */
-    public function exportSettings()
-    {
-        $this->authorize('exportSettings');
-        
-        $settings = Setting::getAllGrouped();
-        
-        $filename = 'sacco-settings-' . date('Y-m-d-H-i-s') . '.json';
-        
-        return response()->json($settings)
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
-    }
-
-    /**
-     * Import settings from JSON
-     */
-    public function importSettings(Request $request)
-    {
-        $this->authorize('importSettings');
-        
-        $request->validate([
-            'settings_file' => 'required|file|mimes:json'
-        ]);
-
-        $file = $request->file('settings_file');
-        $content = file_get_contents($file->getPathname());
-        $settings = json_decode($content, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return back()->withErrors(['settings_file' => 'Invalid JSON file format.']);
-        }
-
-        $imported = 0;
-
-        foreach ($settings as $group => $groupSettings) {
-            foreach ($groupSettings as $key => $settingData) {
-                Setting::updateOrCreate(
-                    ['key' => $key],
-                    [
-                        'value' => $settingData['raw_value'] ?? $settingData['value'],
-                        'type' => $settingData['type'] ?? 'string',
-                        'group' => $group,
-                        'label' => $settingData['label'] ?? null,
-                        'description' => $settingData['description'] ?? null
-                    ]
-                );
-                $imported++;
-            }
-        }
-
-        Setting::clearCache();
-
-        return back()->with('success', "Imported {$imported} settings successfully.");
     }
 
     /**

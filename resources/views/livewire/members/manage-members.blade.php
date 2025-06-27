@@ -15,11 +15,11 @@ new #[Layout('components.layouts.app')] class extends Component {
     public $search = '';
     public $statusFilter = '';
     public $branchFilter = '';
+    public $viewMode = 'list'; // 'list' or 'grid'
     public $showCreateModal = false;
     public $showEditModal = false;
     public $showViewModal = false;
     public $selectedMember = null;
-
 
     // Form fields
     public $name = '';
@@ -39,34 +39,38 @@ new #[Layout('components.layouts.app')] class extends Component {
         'suspended' => 'Suspended',
     ];
 
-
-
     public function with()
     {
-        $members = User::query()
-            ->when($this->search, fn($query) => 
-                $query->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('email', 'like', '%' . $this->search . '%')
-                      ->orWhere('member_number', 'like', '%' . $this->search . '%')
+        $query = User::query()
+            ->when($this->search, fn($q) => 
+                $q->where('name', 'like', '%' . $this->search . '%')
+                  ->orWhere('email', 'like', '%' . $this->search . '%')
+                  ->orWhere('member_number', 'like', '%' . $this->search . '%')
             )
-            ->when($this->statusFilter, fn($query) => 
-                $query->where('membership_status', $this->statusFilter)
+            ->when($this->statusFilter, fn($q) => 
+                $q->where('membership_status', $this->statusFilter)
             )
-            ->when($this->branchFilter, fn($query) => 
-                $query->where('branch_id', $this->branchFilter)
+            ->when($this->branchFilter, fn($q) => 
+                $q->where('branch_id', $this->branchFilter)
             )
-            ->with(['branch', 'accounts', 'loans'])
-            ->latest()
-            ->paginate(10);
+            ->with(['branch', 'accounts', 'loans']);
 
+        $members = $query->latest()->paginate(15);
         $branches = Branch::where('status', 'active')->get();
+
+        // Stats for dashboard
+        $totalMembers = User::count();
+        $activeMembers = User::where('membership_status', 'active')->count();
+        $pendingMembers = User::where('membership_status', 'inactive')->count();
+        $suspendedMembers = User::where('membership_status', 'suspended')->count();
 
         return [
             'members' => $members,
             'branches' => $branches,
-            'canCreate' => true, // Simplified for now - can be enhanced with proper permission checks
-            'canEdit' => true,
-            'canDelete' => true,
+            'totalMembers' => $totalMembers,
+            'activeMembers' => $activeMembers,
+            'pendingMembers' => $pendingMembers,
+            'suspendedMembers' => $suspendedMembers,
         ];
     }
 
@@ -83,6 +87,11 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function updatedBranchFilter()
     {
         $this->resetPage();
+    }
+
+    public function setViewMode($mode)
+    {
+        $this->viewMode = $mode;
     }
 
     public function openCreateModal()
@@ -140,8 +149,6 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'member_number' => $this->generateMemberNumber(),
             ]);
 
-            // Member created successfully
-
             session()->flash('success', 'Member created successfully!');
             $this->resetForm();
             $this->showCreateModal = false;
@@ -188,7 +195,6 @@ new #[Layout('components.layouts.app')] class extends Component {
         try {
             $member = User::findOrFail($memberId);
             
-            // Check if member has active loans or accounts with balance
             if ($member->loans()->whereIn('status', ['active', 'disbursed'])->exists()) {
                 $this->addError('general', 'Cannot delete member with active loans.');
                 return;
@@ -209,25 +215,25 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     private function generateMemberNumber()
     {
-        $lastMember = User::whereNotNull('member_number')
-            ->orderBy('member_number', 'desc')
-            ->first();
+        do {
+            $memberNumber = 'MEM' . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
+        } while (User::where('member_number', $memberNumber)->exists());
 
-        if ($lastMember && $lastMember->member_number) {
-            $lastNumber = intval(substr($lastMember->member_number, 1));
-            return 'M' . str_pad($lastNumber + 1, 6, '0', STR_PAD_LEFT);
-        }
-
-        return 'M000001';
+        return $memberNumber;
     }
 
     private function resetForm()
     {
-        $this->reset([
-            'name', 'email', 'password', 'password_confirmation',
-            'phone_number', 'id_number', 'address', 'branch_id',
-            'membership_status', 'member_number'
-        ]);
+        $this->name = '';
+        $this->email = '';
+        $this->password = '';
+        $this->password_confirmation = '';
+        $this->phone_number = '';
+        $this->id_number = '';
+        $this->address = '';
+        $this->branch_id = '';
+        $this->membership_status = 'active';
+        $this->member_number = '';
         $this->selectedMember = null;
     }
 
@@ -240,298 +246,343 @@ new #[Layout('components.layouts.app')] class extends Component {
     }
 }; ?>
 
-<div class="min-h-screen bg-zinc-50 dark:bg-zinc-900">
+<div>
     <!-- Header -->
-    <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
-        <div class="px-4 sm:px-6 lg:px-8 py-6">
+    <div class="mb-8">
+        <flux:heading size="xl">Members</flux:heading>
+        <flux:subheading>Manage SACCO members and their accounts</flux:subheading>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                        {{ __('Member Management') }}
-                    </h1>
-                    <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                        {{ __('Manage SACCO members and their information') }}
-                    </p>
+                    <flux:subheading class="!text-zinc-600 dark:!text-zinc-400">Total Members</flux:subheading>
+                    <flux:heading size="lg" class="!text-zinc-900 dark:!text-zinc-100">{{ number_format($totalMembers) }}</flux:heading>
                 </div>
-                
-                @if($canCreate)
-                    <flux:button wire:click="openCreateModal" variant="primary">
-                        <flux:icon.plus class="w-4 h-4 mr-1" />
-                        {{ __('Add Member') }}
-                    </flux:button>
-                @endif
+                <div class="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                    <flux:icon.users class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:subheading class="!text-zinc-600 dark:!text-zinc-400">Active</flux:subheading>
+                    <flux:heading size="lg" class="!text-green-600 dark:!text-green-400">{{ number_format($activeMembers) }}</flux:heading>
+                </div>
+                <div class="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                    <flux:icon.check-circle class="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:subheading class="!text-zinc-600 dark:!text-zinc-400">Pending</flux:subheading>
+                    <flux:heading size="lg" class="!text-amber-600 dark:!text-amber-400">{{ number_format($pendingMembers) }}</flux:heading>
+                </div>
+                <div class="p-3 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
+                    <flux:icon.clock class="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <flux:subheading class="!text-zinc-600 dark:!text-zinc-400">Suspended</flux:subheading>
+                    <flux:heading size="lg" class="!text-red-600 dark:!text-red-400">{{ number_format($suspendedMembers) }}</flux:heading>
+                </div>
+                <div class="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg">
+                    <flux:icon.x-circle class="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Filters -->
-    <div class="px-4 sm:px-6 lg:px-8 py-4">
-        <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <flux:input 
-                    wire:model.live.debounce.300ms="search"
-                    placeholder="{{ __('Search members...') }}"
-                    icon="magnifying-glass" />
+    <!-- Controls -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700 mb-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <!-- Search and Filters -->
+            <div class="flex flex-col sm:flex-row gap-4 flex-1">
+                <div class="flex-1">
+                    <flux:input 
+                        wire:model.live="search" 
+                        placeholder="Search members..." 
+                        icon="magnifying-glass"
+                    />
+                </div>
                 
-                <flux:select wire:model.live="statusFilter">
-                    <option value="">{{ __('All Statuses') }}</option>
-                    @foreach($memberStatuses as $key => $label)
-                        <option value="{{ $key }}">{{ $label }}</option>
+                <flux:select wire:model.live="statusFilter" placeholder="All Status">
+                    <option value="">All Status</option>
+                    @foreach($memberStatuses as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
                     @endforeach
                 </flux:select>
 
-                <flux:select wire:model.live="branchFilter">
-                    <option value="">{{ __('All Branches') }}</option>
+                <flux:select wire:model.live="branchFilter" placeholder="All Branches">
+                    <option value="">All Branches</option>
                     @foreach($branches as $branch)
                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                     @endforeach
                 </flux:select>
+            </div>
 
-                <flux:button wire:click="$set('search', '')" variant="outline">
-                    {{ __('Clear Filters') }}
+            <!-- View Toggle and Add Button -->
+            <div class="flex items-center gap-3">
+                <!-- View Mode Toggle -->
+                <div class="flex rounded-lg border border-zinc-200 dark:border-zinc-600 p-1">
+                    <flux:button 
+                        variant="{{ $viewMode === 'list' ? 'primary' : 'ghost' }}" 
+                        size="sm"
+                        wire:click="setViewMode('list')"
+                        icon="list-bullet"
+                    />
+                    <flux:button 
+                        variant="{{ $viewMode === 'grid' ? 'primary' : 'ghost' }}" 
+                        size="sm"
+                        wire:click="setViewMode('grid')"
+                        icon="squares-2x2"
+                    />
+                </div>
+
+                <flux:button variant="primary" wire:click="openCreateModal" icon="plus">
+                    Add Member
                 </flux:button>
             </div>
         </div>
     </div>
 
-    <!-- Members Table -->
-    <div class="px-4 sm:px-6 lg:px-8 pb-8">
-        <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
-                    <thead class="bg-zinc-50 dark:bg-zinc-700">
+    <!-- Members Display -->
+    @if($members->count())
+        @if($viewMode === 'list')
+            <!-- List View -->
+            <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                <table class="w-full">
+                    <thead class="bg-zinc-50 dark:bg-zinc-700 border-b border-zinc-200 dark:border-zinc-600">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                                {{ __('Member') }}
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                                {{ __('Contact') }}
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                                {{ __('Branch') }}
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                                {{ __('Status') }}
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                                {{ __('Accounts') }}
-                            </th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                                {{ __('Actions') }}
-                            </th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-zinc-900 dark:text-zinc-100">Member</th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-zinc-900 dark:text-zinc-100">Contact</th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-zinc-900 dark:text-zinc-100">Branch</th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-zinc-900 dark:text-zinc-100">Status</th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-zinc-900 dark:text-zinc-100">Accounts</th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-zinc-900 dark:text-zinc-100">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white dark:bg-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-700">
-                        @forelse($members as $member)
+                    <tbody class="divide-y divide-zinc-200 dark:divide-zinc-600">
+                        @foreach($members as $member)
                             <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10">
-                                            <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-                                                {{ substr($member->name, 0, 2) }}
-                                            </div>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                            {{ substr($member->name, 0, 2) }}
                                         </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                                {{ $member->name }}
-                                            </div>
-                                            <div class="text-sm text-zinc-500 dark:text-zinc-400">
-                                                {{ $member->member_number ?? 'No member number' }}
-                                            </div>
+                                        <div>
+                                            <div class="font-medium text-zinc-900 dark:text-zinc-100">{{ $member->name }}</div>
+                                            <div class="text-sm text-zinc-500 dark:text-zinc-400">{{ $member->member_number }}</div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4">
                                     <div class="text-sm text-zinc-900 dark:text-zinc-100">{{ $member->email }}</div>
                                     <div class="text-sm text-zinc-500 dark:text-zinc-400">{{ $member->phone_number }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">
-                                    {{ $member->branch->name ?? 'No branch' }}
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-zinc-900 dark:text-zinc-100">{{ $member->branch?->name ?? 'N/A' }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                        {{ ($member->membership_status ?? 'active') === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : '' }}
-                                        {{ ($member->membership_status ?? 'active') === 'inactive' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' : '' }}
-                                        {{ ($member->membership_status ?? 'active') === 'suspended' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : '' }}">
-                                        {{ ucfirst($member->membership_status ?? 'active') }}
-                                    </span>
+                                <td class="px-6 py-4">
+                                    <flux:badge 
+                                        variant="{{ $member->membership_status === 'active' ? 'lime' : ($member->membership_status === 'suspended' ? 'red' : 'amber') }}"
+                                    >
+                                        {{ ucfirst($member->membership_status) }}
+                                    </flux:badge>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
-                                    {{ $member->accounts->count() }} accounts
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-zinc-900 dark:text-zinc-100">{{ $member->accounts->count() }} account(s)</div>
+                                    <div class="text-sm text-zinc-500 dark:text-zinc-400">KES {{ number_format($member->accounts->sum('balance'), 2) }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div class="flex justify-end space-x-2">
-                                        <flux:button 
-                                            wire:click="openViewModal({{ $member->id }})"
-                                            variant="ghost" 
-                                            size="sm">
-                                            {{ __('View') }}
-                                        </flux:button>
+                                <td class="px-6 py-4">
+                                    <flux:dropdown align="end">
+                                        <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
                                         
-                                        @if($canEdit)
-                                            <flux:button 
-                                                wire:click="openEditModal({{ $member->id }})"
-                                                variant="outline" 
-                                                size="sm">
-                                                {{ __('Edit') }}
-                                            </flux:button>
-                                        @endif
-
-                                        @if($canDelete)
-                                            <flux:button 
+                                        <flux:menu>
+                                            <flux:menu.item wire:click="openViewModal({{ $member->id }})" icon="eye">
+                                                View Details
+                                            </flux:menu.item>
+                                            <flux:menu.item wire:click="openEditModal({{ $member->id }})" icon="pencil">
+                                                Edit Member
+                                            </flux:menu.item>
+                                            <flux:menu.separator />
+                                            <flux:menu.item 
                                                 wire:click="deleteMember({{ $member->id }})"
                                                 wire:confirm="Are you sure you want to delete this member?"
-                                                variant="danger" 
-                                                size="sm">
-                                                {{ __('Delete') }}
-                                            </flux:button>
-                                        @endif
-                                    </div>
+                                                icon="trash"
+                                                variant="danger"
+                                            >
+                                                Delete
+                                            </flux:menu.item>
+                                        </flux:menu>
+                                    </flux:dropdown>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="px-6 py-12 text-center text-zinc-500 dark:text-zinc-400">
-                                    {{ __('No members found.') }}
-                                </td>
-                            </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>
+        @else
+            <!-- Grid View -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                @foreach($members as $member)
+                    <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 hover:shadow-lg dark:hover:shadow-zinc-900/25 transition-shadow">
+                        <!-- Member Header -->
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                {{ substr($member->name, 0, 2) }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-zinc-900 dark:text-zinc-100 truncate">{{ $member->name }}</div>
+                                <div class="text-sm text-zinc-500 dark:text-zinc-400">{{ $member->member_number }}</div>
+                            </div>
+                        </div>
 
-            <!-- Pagination -->
-            <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700">
-                {{ $members->links() }}
+                        <!-- Member Details -->
+                        <div class="space-y-2 mb-4">
+                            <div class="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+                                <flux:icon.envelope class="w-4 h-4" />
+                                <span class="truncate">{{ $member->email }}</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+                                <flux:icon.phone class="w-4 h-4" />
+                                <span>{{ $member->phone_number }}</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+                                <flux:icon.building-office class="w-4 h-4" />
+                                <span>{{ $member->branch?->name ?? 'N/A' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Status and Stats -->
+                        <div class="flex items-center justify-between mb-4">
+                            <flux:badge 
+                                variant="{{ $member->membership_status === 'active' ? 'lime' : ($member->membership_status === 'suspended' ? 'red' : 'amber') }}"
+                            >
+                                {{ ucfirst($member->membership_status) }}
+                            </flux:badge>
+                            <div class="text-right">
+                                <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $member->accounts->count() }} accounts</div>
+                                <div class="text-xs text-zinc-500 dark:text-zinc-400">KES {{ number_format($member->accounts->sum('balance'), 2) }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex gap-2">
+                            <flux:button variant="outline" size="sm" wire:click="openViewModal({{ $member->id }})" class="flex-1">
+                                View
+                            </flux:button>
+                            <flux:button variant="outline" size="sm" wire:click="openEditModal({{ $member->id }})" class="flex-1">
+                                Edit
+                            </flux:button>
+                            <flux:button 
+                                variant="outline" 
+                                size="sm" 
+                                wire:click="deleteMember({{ $member->id }})"
+                                wire:confirm="Are you sure?"
+                                class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                            >
+                                <flux:icon.trash class="w-4 h-4" />
+                            </flux:button>
+                        </div>
+                    </div>
+                @endforeach
             </div>
+        @endif
+
+        <!-- Pagination -->
+        <div class="mt-6">
+            {{ $members->links() }}
         </div>
-    </div>
+    @else
+        <!-- Empty State -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-12 text-center">
+            <div class="w-12 h-12 bg-zinc-100 dark:bg-zinc-700 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <flux:icon.users class="w-6 h-6 text-zinc-400 dark:text-zinc-500" />
+            </div>
+            <flux:heading size="lg" class="mb-2 dark:text-zinc-100">No members found</flux:heading>
+            <flux:subheading class="mb-6 dark:text-zinc-400">
+                @if($search || $statusFilter || $branchFilter)
+                    No members match your current filters.
+                @else
+                    Get started by adding your first member.
+                @endif
+            </flux:subheading>
+            <flux:button variant="primary" wire:click="openCreateModal" icon="plus">
+                Add Your First Member
+            </flux:button>
+        </div>
+    @endif
 
     <!-- Create Member Modal -->
-    <flux:modal name="create-member" :show="$showCreateModal">
+    <flux:modal wire:model="showCreateModal" class="md:w-2xl">
         <div class="space-y-6">
-            <div class="border-b border-zinc-200 dark:border-zinc-700 pb-4">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">{{ __('Create New Member') }}</h3>
+            <div>
+                <flux:heading size="lg" class="dark:text-zinc-100">Add New Member</flux:heading>
+                <flux:subheading class="dark:text-zinc-400">Create a new SACCO member account</flux:subheading>
             </div>
 
-            <form wire:submit="createMember" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <flux:field>
-                        <flux:label>{{ __('Full Name') }}</flux:label>
-                        <flux:input wire:model="name" required />
-                        <flux:error name="name" />
-                    </flux:field>
+            <form wire:submit="createMember" class="space-y-6">
+                <!-- Personal Information -->
+                <div class="space-y-4">
+                    <flux:heading size="base" class="dark:text-zinc-100">Personal Information</flux:heading>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <flux:field>
+                            <flux:label>Full Name</flux:label>
+                            <flux:input wire:model="name" placeholder="Enter full name" />
+                            <flux:error name="name" />
+                        </flux:field>
 
+                        <flux:field>
+                            <flux:label>ID Number</flux:label>
+                            <flux:input wire:model="id_number" placeholder="National ID number" />
+                            <flux:error name="id_number" />
+                        </flux:field>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="space-y-4">
+                    <flux:heading size="base" class="dark:text-zinc-100">Contact Information</flux:heading>
+                    
                     <flux:field>
-                        <flux:label>{{ __('Email Address') }}</flux:label>
-                        <flux:input wire:model="email" type="email" required />
+                        <flux:label>Email Address</flux:label>
+                        <flux:input wire:model="email" type="email" placeholder="member@example.com" />
                         <flux:error name="email" />
                     </flux:field>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <flux:field>
-                        <flux:label>{{ __('Password') }}</flux:label>
-                        <flux:input wire:model="password" type="password" required />
-                        <flux:error name="password" />
-                    </flux:field>
 
                     <flux:field>
-                        <flux:label>{{ __('Confirm Password') }}</flux:label>
-                        <flux:input wire:model="password_confirmation" type="password" required />
-                    </flux:field>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <flux:field>
-                        <flux:label>{{ __('Phone Number') }}</flux:label>
-                        <flux:input wire:model="phone_number" required />
+                        <flux:label>Phone Number</flux:label>
+                        <flux:input wire:model="phone_number" placeholder="+254 700 000 000" />
                         <flux:error name="phone_number" />
                     </flux:field>
 
                     <flux:field>
-                        <flux:label>{{ __('ID Number') }}</flux:label>
-                        <flux:input wire:model="id_number" required />
-                        <flux:error name="id_number" />
+                        <flux:label>Address</flux:label>
+                        <flux:textarea wire:model="address" placeholder="Physical address" rows="3" />
+                        <flux:error name="address" />
                     </flux:field>
                 </div>
 
-                <flux:field>
-                    <flux:label>{{ __('Address') }}</flux:label>
-                    <flux:textarea wire:model="address" rows="3" required />
-                    <flux:error name="address" />
-                </flux:field>
-
-                <flux:field>
-                    <flux:label>{{ __('Branch') }}</flux:label>
-                    <flux:select wire:model="branch_id" required>
-                        <option value="">{{ __('Select branch...') }}</option>
-                        @foreach($branches as $branch)
-                            <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                        @endforeach
-                    </flux:select>
-                    <flux:error name="branch_id" />
-                </flux:field>
-
-                <div class="flex justify-end space-x-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                    <flux:button wire:click="closeModals" variant="outline">
-                        {{ __('Cancel') }}
-                    </flux:button>
-                    <flux:button type="submit" variant="primary">
-                        {{ __('Create Member') }}
-                    </flux:button>
-                </div>
-            </form>
-        </div>
-    </flux:modal>
-
-    <!-- Edit Member Modal -->
-    <flux:modal name="edit-member" :show="$showEditModal">
-        <div class="space-y-6">
-            <div class="border-b border-zinc-200 dark:border-zinc-700 pb-4">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">{{ __('Edit Member') }}</h3>
-            </div>
-
-            <form wire:submit="updateMember" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Account Setup -->
+                <div class="space-y-4">
+                    <flux:heading size="base" class="dark:text-zinc-100">Account Setup</flux:heading>
+                    
                     <flux:field>
-                        <flux:label>{{ __('Full Name') }}</flux:label>
-                        <flux:input wire:model="name" required />
-                        <flux:error name="name" />
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>{{ __('Email Address') }}</flux:label>
-                        <flux:input wire:model="email" type="email" required />
-                        <flux:error name="email" />
-                    </flux:field>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <flux:field>
-                        <flux:label>{{ __('Phone Number') }}</flux:label>
-                        <flux:input wire:model="phone_number" required />
-                        <flux:error name="phone_number" />
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>{{ __('ID Number') }}</flux:label>
-                        <flux:input wire:model="id_number" required />
-                        <flux:error name="id_number" />
-                    </flux:field>
-                </div>
-
-                <flux:field>
-                    <flux:label>{{ __('Address') }}</flux:label>
-                    <flux:textarea wire:model="address" rows="3" required />
-                    <flux:error name="address" />
-                </flux:field>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <flux:field>
-                        <flux:label>{{ __('Branch') }}</flux:label>
-                        <flux:select wire:model="branch_id" required>
-                            <option value="">{{ __('Select branch...') }}</option>
+                        <flux:label>Branch</flux:label>
+                        <flux:select wire:model="branch_id" placeholder="Select a branch">
                             @foreach($branches as $branch)
                                 <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                             @endforeach
@@ -539,119 +590,208 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <flux:error name="branch_id" />
                     </flux:field>
 
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <flux:field>
+                            <flux:label>Password</flux:label>
+                            <flux:input wire:model="password" type="password" placeholder="Secure password" />
+                            <flux:error name="password" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>Confirm Password</flux:label>
+                            <flux:input wire:model="password_confirmation" type="password" placeholder="Confirm password" />
+                            <flux:error name="password_confirmation" />
+                        </flux:field>
+                    </div>
+                </div>
+
+                @error('general')
+                    <flux:error>{{ $message }}</flux:error>
+                @enderror
+
+                <div class="flex justify-end gap-3">
+                    <flux:button type="button" variant="ghost" wire:click="closeModals">Cancel</flux:button>
+                    <flux:button type="submit" variant="primary">Create Member</flux:button>
+                </div>
+            </form>
+        </div>
+    </flux:modal>
+
+    <!-- Edit Member Modal -->
+    <flux:modal wire:model="showEditModal" class="md:w-2xl">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg" class="dark:text-zinc-100">Edit Member</flux:heading>
+                <flux:subheading class="dark:text-zinc-400">Update member information</flux:subheading>
+            </div>
+
+            <form wire:submit="updateMember" class="space-y-6">
+                <!-- Personal Information -->
+                <div class="space-y-4">
+                    <flux:heading size="base" class="dark:text-zinc-100">Personal Information</flux:heading>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <flux:field>
+                            <flux:label>Full Name</flux:label>
+                            <flux:input wire:model="name" />
+                            <flux:error name="name" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>ID Number</flux:label>
+                            <flux:input wire:model="id_number" />
+                            <flux:error name="id_number" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>Member Number</flux:label>
+                            <flux:input wire:model="member_number" readonly />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>Status</flux:label>
+                            <flux:select wire:model="membership_status">
+                                @foreach($memberStatuses as $value => $label)
+                                    <option value="{{ $value }}">{{ $label }}</option>
+                                @endforeach
+                            </flux:select>
+                            <flux:error name="membership_status" />
+                        </flux:field>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="space-y-4">
+                    <flux:heading size="base" class="dark:text-zinc-100">Contact Information</flux:heading>
+                    
                     <flux:field>
-                        <flux:label>{{ __('Status') }}</flux:label>
-                        <flux:select wire:model="membership_status" required>
-                            @foreach($memberStatuses as $key => $label)
-                                <option value="{{ $key }}">{{ $label }}</option>
+                        <flux:label>Email Address</flux:label>
+                        <flux:input wire:model="email" type="email" />
+                        <flux:error name="email" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>Phone Number</flux:label>
+                        <flux:input wire:model="phone_number" />
+                        <flux:error name="phone_number" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>Address</flux:label>
+                        <flux:textarea wire:model="address" rows="3" />
+                        <flux:error name="address" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>Branch</flux:label>
+                        <flux:select wire:model="branch_id">
+                            @foreach($branches as $branch)
+                                <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                             @endforeach
                         </flux:select>
+                        <flux:error name="branch_id" />
                     </flux:field>
                 </div>
 
-                <div class="flex justify-end space-x-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                    <flux:button wire:click="closeModals" variant="outline">
-                        {{ __('Cancel') }}
-                    </flux:button>
-                    <flux:button type="submit" variant="primary">
-                        {{ __('Update Member') }}
-                    </flux:button>
+                @error('general')
+                    <flux:error>{{ $message }}</flux:error>
+                @enderror
+
+                <div class="flex justify-end gap-3">
+                    <flux:button type="button" variant="ghost" wire:click="closeModals">Cancel</flux:button>
+                    <flux:button type="submit" variant="primary">Update Member</flux:button>
                 </div>
             </form>
         </div>
     </flux:modal>
 
     <!-- View Member Modal -->
-    @if($selectedMember && $showViewModal)
-        <flux:modal name="view-member" :show="$showViewModal">
+    @if($selectedMember)
+        <flux:modal wire:model="showViewModal" class="md:w-4xl">
             <div class="space-y-6">
-                <div class="border-b border-zinc-200 dark:border-zinc-700 pb-4">
-                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">
-                        {{ __('Member Details') }} - {{ $selectedMember->name }}
-                    </h3>
-                </div>
-                <div class="space-y-6">
-                    <!-- Personal Information -->
+                <!-- Header -->
+                <div class="flex items-center gap-4 p-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white">
+                    <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-2xl font-bold">
+                        {{ substr($selectedMember->name, 0, 2) }}
+                    </div>
                     <div>
-                        <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-3">
-                            {{ __('Personal Information') }}
-                        </h3>
-                        <div class="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <span class="text-zinc-500 dark:text-zinc-400">Name:</span>
-                                <div class="font-medium">{{ $selectedMember->name }}</div>
+                        <flux:heading size="xl" class="!text-white">{{ $selectedMember->name }}</flux:heading>
+                        <div class="text-blue-100">{{ $selectedMember->member_number }}</div>
+                        <div class="mt-2">
+                            <flux:badge 
+                                variant="{{ $selectedMember->membership_status === 'active' ? 'lime' : ($selectedMember->membership_status === 'suspended' ? 'red' : 'amber') }}"
+                            >
+                                {{ ucfirst($selectedMember->membership_status) }}
+                            </flux:badge>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Details Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Personal Information -->
+                    <div class="space-y-4">
+                        <flux:heading size="base" class="dark:text-zinc-100">Personal Information</flux:heading>
+                        <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-zinc-600 dark:text-zinc-400">ID Number:</span>
+                                <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $selectedMember->id_number }}</span>
                             </div>
-                            <div>
-                                <span class="text-zinc-500 dark:text-zinc-400">Member Number:</span>
-                                <div class="font-medium">{{ $selectedMember->member_number ?? 'Not assigned' }}</div>
+                            <div class="flex justify-between">
+                                <span class="text-zinc-600 dark:text-zinc-400">Joining Date:</span>
+                                <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $selectedMember->joining_date?->format('M d, Y') ?? $selectedMember->created_at->format('M d, Y') }}</span>
                             </div>
-                            <div>
-                                <span class="text-zinc-500 dark:text-zinc-400">Email:</span>
-                                <div class="font-medium">{{ $selectedMember->email }}</div>
-                            </div>
-                            <div>
-                                <span class="text-zinc-500 dark:text-zinc-400">Phone:</span>
-                                <div class="font-medium">{{ $selectedMember->phone_number }}</div>
-                            </div>
-                            <div class="col-span-2">
-                                <span class="text-zinc-500 dark:text-zinc-400">Address:</span>
-                                <div class="font-medium">{{ $selectedMember->address }}</div>
+                            <div class="flex justify-between">
+                                <span class="text-zinc-600 dark:text-zinc-400">Branch:</span>
+                                <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $selectedMember->branch?->name ?? 'N/A' }}</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Account Summary -->
-                    @if($selectedMember->accounts->count() > 0)
-                        <div>
-                            <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-3">
-                                {{ __('Account Summary') }}
-                            </h3>
-                            <div class="grid grid-cols-3 gap-4">
-                                @foreach($selectedMember->accounts as $account)
-                                    <div class="bg-zinc-50 dark:bg-zinc-700 p-3 rounded-lg">
-                                        <div class="text-sm font-medium">{{ ucfirst($account->account_type) }}</div>
-                                        <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ $account->account_number }}</div>
-                                        <div class="text-lg font-bold text-green-600 dark:text-green-400">
-                                            KES {{ number_format($account->balance) }}
-                                        </div>
-                                    </div>
-                                @endforeach
+                    <!-- Contact Information -->
+                    <div class="space-y-4">
+                        <flux:heading size="base" class="dark:text-zinc-100">Contact Information</flux:heading>
+                        <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-zinc-600 dark:text-zinc-400">Email:</span>
+                                <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $selectedMember->email }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-zinc-600 dark:text-zinc-400">Phone:</span>
+                                <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $selectedMember->phone_number ?? 'N/A' }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-zinc-600 dark:text-zinc-400">Address:</span>
+                                <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $selectedMember->address ?? 'N/A' }}</span>
                             </div>
                         </div>
-                    @endif
-
-                    <!-- Loan Summary -->
-                    @if($selectedMember->loans->count() > 0)
-                        <div>
-                            <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-3">
-                                {{ __('Active Loans') }}
-                            </h3>
-                            <div class="space-y-2">
-                                @foreach($selectedMember->loans->where('status', 'active') as $loan)
-                                    <div class="bg-zinc-50 dark:bg-zinc-700 p-3 rounded-lg flex justify-between items-center">
-                                        <div>
-                                            <div class="font-medium">KES {{ number_format($loan->amount) }}</div>
-                                            <div class="text-sm text-zinc-500 dark:text-zinc-400">{{ $loan->loanType->name ?? 'Unknown Type' }}</div>
-                                        </div>
-                                        <div class="text-right">
-                                            <div class="text-sm">Paid: KES {{ number_format($loan->amount_paid) }}</div>
-                                            <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ $loan->status }}</div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
+                    </div>
                 </div>
 
-                <div class="flex justify-end pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                    <flux:button wire:click="closeModals" variant="outline">
-                        {{ __('Close') }}
+                <!-- Accounts -->
+                @if($selectedMember->accounts && $selectedMember->accounts->count())
+                    <div class="space-y-4">
+                        <flux:heading size="base" class="dark:text-zinc-100">Accounts</flux:heading>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            @foreach($selectedMember->accounts as $account)
+                                <div class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4">
+                                    <div class="text-sm text-zinc-600 dark:text-zinc-400">{{ ucfirst($account->account_type) }} Account</div>
+                                    <div class="text-xl font-semibold text-zinc-900 dark:text-zinc-100">KES {{ number_format($account->balance, 2) }}</div>
+                                    <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ $account->account_number }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Actions -->
+                <div class="flex justify-end gap-3">
+                    <flux:button variant="ghost" wire:click="closeModals">Close</flux:button>
+                    <flux:button variant="primary" wire:click="openEditModal({{ $selectedMember->id }})">
+                        Edit Member
                     </flux:button>
                 </div>
             </div>
         </flux:modal>
     @endif
-
-
 </div> 

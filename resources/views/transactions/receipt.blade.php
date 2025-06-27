@@ -52,8 +52,9 @@
                     <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6 text-white">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h2 class="text-2xl font-bold">SaccoCore</h2>
-                                <p class="text-blue-100">Digital Banking Platform</p>
+                                <h2 class="text-2xl font-bold">{{ organization_name() }}</h2>
+                                <p class="text-zinc-600 dark:text-zinc-400">{{ setting('contact_email', 'info@sacco.com') }}</p>
+                                <p class="text-zinc-600 dark:text-zinc-400">{{ setting('contact_phone', '+254 700 000 000') }}</p>
                             </div>
                             <div class="text-right">
                                 <div class="text-3xl font-bold">
@@ -235,7 +236,7 @@
 
                         <!-- Footer -->
                         <div class="text-center text-xs text-zinc-400 dark:text-zinc-500 mt-8 pt-6 border-t border-zinc-100 dark:border-zinc-700">
-                            <p>This is a computer-generated receipt. For any queries, please contact SaccoCore support.</p>
+                            <p>This is a computer-generated receipt. For any queries, please contact {{ organization_name() }} support.</p>
                             <p class="mt-1">Generated on {{ now()->format('M j, Y \a\t g:i A') }}</p>
                         </div>
                     </div>
