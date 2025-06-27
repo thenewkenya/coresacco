@@ -139,15 +139,16 @@
                         </h3>
                         <div class="flex items-center space-x-2">
                             <!-- Search and Filter -->
-                            <form method="GET" class="flex items-center space-x-2">
+                            <form method="GET" class="flex items-center space-x-2" id="search-form">
                                 <flux:input 
                                     type="search" 
                                     name="search" 
+                                    id="search-input"
                                     placeholder="Search users..." 
                                     value="{{ $search }}"
                                     size="sm"
                                 />
-                                <select name="role_filter" class="rounded-md border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm">
+                                <select name="role_filter" id="role-filter" class="rounded-md border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm">
                                     <option value="">All Roles</option>
                                     @foreach($roles as $filterRole)
                                     <option value="{{ $filterRole->slug }}" {{ $roleFilter === $filterRole->slug ? 'selected' : '' }}>
@@ -163,7 +164,7 @@
                     </div>
                 </div>
 
-                <div class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                <div class="divide-y divide-zinc-200 dark:divide-zinc-700" id="user-list">
                     @forelse($users as $user)
                     <div class="p-6">
                         <div class="flex items-center justify-between">
@@ -264,11 +265,121 @@
 
                 <!-- Pagination -->
                 @if($users->hasPages())
-                <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700">
+                <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700" id="pagination">
                     {{ $users->links() }}
                 </div>
                 @endif
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        let searchTimeout;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search-input');
+            const roleFilter = document.getElementById('role-filter');
+            const userList = document.getElementById('user-list');
+            const paginationContainer = document.querySelector('.bg-white.dark\\:bg-zinc-800.rounded-xl.border');
+            
+            if (!searchInput || !roleFilter || !userList) {
+                console.error('Live search elements not found');
+                return;
+            }
+            
+            console.log('Live search initialized');
+            
+            // Function to perform search
+            function performSearch() {
+                const searchTerm = searchInput.value;
+                const roleFilterValue = roleFilter.value;
+                
+                console.log('Searching for:', searchTerm, 'with role filter:', roleFilterValue);
+                
+                // Show loading state
+                userList.style.opacity = '0.6';
+                userList.style.pointerEvents = 'none';
+                
+                // Create URL with parameters
+                const url = new URL(window.location.href);
+                url.searchParams.set('search', searchTerm);
+                url.searchParams.set('role_filter', roleFilterValue);
+                
+                // Fetch new results
+                fetch(url.toString(), {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    // Parse the response and extract the user list and pagination
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newUserList = doc.getElementById('user-list');
+                    const newPagination = doc.getElementById('pagination');
+                    
+                    if (newUserList) {
+                        userList.innerHTML = newUserList.innerHTML;
+                        console.log('User list updated');
+                        
+                        // Update pagination if it exists
+                        const currentPagination = document.getElementById('pagination');
+                        if (newPagination && currentPagination) {
+                            currentPagination.innerHTML = newPagination.innerHTML;
+                            console.log('Pagination updated');
+                        } else if (newPagination && !currentPagination) {
+                            // Add pagination if it doesn't exist
+                            const paginationDiv = document.createElement('div');
+                            paginationDiv.id = 'pagination';
+                            paginationDiv.className = 'px-6 py-4 border-t border-zinc-200 dark:border-zinc-700';
+                            paginationDiv.innerHTML = newPagination.innerHTML;
+                            userList.parentNode.appendChild(paginationDiv);
+                        } else if (!newPagination && currentPagination) {
+                            // Remove pagination if it's no longer needed
+                            currentPagination.remove();
+                        }
+                    } else {
+                        console.error('Could not find user list in response');
+                    }
+                    
+                    // Remove loading state
+                    userList.style.opacity = '1';
+                    userList.style.pointerEvents = 'auto';
+                    
+                    // Update URL without reloading page
+                    window.history.pushState({}, '', url.toString());
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    // Remove loading state on error
+                    userList.style.opacity = '1';
+                    userList.style.pointerEvents = 'auto';
+                });
+            }
+            
+            // Debounced search on input
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(performSearch, 300); // 300ms delay
+            });
+            
+            // Immediate search on role filter change
+            roleFilter.addEventListener('change', function() {
+                clearTimeout(searchTimeout);
+                performSearch();
+            });
+            
+            // Handle browser back/forward buttons
+            window.addEventListener('popstate', function() {
+                const urlParams = new URLSearchParams(window.location.search);
+                searchInput.value = urlParams.get('search') || '';
+                roleFilter.value = urlParams.get('role_filter') || '';
+                performSearch();
+            });
+        });
+    </script>
+    @endpush
 </x-layouts.app> 
