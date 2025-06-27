@@ -14,7 +14,7 @@ class MemberSearchService
     private const CACHE_DURATION = 300;
 
     /**
-     * Search members with caching for performance
+     * Search members using Scout with caching
      *
      * @param string $search
      * @param int $limit
@@ -30,12 +30,39 @@ class MemberSearchService
         $cacheKey = "member_search:" . md5(strtolower($search) . $limit . implode('', $columns));
 
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($search, $limit, $columns) {
-            return User::select($columns)
-                ->where('name', 'like', '%' . $search . '%')
-                ->orWhere('email', 'like', '%' . $search . '%')
-                ->orWhere('member_number', 'like', '%' . $search . '%')
-                ->orWhere('phone_number', 'like', '%' . $search . '%')
-                ->limit($limit)
+            return User::search($search)
+                ->where('role', 'member')
+                ->take($limit)
+                ->get($columns);
+        });
+    }
+
+    /**
+     * Search members with filters using Scout
+     *
+     * @param array $filters
+     * @param int $limit
+     * @return Collection
+     */
+    public function searchMembersWithFilters(array $filters, int $limit = 15): Collection
+    {
+        $cacheKey = "member_filtered_search:" . md5(serialize($filters) . $limit);
+
+        return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($filters, $limit) {
+            $query = User::search($filters['search'] ?? '');
+
+            // Apply status filter
+            if (isset($filters['status']) && !empty($filters['status'])) {
+                $query->where('membership_status', $filters['status']);
+            }
+
+            // Apply branch filter
+            if (isset($filters['branch']) && !empty($filters['branch'])) {
+                $query->where('branch_id', $filters['branch']);
+            }
+
+            return $query->where('role', 'member')
+                ->take($limit)
                 ->get();
         });
     }
@@ -56,45 +83,6 @@ class MemberSearchService
     }
 
     /**
-     * Search members with filters and caching
-     *
-     * @param array $filters
-     * @param int $limit
-     * @return Collection
-     */
-    public function searchMembersWithFilters(array $filters, int $limit = 15): Collection
-    {
-        $cacheKey = "member_filtered_search:" . md5(serialize($filters) . $limit);
-
-        return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($filters, $limit) {
-            $query = User::with(['branch', 'accounts', 'loans']);
-
-            // Apply search filter
-            if (isset($filters['search']) && !empty($filters['search'])) {
-                $search = $filters['search'];
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', '%' . $search . '%')
-                      ->orWhere('email', 'like', '%' . $search . '%')
-                      ->orWhere('member_number', 'like', '%' . $search . '%')
-                      ->orWhere('phone_number', 'like', '%' . $search . '%');
-                });
-            }
-
-            // Apply status filter
-            if (isset($filters['status']) && !empty($filters['status'])) {
-                $query->where('membership_status', $filters['status']);
-            }
-
-            // Apply branch filter
-            if (isset($filters['branch']) && !empty($filters['branch'])) {
-                $query->where('branch_id', $filters['branch']);
-            }
-
-            return $query->latest()->limit($limit)->get();
-        });
-    }
-
-    /**
      * Get member statistics with caching
      *
      * @return array
@@ -105,12 +93,12 @@ class MemberSearchService
 
         return Cache::remember($cacheKey, self::CACHE_DURATION * 2, function () {
             return [
-                'total_members' => User::count(),
-                'active_members' => User::where('membership_status', 'active')->count(),
-                'inactive_members' => User::where('membership_status', 'inactive')->count(),
-                'suspended_members' => User::where('membership_status', 'suspended')->count(),
-                'new_this_month' => User::whereMonth('created_at', now()->month)->count(),
-                'new_this_week' => User::whereDate('created_at', '>=', now()->startOfWeek())->count(),
+                'total_members' => User::where('role', 'member')->count(),
+                'active_members' => User::where('role', 'member')->where('membership_status', 'active')->count(),
+                'inactive_members' => User::where('role', 'member')->where('membership_status', 'inactive')->count(),
+                'suspended_members' => User::where('role', 'member')->where('membership_status', 'suspended')->count(),
+                'new_this_month' => User::where('role', 'member')->whereMonth('created_at', now()->month)->count(),
+                'new_this_week' => User::where('role', 'member')->whereDate('created_at', '>=', now()->startOfWeek())->count(),
             ];
         });
     }
@@ -147,15 +135,11 @@ class MemberSearchService
         $cacheKey = "member_transaction_search:" . md5(strtolower($search) . $limit);
 
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($search, $limit) {
-            return User::select(['id', 'name', 'email', 'member_number'])
+            return User::search($search)
+                ->where('role', 'member')
                 ->where('membership_status', 'active')
-                ->where(function ($query) use ($search) {
-                    $query->where('name', 'like', '%' . $search . '%')
-                          ->orWhere('email', 'like', '%' . $search . '%')
-                          ->orWhere('member_number', 'like', '%' . $search . '%');
-                })
-                ->limit($limit)
-                ->get();
+                ->take($limit)
+                ->get(['id', 'name', 'email', 'member_number']);
         });
     }
 } 

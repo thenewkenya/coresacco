@@ -12,10 +12,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Scout\Searchable;
 
 class Account extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Searchable;
 
     protected $fillable = [
         'account_number',
@@ -60,8 +61,6 @@ class Account extends Model
     {
         return $this->belongsTo(User::class, 'member_id');
     }
-
-
 
     public function transactions(): HasMany
     {
@@ -177,5 +176,25 @@ class Account extends Model
     {
         $names = self::getAccountTypeNames();
         return $names[$type] ?? ucfirst(str_replace('_', ' ', $type));
+    }
+
+    /**
+     * Get the indexable data array for the model.
+     *
+     * @return array
+     */
+    public function toSearchableArray()
+    {
+        return [
+            'id' => $this->id,
+            'account_number' => $this->account_number,
+            'account_type' => $this->account_type,
+            'status' => $this->status,
+            'balance' => $this->balance,
+            'member_id' => $this->member_id,
+            // Include member details for better search
+            'member_name' => $this->member->name ?? null,
+            'member_email' => $this->member->email ?? null,
+        ];
     }
 } 
