@@ -43,8 +43,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('viewSettings', [SystemPolicy::class, 'viewSettings']);
         Gate::define('updateSettings', [SystemPolicy::class, 'updateSettings']);
         Gate::define('resetSettings', [SystemPolicy::class, 'resetSettings']);
-        Gate::define('exportSettings', [SystemPolicy::class, 'exportSettings']);
-        Gate::define('importSettings', [SystemPolicy::class, 'importSettings']);
         
         // Custom Blade directives for permissions
         Blade::if('can', function ($permission) {

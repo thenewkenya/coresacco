@@ -138,63 +138,6 @@ class SystemController extends Controller
     }
 
     /**
-     * Export settings as JSON
-     */
-    public function exportSettings()
-    {
-        $this->authorize('exportSettings');
-        
-        $settings = Setting::getAllGrouped();
-        
-        $filename = 'sacco-settings-' . date('Y-m-d-H-i-s') . '.json';
-        
-        return response()->json($settings)
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
-    }
-
-    /**
-     * Import settings from JSON
-     */
-    public function importSettings(Request $request)
-    {
-        $this->authorize('importSettings');
-        
-        $request->validate([
-            'settings_file' => 'required|file|mimes:json'
-        ]);
-
-        $file = $request->file('settings_file');
-        $content = file_get_contents($file->getPathname());
-        $settings = json_decode($content, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return back()->withErrors(['settings_file' => 'Invalid JSON file format.']);
-        }
-
-        $imported = 0;
-
-        foreach ($settings as $group => $groupSettings) {
-            foreach ($groupSettings as $key => $settingData) {
-                Setting::updateOrCreate(
-                    ['key' => $key],
-                    [
-                        'value' => $settingData['raw_value'] ?? $settingData['value'],
-                        'type' => $settingData['type'] ?? 'string',
-                        'group' => $group,
-                        'label' => $settingData['label'] ?? null,
-                        'description' => $settingData['description'] ?? null
-                    ]
-                );
-                $imported++;
-            }
-        }
-
-        Setting::clearCache();
-
-        return back()->with('success', "Imported {$imported} settings successfully.");
-    }
-
-    /**
      * Get the settings structure with defaults and validation
      */
     private function getSettingsStructure(): array

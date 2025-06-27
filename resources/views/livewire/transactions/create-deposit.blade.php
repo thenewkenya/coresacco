@@ -65,11 +65,8 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function loadMembers($search = '')
     {
-        $this->members = User::where('name', 'like', '%' . $search . '%')
-            ->orWhere('email', 'like', '%' . $search . '%')
-            ->orWhere('member_number', 'like', '%' . $search . '%')
-            ->limit(10)
-            ->get();
+        $memberSearchService = app(\App\Services\MemberSearchService::class);
+        $this->members = $memberSearchService->searchMembersForTransactions($search, 10);
     }
 
     public function updatedMemberSearch()
@@ -93,22 +90,23 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function loadAccountsForMember()
     {
         if ($this->member_id) {
-            $this->accounts = Account::where('member_id', $this->member_id)
-                ->where('status', 'active')
-                ->get();
+            $accountLookupService = app(\App\Services\AccountLookupService::class);
+            $this->accounts = $accountLookupService->getMemberAccounts($this->member_id, 'active');
         }
     }
 
     public function selectAccount($accountId)
     {
         $this->account_id = $accountId;
-        $this->selectedAccount = Account::find($accountId);
+        $accountLookupService = app(\App\Services\AccountLookupService::class);
+        $this->selectedAccount = $accountLookupService->getAccountDetails($accountId);
     }
 
     public function updatedAccountId()
     {
         if ($this->account_id) {
-            $this->selectedAccount = Account::find($this->account_id);
+            $accountLookupService = app(\App\Services\AccountLookupService::class);
+            $this->selectedAccount = $accountLookupService->getAccountDetails($this->account_id);
         }
     }
 

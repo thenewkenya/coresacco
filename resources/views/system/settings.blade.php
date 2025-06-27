@@ -14,9 +14,11 @@
                         </p>
                     </div>
                     <div class="flex gap-3">
-                        <flux:button variant="outline" :href="route('system.settings.export')" icon="arrow-down">
-                            {{ __('Export') }}
-                        </flux:button>
+                        <flux:modal.trigger name="reset-confirmation">
+                            <flux:button variant="outline" icon="arrow-path">
+                                {{ __('Reset Settings') }}
+                            </flux:button>
+                        </flux:modal.trigger>
                         <flux:button variant="primary" type="submit" form="settings-form" icon="check">
                             {{ __('Save Changes') }}
                         </flux:button>
@@ -24,6 +26,32 @@
                 </div>
             </div>
         </div>
+
+        <!-- Success/Error Messages -->
+        @if(session('success'))
+            <div class="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <div class="flex items-center">
+                    <flux:icon.check-circle class="w-5 h-5 text-green-600 dark:text-green-400 mr-2" />
+                    <p class="text-green-800 dark:text-green-200">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <div class="flex items-start">
+                    <flux:icon.exclamation-circle class="w-5 h-5 text-red-600 dark:text-red-400 mr-2 mt-0.5" />
+                    <div>
+                        <p class="text-red-800 dark:text-red-200 font-medium mb-2">Please correct the following errors:</p>
+                        <ul class="text-red-700 dark:text-red-300 text-sm space-y-1">
+                            @foreach($errors->all() as $error)
+                                <li>• {{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         <!-- Tab Navigation -->
         <div class="mb-8">
@@ -43,11 +71,6 @@
                        class="flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap {{ $activeTab === 'features' ? 'bg-blue-600 text-white' : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700' }}">
                         <flux:icon.puzzle-piece class="w-4 h-4" />
                         <span>{{ __('Features') }}</span>
-                    </a>
-                    <a href="?tab=import-export" 
-                       class="flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap {{ $activeTab === 'import-export' ? 'bg-blue-600 text-white' : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700' }}">
-                        <flux:icon.arrow-down class="w-4 h-4" />
-                        <span>{{ __('Import/Export') }}</span>
                     </a>
                 </nav>
             </div>
@@ -79,31 +102,40 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         @foreach($settings['general'] ?? [] as $key => $setting)
                         <div class="space-y-3">
-                            <flux:label for="general_{{ $key }}">{{ $setting['label'] }}</flux:label>
-                            
-                            @if($setting['type'] === 'string' && $key === 'default_currency')
-                                <flux:select name="general[{{ $key }}]" id="general_{{ $key }}">
-                                    <option value="KES" {{ $setting['value'] === 'KES' ? 'selected' : '' }}>KES - Kenyan Shilling</option>
-                                    <option value="USD" {{ $setting['value'] === 'USD' ? 'selected' : '' }}>USD - US Dollar</option>
-                                    <option value="EUR" {{ $setting['value'] === 'EUR' ? 'selected' : '' }}>EUR - Euro</option>
-                                    <option value="GBP" {{ $setting['value'] === 'GBP' ? 'selected' : '' }}>GBP - British Pound</option>
-                                </flux:select>
-                            @elseif($setting['type'] === 'string')
-                                <flux:input 
-                                    type="text" 
-                                    name="general[{{ $key }}]" 
-                                    id="general_{{ $key }}"
-                                    value="{{ old('general.'.$key, $setting['value']) }}" 
-                                />
-                            @endif
-                            
-                            @if($setting['description'])
-                                <flux:description>{{ $setting['description'] }}</flux:description>
-                            @endif
-                            
-                            @error('general.'.$key)
-                                <flux:error>{{ $message }}</flux:error>
-                            @enderror
+                            <flux:field>
+                                <flux:label for="general_{{ $key }}">{{ $setting['label'] }}</flux:label>
+                                
+                                @if($setting['type'] === 'string' && $key === 'default_currency')
+                                    <flux:select name="general[{{ $key }}]" id="general_{{ $key }}">
+                                        <option value="KES" {{ $setting['value'] === 'KES' ? 'selected' : '' }}>KES - Kenyan Shilling</option>
+                                        <option value="USD" {{ $setting['value'] === 'USD' ? 'selected' : '' }}>USD - US Dollar</option>
+                                        <option value="EUR" {{ $setting['value'] === 'EUR' ? 'selected' : '' }}>EUR - Euro</option>
+                                        <option value="GBP" {{ $setting['value'] === 'GBP' ? 'selected' : '' }}>GBP - British Pound</option>
+                                    </flux:select>
+                                @elseif($setting['type'] === 'string' && $key === 'timezone')
+                                    <flux:select name="general[{{ $key }}]" id="general_{{ $key }}">
+                                        <option value="Africa/Nairobi" {{ $setting['value'] === 'Africa/Nairobi' ? 'selected' : '' }}>Africa/Nairobi</option>
+                                        <option value="Africa/Lagos" {{ $setting['value'] === 'Africa/Lagos' ? 'selected' : '' }}>Africa/Lagos</option>
+                                        <option value="Africa/Cairo" {{ $setting['value'] === 'Africa/Cairo' ? 'selected' : '' }}>Africa/Cairo</option>
+                                        <option value="UTC" {{ $setting['value'] === 'UTC' ? 'selected' : '' }}>UTC</option>
+                                    </flux:select>
+                                @elseif($setting['type'] === 'string')
+                                    <flux:input 
+                                        type="text" 
+                                        name="general[{{ $key }}]" 
+                                        id="general_{{ $key }}"
+                                        value="{{ old('general.'.$key, $setting['value']) }}" 
+                                    />
+                                @endif
+                                
+                                @if($setting['description'])
+                                    <flux:description>{{ $setting['description'] }}</flux:description>
+                                @endif
+                                
+                                @error('general.'.$key)
+                                    <flux:error>{{ $message }}</flux:error>
+                                @enderror
+                            </flux:field>
                         </div>
                         @endforeach
                     </div>
@@ -135,21 +167,23 @@
                             @if(isset($settings['financial'][$key]))
                             @php $setting = $settings['financial'][$key]; @endphp
                             <div class="space-y-3">
-                                <flux:label for="financial_{{ $key }}">{{ $setting['label'] }}</flux:label>
-                                <flux:input 
-                                    type="number" 
-                                    step="0.01"
-                                    name="financial[{{ $key }}]" 
-                                    id="financial_{{ $key }}"
-                                    value="{{ old('financial.'.$key, $setting['value']) }}" 
-                                    suffix="%"
-                                />
-                                @if($setting['description'])
-                                    <flux:description>{{ $setting['description'] }}</flux:description>
-                                @endif
-                                @error('financial.'.$key)
-                                    <flux:error>{{ $message }}</flux:error>
-                                @enderror
+                                <flux:field>
+                                    <flux:label for="financial_{{ $key }}">{{ $setting['label'] }}</flux:label>
+                                    <flux:input 
+                                        type="number" 
+                                        step="0.01"
+                                        name="financial[{{ $key }}]" 
+                                        id="financial_{{ $key }}"
+                                        value="{{ old('financial.'.$key, $setting['value']) }}" 
+                                        suffix="%"
+                                    />
+                                    @if($setting['description'])
+                                        <flux:description>{{ $setting['description'] }}</flux:description>
+                                    @endif
+                                    @error('financial.'.$key)
+                                        <flux:error>{{ $message }}</flux:error>
+                                    @enderror
+                                </flux:field>
                             </div>
                             @endif
                             @endforeach
@@ -175,23 +209,28 @@
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            @foreach(['max_loan_amount', 'min_savings_balance', 'daily_withdrawal_limit', 'loan_term_months'] as $key)
+                            @foreach(['maximum_loan_amount', 'minimum_savings_balance', 'daily_withdrawal_limit', 'loan_term_months'] as $key)
                             @if(isset($settings['financial'][$key]))
                             @php $setting = $settings['financial'][$key]; @endphp
                             <div class="space-y-3">
-                                <flux:label for="financial_{{ $key }}">{{ $setting['label'] }}</flux:label>
-                                <flux:input 
-                                    type="number" 
-                                    name="financial[{{ $key }}]" 
-                                    id="financial_{{ $key }}"
-                                    value="{{ old('financial.'.$key, $setting['value']) }}" 
-                                />
-                                @if($setting['description'])
-                                    <flux:description>{{ $setting['description'] }}</flux:description>
-                                @endif
-                                @error('financial.'.$key)
-                                    <flux:error>{{ $message }}</flux:error>
-                                @enderror
+                                <flux:field>
+                                    <flux:label for="financial_{{ $key }}">{{ $setting['label'] }}</flux:label>
+                                    <flux:input 
+                                        type="number" 
+                                        name="financial[{{ $key }}]" 
+                                        id="financial_{{ $key }}"
+                                        value="{{ old('financial.'.$key, $setting['value']) }}" 
+                                        @if(str_contains($key, 'amount') || str_contains($key, 'balance') || str_contains($key, 'limit'))
+                                            prefix="KES"
+                                        @endif
+                                    />
+                                    @if($setting['description'])
+                                        <flux:description>{{ $setting['description'] }}</flux:description>
+                                    @endif
+                                    @error('financial.'.$key)
+                                        <flux:error>{{ $message }}</flux:error>
+                                    @enderror
+                                </flux:field>
                             </div>
                             @endif
                             @endforeach
@@ -239,131 +278,55 @@
                         @endforeach
                     </div>
                 </div>
-
-            @elseif($activeTab === 'import-export')
-                <!-- Import/Export Settings -->
-                <div class="space-y-6">
-                    <!-- Export Settings -->
-                    <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
-                        <div class="mb-6">
-                            <div class="flex items-center space-x-3 mb-4">
-                                <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                                    <flux:icon.arrow-down class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                                </div>
-                                <div>
-                                    <h2 class="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-                                        {{ __('Export Settings') }}
-                                    </h2>
-                                    <p class="text-zinc-600 dark:text-zinc-400">
-                                        {{ __('Download your current settings as a backup') }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                            <div>
-                                <h3 class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ __('Export Configuration') }}</h3>
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{{ __('Download all system settings as a JSON file') }}</p>
-                            </div>
-                            <flux:button variant="outline" :href="route('system.settings.export')" icon="arrow-down">
-                                {{ __('Download Settings') }}
-                            </flux:button>
-                        </div>
-                    </div>
-
-                    <!-- Import Settings -->
-                    <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
-                        <div class="mb-6">
-                            <div class="flex items-center space-x-3 mb-4">
-                                <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                    <flux:icon.arrow-up class="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <div>
-                                    <h2 class="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-                                        {{ __('Import Settings') }}
-                                    </h2>
-                                    <p class="text-zinc-600 dark:text-zinc-400">
-                                        {{ __('Upload a settings file to restore configuration') }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 p-4 mb-6">
-                            <div class="flex items-start space-x-3">
-                                <flux:icon.exclamation-triangle class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                                <div>
-                                    <h4 class="text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">{{ __('Important Notice') }}</h4>
-                                    <p class="text-sm text-amber-800 dark:text-amber-200">{{ __('Importing settings will overwrite your current configuration. Make sure to export your current settings first as a backup.') }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <form method="POST" action="{{ route('system.settings.import') }}" enctype="multipart/form-data" class="space-y-4">
-                            @csrf
-                            <div class="space-y-3">
-                                <flux:label for="settings_file">{{ __('Settings File') }}</flux:label>
-                                <flux:input 
-                                    type="file" 
-                                    name="settings_file" 
-                                    id="settings_file" 
-                                    accept=".json" 
-                                />
-                                <flux:description>{{ __('Select a JSON settings file exported from this system') }}</flux:description>
-                                @error('settings_file')
-                                    <flux:error>{{ $message }}</flux:error>
-                                @enderror
-                            </div>
-                            <div class="flex justify-end">
-                                <flux:button type="submit" variant="primary" icon="arrow-up">
-                                    {{ __('Import Settings') }}
-                                </flux:button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
             @endif
         </form>
-
-        <!-- Reset Actions -->
-        <div class="mt-6 flex flex-col sm:flex-row gap-4">
-            <flux:button variant="danger" onclick="resetSettings('{{ $activeTab }}')" icon="arrow-path">
-                {{ __('Reset This Section') }}
-            </flux:button>
-            <flux:button variant="danger" onclick="resetSettings('all')" icon="arrow-path">
-                {{ __('Reset All Settings') }}
-            </flux:button>
-        </div>
     </div>
 </div>
 
-<script>
-function resetSettings(group) {
-    const message = group === 'all' 
-        ? 'Are you sure you want to reset ALL settings to their default values? This action cannot be undone.'
-        : `Are you sure you want to reset ${group} settings to their default values? This action cannot be undone.`;
+<!-- Reset Confirmation Modal -->
+<flux:modal name="reset-confirmation" class="max-w-lg">
+    <div class="flex items-center space-x-3 mb-6">
+        <div class="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+            <flux:icon.exclamation-triangle class="w-6 h-6 text-red-600 dark:text-red-400" />
+        </div>
+        <div>
+            <flux:heading size="lg">{{ __('Reset Settings') }}</flux:heading>
+            <flux:subheading>{{ __('Choose what to reset') }}</flux:subheading>
+        </div>
+    </div>
+
+    <div class="space-y-4 mb-6">
+        <p class="text-zinc-600 dark:text-zinc-400">
+            {{ __('This action will reset the selected settings to their default values and cannot be undone.') }}
+        </p>
         
-    if (confirm(message)) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ route("system.settings.reset") }}';
+        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <div class="flex items-start space-x-3">
+                <flux:icon.information-circle class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <div>
+                    <h4 class="text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">{{ __('Recommendation') }}</h4>
+                    <p class="text-sm text-amber-800 dark:text-amber-200">{{ __('Consider resetting only the current section first before resetting all settings.') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3">
+        <form method="POST" action="{{ route('system.settings.reset') }}" class="flex-1">
+            @csrf
+            <input type="hidden" name="group" value="{{ $activeTab }}">
+            <flux:button type="submit" variant="outline" class="w-full" icon="arrow-path">
+                {{ __('Reset Current Section') }}
+            </flux:button>
+        </form>
         
-        const csrfToken = document.createElement('input');
-        csrfToken.type = 'hidden';
-        csrfToken.name = '_token';
-        csrfToken.value = '{{ csrf_token() }}';
-        
-        const groupInput = document.createElement('input');
-        groupInput.type = 'hidden';
-        groupInput.name = 'group';
-        groupInput.value = group;
-        
-        form.appendChild(csrfToken);
-        form.appendChild(groupInput);
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
-</script>
+        <form method="POST" action="{{ route('system.settings.reset') }}" class="flex-1">
+            @csrf
+            <input type="hidden" name="group" value="all">
+            <flux:button type="submit" variant="danger" class="w-full" icon="arrow-path">
+                {{ __('Reset All Settings') }}
+            </flux:button>
+        </form>
+    </div>
+</flux:modal>
 </x-layouts.app>
