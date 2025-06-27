@@ -93,18 +93,38 @@
     <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
         <div class="border-b border-zinc-200 dark:border-zinc-700">
             <nav class="flex space-x-8 px-6">
-                <button class="ranking-tab-btn border-b-2 border-blue-500 text-blue-600 dark:text-blue-400 py-4 px-1 text-sm font-medium" data-tab="performance">
+                <flux:button 
+                    class="ranking-tab-btn border-b-2 border-blue-500 text-blue-600 dark:text-blue-400 py-4 px-1 text-sm font-medium" 
+                    data-tab="performance"
+                    variant="ghost"
+                    size="sm"
+                >
                     {{ __('Performance Ranking') }}
-                </button>
-                <button class="ranking-tab-btn border-b-2 border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 py-4 px-1 text-sm font-medium" data-tab="deposits">
+                </flux:button>
+                <flux:button 
+                    class="ranking-tab-btn border-b-2 border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 py-4 px-1 text-sm font-medium" 
+                    data-tab="deposits"
+                    variant="ghost"
+                    size="sm"
+                >
                     {{ __('By Deposits') }}
-                </button>
-                <button class="ranking-tab-btn border-b-2 border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 py-4 px-1 text-sm font-medium" data-tab="members">
+                </flux:button>
+                <flux:button 
+                    class="ranking-tab-btn border-b-2 border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 py-4 px-1 text-sm font-medium" 
+                    data-tab="members"
+                    variant="ghost"
+                    size="sm"
+                >
                     {{ __('By Members') }}
-                </button>
-                <button class="ranking-tab-btn border-b-2 border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 py-4 px-1 text-sm font-medium" data-tab="growth">
+                </flux:button>
+                <flux:button 
+                    class="ranking-tab-btn border-b-2 border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 py-4 px-1 text-sm font-medium" 
+                    data-tab="growth"
+                    variant="ghost"
+                    size="sm"
+                >
                     {{ __('By Growth') }}
-                </button>
+                </flux:button>
             </nav>
         </div>
 

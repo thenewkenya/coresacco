@@ -79,36 +79,42 @@
             <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 mb-6">
                 <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
-                        <flux:input 
-                            name="search" 
-                            placeholder="Search accounts..." 
-                            value="{{ $search }}"
-                        />
+                        <flux:field>
+                            <flux:label>{{ __('Search') }}</flux:label>
+                            <flux:input 
+                                type="text" 
+                                name="search" 
+                                value="{{ request('search') }}" 
+                                placeholder="Search accounts, members..." 
+                                icon="magnifying-glass"
+                            />
+                        </flux:field>
                     </div>
                     <div>
-                        <flux:select name="account_type" placeholder="All Types">
-                            <option value="">All Types</option>
-                            <option value="savings" {{ $accountType === 'savings' ? 'selected' : '' }}>Savings</option>
-                            <option value="shares" {{ $accountType === 'shares' ? 'selected' : '' }}>Shares</option>
-                            <option value="fixed_deposit" {{ $accountType === 'fixed_deposit' ? 'selected' : '' }}>Fixed Deposit</option>
-                            <option value="current" {{ $accountType === 'current' ? 'selected' : '' }}>Current</option>
-                        </flux:select>
+                        <flux:field>
+                            <flux:label>{{ __('Account Type') }}</flux:label>
+                            <flux:select name="type">
+                                <option value="">{{ __('All Types') }}</option>
+                                <option value="savings" {{ request('type') === 'savings' ? 'selected' : '' }}>{{ __('Savings') }}</option>
+                                <option value="current" {{ request('type') === 'current' ? 'selected' : '' }}>{{ __('Current') }}</option>
+                                <option value="fixed_deposit" {{ request('type') === 'fixed_deposit' ? 'selected' : '' }}>{{ __('Fixed Deposit') }}</option>
+                            </flux:select>
+                        </flux:field>
                     </div>
                     <div>
-                        <flux:select name="status" placeholder="All Statuses">
-                            <option value="">All Statuses</option>
-                            <option value="active" {{ $status === 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="inactive" {{ $status === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            <option value="suspended" {{ $status === 'suspended' ? 'selected' : '' }}>Suspended</option>
-                            <option value="closed" {{ $status === 'closed' ? 'selected' : '' }}>Closed</option>
-                        </flux:select>
+                        <flux:field>
+                            <flux:label>{{ __('Status') }}</flux:label>
+                            <flux:select name="status">
+                                <option value="">{{ __('All Statuses') }}</option>
+                                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
+                                <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>{{ __('Inactive') }}</option>
+                                <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>{{ __('Closed') }}</option>
+                            </flux:select>
+                        </flux:field>
                     </div>
-                    <div class="flex space-x-2">
-                        <flux:button type="submit" variant="primary" class="flex-1">
+                    <div class="flex items-end">
+                        <flux:button type="submit" variant="primary" class="w-full">
                             {{ __('Filter') }}
-                        </flux:button>
-                        <flux:button variant="outline" :href="route('accounts.index')" wire:navigate>
-                            {{ __('Clear') }}
                         </flux:button>
                     </div>
                 </form>

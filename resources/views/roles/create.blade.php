@@ -155,12 +155,24 @@
                                             {{ __('Quick Actions') }}
                                         </p>
                                         <div class="space-y-2">
-                                            <button type="button" onclick="selectAllPermissions()" class="w-full text-left px-3 py-2 text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50">
-                                                {{ __('Select All Permissions') }}
-                                            </button>
-                                            <button type="button" onclick="selectNoPermissions()" class="w-full text-left px-3 py-2 text-sm bg-gray-50 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900/50">
-                                                {{ __('Clear All Permissions') }}
-                                            </button>
+                                            <flux:button 
+                                                type="button" 
+                                                onclick="selectAllPermissions()" 
+                                                variant="outline"
+                                                size="sm"
+                                                class="w-full"
+                                            >
+                                                Select All
+                                            </flux:button>
+                                            <flux:button 
+                                                type="button" 
+                                                onclick="selectNoPermissions()" 
+                                                variant="ghost"
+                                                size="sm" 
+                                                class="w-full"
+                                            >
+                                                Clear All
+                                            </flux:button>
                                         </div>
                                     </div>
 

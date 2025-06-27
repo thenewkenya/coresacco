@@ -251,8 +251,8 @@
                                         </div>
                                     </div>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <button class="bg-white/20 hover:bg-white/30 px-3 py-2 rounded text-sm transition-colors">Deposit</button>
-                                        <button class="bg-white/20 hover:bg-white/30 px-3 py-2 rounded text-sm transition-colors">Withdraw</button>
+                                        <flux:button variant="outline" size="sm">Deposit</flux:button>
+                                        <flux:button variant="outline" size="sm">Withdraw</flux:button>
                                     </div>
                                 </div>
                             </div>
@@ -423,9 +423,9 @@
                                             <div class="text-sm opacity-90">Applications</div>
                                         </div>
                                     </div>
-                                    <button class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded transition-colors">
+                                    <flux:button variant="outline" size="sm">
                                         View Loan Dashboard
-                                    </button>
+                                    </flux:button>
                                 </div>
                             </div>
                         </div>

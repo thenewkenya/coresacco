@@ -137,15 +137,21 @@
 
                                 <!-- Submit Button -->
                                 <div class="flex items-center justify-between">
-                                    <a href="{{ route('transactions.index') }}" 
-                                        class="px-4 py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium">
+                                    <flux:button 
+                                        variant="ghost" 
+                                        :href="route('transactions.index')" 
+                                        wire:navigate
+                                    >
                                         Cancel
-                                    </a>
-                                    <button type="submit" id="submitBtn"
-                                        class="bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-400 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center">
-                                        <flux:icon.arrow-up class="w-5 h-5 mr-2" />
+                                    </flux:button>
+                                    <flux:button 
+                                        type="submit" 
+                                        id="submitBtn"
+                                        variant="primary"
+                                        icon="arrow-up"
+                                    >
                                         Process Withdrawal
-                                    </button>
+                                    </flux:button>
                                 </div>
                             </form>
                         </div>

@@ -139,9 +139,13 @@
     </style>
 </head>
 <body>
-    <div class="actions no-print">
-        <button class="btn" onclick="window.print()">Print Receipt</button>
-        <a href="{{ route('payments.show', $transaction) }}" class="btn">Back to Payment</a>
+    <div class="actions no-print" style="margin-bottom: 20px; text-align: center;">
+        <flux:button onclick="window.print()" variant="primary" icon="printer" size="sm" style="margin-right: 10px;">
+            Print Receipt
+        </flux:button>
+        <flux:button :href="route('payments.show', $transaction)" variant="outline" icon="arrow-left" size="sm">
+            Back to Payment
+        </flux:button>
     </div>
 
     <div class="receipt-header">
