@@ -57,10 +57,13 @@ services:
         networks:
             - sail
         healthcheck:
-            test: ["CMD", "redis-cli", "ping"]
+            test:
+                - CMD
+                - redis-cli
+                - ping
             retries: 3
             timeout: 5s
-        command: redis-server --appendonly yes
+        command: 'redis-server --appendonly yes'
 networks:
     sail:
         driver: bridge
