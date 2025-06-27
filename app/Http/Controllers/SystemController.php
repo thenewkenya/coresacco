@@ -57,14 +57,15 @@ class SystemController extends Controller
     {
         $this->authorize('updateSettings');
         
+        $activeTab = $request->input('active_tab', 'general');
         $settingsStructure = $this->getSettingsStructure();
         $rules = [];
         $messages = [];
 
-        // Build validation rules dynamically
-        foreach ($settingsStructure as $group => $groupSettings) {
-            foreach ($groupSettings as $key => $config) {
-                $fieldName = "{$group}.{$key}";
+        // Only build validation rules for the active tab
+        if (isset($settingsStructure[$activeTab])) {
+            foreach ($settingsStructure[$activeTab] as $key => $config) {
+                $fieldName = "{$activeTab}.{$key}";
                 $rules[$fieldName] = $config['validation'] ?? 'nullable';
                 
                 if (isset($config['validation_message'])) {
@@ -81,38 +82,40 @@ class SystemController extends Controller
 
         $updated = 0;
 
-        // Process each setting group
-        foreach ($settingsStructure as $group => $groupSettings) {
-            foreach ($groupSettings as $key => $config) {
-                $fieldName = "{$group}.{$key}";
+        // Only process settings for the active tab
+        if (isset($settingsStructure[$activeTab])) {
+            foreach ($settingsStructure[$activeTab] as $key => $config) {
+                $fieldName = "{$activeTab}.{$key}";
                 
-                if ($request->has($fieldName)) {
-                    $value = $request->input($fieldName);
-                    
-                    // Handle boolean values from checkboxes
-                    if ($config['type'] === 'boolean') {
-                        $value = $request->has($fieldName) ? 'true' : 'false';
+                // For boolean fields, check if the field exists in request
+                if ($config['type'] === 'boolean') {
+                    $value = $request->has($fieldName) ? 'true' : 'false';
+                } else {
+                    // Only process non-boolean fields if they exist in the request
+                    if (!$request->has($fieldName)) {
+                        continue;
                     }
-                    
-                    Setting::updateOrCreate(
-                        ['key' => $key],
-                        [
-                            'value' => $value,
-                            'type' => $config['type'],
-                            'group' => $group,
-                            'label' => $config['label'],
-                            'description' => $config['description']
-                        ]
-                    );
-                    
-                    $updated++;
+                    $value = $request->input($fieldName);
                 }
+                
+                Setting::updateOrCreate(
+                    ['key' => $key],
+                    [
+                        'value' => $value,
+                        'type' => $config['type'],
+                        'group' => $activeTab,
+                        'label' => $config['label'],
+                        'description' => $config['description']
+                    ]
+                );
+                
+                $updated++;
             }
         }
 
         Setting::clearCache();
 
-        return back()->with('success', "Updated {$updated} settings successfully.");
+        return back()->with('success', "Updated {$updated} {$activeTab} settings successfully.");
     }
 
     /**

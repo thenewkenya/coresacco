@@ -79,6 +79,7 @@
         <!-- Main Content -->
         <form method="POST" action="{{ route('system.settings.update') }}" id="settings-form">
             @csrf
+            <input type="hidden" name="active_tab" value="{{ $activeTab }}" />
 
             @if($activeTab === 'general')
                 <!-- General Settings -->
@@ -144,6 +145,19 @@
             @elseif($activeTab === 'financial')
                 <!-- Financial Settings -->
                 <div class="space-y-6">
+                    <!-- Important Notice -->
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <div class="flex items-start space-x-3">
+                            <flux:icon.information-circle class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">{{ __('Important Notice') }}</h4>
+                                <p class="text-sm text-blue-800 dark:text-blue-200">
+                                    {{ __('All financial settings are required for the system to function properly. Fields marked with') }} <span class="text-red-500 font-medium">*</span> {{ __('must be filled in.') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Interest Rates -->
                     <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
                         <div class="mb-6">
@@ -163,30 +177,105 @@
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            @foreach(['savings_interest_rate', 'loan_interest_rate', 'emergency_loan_rate', 'late_payment_penalty'] as $key)
-                            @if(isset($settings['financial'][$key]))
-                            @php $setting = $settings['financial'][$key]; @endphp
+                            <!-- Savings Interest Rate -->
                             <div class="space-y-3">
                                 <flux:field>
-                                    <flux:label for="financial_{{ $key }}">{{ $setting['label'] }}</flux:label>
+                                    <flux:label for="financial_savings_interest_rate">
+                                        {{ __('Savings Interest Rate (Annual %)') }} <span class="text-red-500">*</span>
+                                    </flux:label>
                                     <flux:input 
                                         type="number" 
                                         step="0.01"
-                                        name="financial[{{ $key }}]" 
-                                        id="financial_{{ $key }}"
-                                        value="{{ old('financial.'.$key, $setting['value']) }}" 
+                                        min="0"
+                                        max="100"
+                                        name="financial[savings_interest_rate]" 
+                                        id="financial_savings_interest_rate"
+                                        value="{{ old('financial.savings_interest_rate', $settings['financial']['savings_interest_rate']['value'] ?? 8.5) }}" 
                                         suffix="%"
+                                        required
+                                        placeholder="8.5"
                                     />
-                                    @if($setting['description'])
-                                        <flux:description>{{ $setting['description'] }}</flux:description>
-                                    @endif
-                                    @error('financial.'.$key)
+                                    <flux:description>{{ __('Annual interest rate for savings accounts (0-100%)') }}</flux:description>
+                                    @error('financial.savings_interest_rate')
                                         <flux:error>{{ $message }}</flux:error>
                                     @enderror
                                 </flux:field>
                             </div>
-                            @endif
-                            @endforeach
+
+                            <!-- Loan Interest Rate -->
+                            <div class="space-y-3">
+                                <flux:field>
+                                    <flux:label for="financial_loan_interest_rate">
+                                        {{ __('Default Loan Interest Rate (Annual %)') }} <span class="text-red-500">*</span>
+                                    </flux:label>
+                                    <flux:input 
+                                        type="number" 
+                                        step="0.01"
+                                        min="0"
+                                        max="100"
+                                        name="financial[loan_interest_rate]" 
+                                        id="financial_loan_interest_rate"
+                                        value="{{ old('financial.loan_interest_rate', $settings['financial']['loan_interest_rate']['value'] ?? 12.5) }}" 
+                                        suffix="%"
+                                        required
+                                        placeholder="12.5"
+                                    />
+                                    <flux:description>{{ __('Default annual interest rate for loans (0-100%)') }}</flux:description>
+                                    @error('financial.loan_interest_rate')
+                                        <flux:error>{{ $message }}</flux:error>
+                                    @enderror
+                                </flux:field>
+                            </div>
+
+                            <!-- Emergency Loan Rate -->
+                            <div class="space-y-3">
+                                <flux:field>
+                                    <flux:label for="financial_emergency_loan_rate">
+                                        {{ __('Emergency Loan Rate (Monthly %)') }} <span class="text-red-500">*</span>
+                                    </flux:label>
+                                    <flux:input 
+                                        type="number" 
+                                        step="0.01"
+                                        min="0"
+                                        max="50"
+                                        name="financial[emergency_loan_rate]" 
+                                        id="financial_emergency_loan_rate"
+                                        value="{{ old('financial.emergency_loan_rate', $settings['financial']['emergency_loan_rate']['value'] ?? 2.5) }}" 
+                                        suffix="%"
+                                        required
+                                        placeholder="2.5"
+                                    />
+                                    <flux:description>{{ __('Monthly interest rate for emergency loans (0-50%)') }}</flux:description>
+                                    @error('financial.emergency_loan_rate')
+                                        <flux:error>{{ $message }}</flux:error>
+                                    @enderror
+                                </flux:field>
+                            </div>
+
+                            <!-- Late Payment Penalty -->
+                            <div class="space-y-3">
+                                <flux:field>
+                                    <flux:label for="financial_late_payment_penalty">
+                                        {{ __('Late Payment Penalty (%)') }} <span class="text-red-500">*</span>
+                                    </flux:label>
+                                    <flux:input 
+                                        type="number" 
+                                        step="0.01"
+                                        min="0"
+                                        max="50"
+                                        name="financial[late_payment_penalty]" 
+                                        id="financial_late_payment_penalty"
+                                        value="{{ old('financial.late_payment_penalty', $settings['financial']['late_payment_penalty']['value'] ?? 5.0) }}" 
+                                        suffix="%"
+                                        required
+                                        placeholder="5.0"
+                                    />
+                                    <flux:description>{{ __('Penalty percentage for late loan payments (0-50%)') }}</flux:description>
+                                    @error('financial.late_payment_penalty')
+                                        <flux:error>{{ $message }}</flux:error>
+                                    @enderror
+                                </flux:field>
+                            </div>
                         </div>
                     </div>
 
@@ -209,31 +298,97 @@
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            @foreach(['maximum_loan_amount', 'minimum_savings_balance', 'daily_withdrawal_limit', 'loan_term_months'] as $key)
-                            @if(isset($settings['financial'][$key]))
-                            @php $setting = $settings['financial'][$key]; @endphp
+                            <!-- Maximum Loan Amount -->
                             <div class="space-y-3">
                                 <flux:field>
-                                    <flux:label for="financial_{{ $key }}">{{ $setting['label'] }}</flux:label>
+                                    <flux:label for="financial_maximum_loan_amount">
+                                        {{ __('Maximum Loan Amount') }} <span class="text-red-500">*</span>
+                                    </flux:label>
                                     <flux:input 
                                         type="number" 
-                                        name="financial[{{ $key }}]" 
-                                        id="financial_{{ $key }}"
-                                        value="{{ old('financial.'.$key, $setting['value']) }}" 
-                                        @if(str_contains($key, 'amount') || str_contains($key, 'balance') || str_contains($key, 'limit'))
-                                            prefix="KES"
-                                        @endif
+                                        min="1000"
+                                        name="financial[maximum_loan_amount]" 
+                                        id="financial_maximum_loan_amount"
+                                        value="{{ old('financial.maximum_loan_amount', $settings['financial']['maximum_loan_amount']['value'] ?? 500000) }}" 
+                                        prefix="KES"
+                                        required
+                                        placeholder="500000"
                                     />
-                                    @if($setting['description'])
-                                        <flux:description>{{ $setting['description'] }}</flux:description>
-                                    @endif
-                                    @error('financial.'.$key)
+                                    <flux:description>{{ __('Maximum amount that can be borrowed (minimum KES 1,000)') }}</flux:description>
+                                    @error('financial.maximum_loan_amount')
                                         <flux:error>{{ $message }}</flux:error>
                                     @enderror
                                 </flux:field>
                             </div>
-                            @endif
-                            @endforeach
+
+                            <!-- Minimum Savings Balance -->
+                            <div class="space-y-3">
+                                <flux:field>
+                                    <flux:label for="financial_minimum_savings_balance">
+                                        {{ __('Minimum Savings Balance') }} <span class="text-red-500">*</span>
+                                    </flux:label>
+                                    <flux:input 
+                                        type="number" 
+                                        min="0"
+                                        name="financial[minimum_savings_balance]" 
+                                        id="financial_minimum_savings_balance"
+                                        value="{{ old('financial.minimum_savings_balance', $settings['financial']['minimum_savings_balance']['value'] ?? 1000) }}" 
+                                        prefix="KES"
+                                        required
+                                        placeholder="1000"
+                                    />
+                                    <flux:description>{{ __('Minimum balance required in savings account') }}</flux:description>
+                                    @error('financial.minimum_savings_balance')
+                                        <flux:error>{{ $message }}</flux:error>
+                                    @enderror
+                                </flux:field>
+                            </div>
+
+                            <!-- Daily Withdrawal Limit -->
+                            <div class="space-y-3">
+                                <flux:field>
+                                    <flux:label for="financial_daily_withdrawal_limit">
+                                        {{ __('Daily Withdrawal Limit') }} <span class="text-red-500">*</span>
+                                    </flux:label>
+                                    <flux:input 
+                                        type="number" 
+                                        min="1000"
+                                        name="financial[daily_withdrawal_limit]" 
+                                        id="financial_daily_withdrawal_limit"
+                                        value="{{ old('financial.daily_withdrawal_limit', $settings['financial']['daily_withdrawal_limit']['value'] ?? 50000) }}" 
+                                        prefix="KES"
+                                        required
+                                        placeholder="50000"
+                                    />
+                                    <flux:description>{{ __('Maximum amount that can be withdrawn per day (minimum KES 1,000)') }}</flux:description>
+                                    @error('financial.daily_withdrawal_limit')
+                                        <flux:error>{{ $message }}</flux:error>
+                                    @enderror
+                                </flux:field>
+                            </div>
+
+                            <!-- Loan Term Months -->
+                            <div class="space-y-3">
+                                <flux:field>
+                                    <flux:label for="financial_loan_term_months">
+                                        {{ __('Default Loan Term (Months)') }} <span class="text-red-500">*</span>
+                                    </flux:label>
+                                    <flux:input 
+                                        type="number" 
+                                        min="1"
+                                        max="120"
+                                        name="financial[loan_term_months]" 
+                                        id="financial_loan_term_months"
+                                        value="{{ old('financial.loan_term_months', $settings['financial']['loan_term_months']['value'] ?? 36) }}" 
+                                        required
+                                        placeholder="36"
+                                    />
+                                    <flux:description>{{ __('Default loan repayment period in months (1-120 months)') }}</flux:description>
+                                    @error('financial.loan_term_months')
+                                        <flux:error>{{ $message }}</flux:error>
+                                    @enderror
+                                </flux:field>
+                            </div>
                         </div>
                     </div>
                 </div>
