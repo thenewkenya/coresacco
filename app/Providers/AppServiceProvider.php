@@ -15,6 +15,7 @@ use App\Policies\UserPolicy;
 use App\Policies\AccountPolicy;
 use App\Policies\LoanPolicy;
 use App\Policies\RolePolicy;
+use App\Policies\SystemPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,6 +38,13 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Account::class, AccountPolicy::class);
         Gate::policy(Loan::class, LoanPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
+        
+        // Register system settings gates
+        Gate::define('viewSettings', [SystemPolicy::class, 'viewSettings']);
+        Gate::define('updateSettings', [SystemPolicy::class, 'updateSettings']);
+        Gate::define('resetSettings', [SystemPolicy::class, 'resetSettings']);
+        Gate::define('exportSettings', [SystemPolicy::class, 'exportSettings']);
+        Gate::define('importSettings', [SystemPolicy::class, 'importSettings']);
         
         // Custom Blade directives for permissions
         Blade::if('can', function ($permission) {

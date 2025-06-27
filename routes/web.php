@@ -169,7 +169,11 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('system')->name('system.')->group(function () {
-        Route::get('/settings', function () { return view('system.settings'); })->name('settings');
+        Route::get('/settings', [App\Http\Controllers\SystemController::class, 'settings'])->name('settings');
+        Route::post('/settings', [App\Http\Controllers\SystemController::class, 'updateSettings'])->name('settings.update');
+        Route::post('/settings/reset', [App\Http\Controllers\SystemController::class, 'resetSettings'])->name('settings.reset');
+        Route::get('/settings/export', [App\Http\Controllers\SystemController::class, 'exportSettings'])->name('settings.export');
+        Route::post('/settings/import', [App\Http\Controllers\SystemController::class, 'importSettings'])->name('settings.import');
     });
 
     // Notifications
