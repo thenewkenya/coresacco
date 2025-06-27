@@ -446,6 +446,7 @@
         </flux:header>
         {{ $slot }}
     @fluxScripts
+    @stack('scripts')
 </body>
 
 </html>

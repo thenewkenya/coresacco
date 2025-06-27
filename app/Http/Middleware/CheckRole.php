@@ -17,13 +17,19 @@ class CheckRole
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         if (!Auth::check()) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+            return redirect()->route('login');
         }
 
         if (!Auth::user()->hasAnyRole($roles)) {
-            return response()->json([
-                'message' => 'Access denied. Required roles: ' . implode(', ', $roles)
-            ], 403);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Access denied. Required roles: ' . implode(', ', $roles)
+                ], 403);
+            }
+            abort(403, 'Access denied. Required roles: ' . implode(', ', $roles));
         }
 
         return $next($request);

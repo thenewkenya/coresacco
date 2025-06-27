@@ -14,14 +14,21 @@
                         </div>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <button onclick="window.print()" class="bg-zinc-600 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center">
-                            <flux:icon.printer class="w-4 h-4 mr-2" />
-                            Print
-                        </button>
-                        <a href="{{ route('transactions.receipt.download', $transaction) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center">
-                            <flux:icon.arrow-down-tray class="w-4 h-4 mr-2" />
-                            Download
-                        </a>
+                                                 <flux:button 
+                             onclick="window.print()" 
+                             variant="primary"
+                             icon="printer"
+                             class="print:hidden"
+                         >
+                             Print Receipt
+                         </flux:button>
+                         <flux:button 
+                             :href="route('transactions.receipt.download', $transaction)"
+                             variant="outline"
+                             icon="arrow-down"
+                         >
+                             Download
+                         </flux:button>
                     </div>
                 </div>
             </div>

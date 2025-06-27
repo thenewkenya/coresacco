@@ -156,7 +156,7 @@ $branchPerformance = Branch::all()->map(function($branch) {
                             </div>
                             <div class="space-y-1">
                                 <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white">
-                                    KES {{ number_format($thisMonthTransactions) }}
+                                    {{ format_currency($thisMonthTransactions) }}
                                 </div>
                                 <div class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">vs last month</div>
                             </div>
@@ -189,7 +189,7 @@ $branchPerformance = Branch::all()->map(function($branch) {
                             </div>
                             <div class="space-y-1">
                                 <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white">
-                                    KES {{ number_format($totalLoanAmount) }}
+                                    {{ format_currency($totalLoanAmount) }}
                                 </div>
                                 <div class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">vs last month</div>
                             </div>

@@ -134,15 +134,46 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('branches')->name('branches.')->group(function () {
-        Route::get('/', function () { return view('branches.index'); })->name('index');
+        Route::get('/', [App\Http\Controllers\BranchController::class, 'index'])->name('index');
+        Route::get('/map', [App\Http\Controllers\BranchController::class, 'mapView'])->name('map');
+        Route::get('/create', [App\Http\Controllers\BranchController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\BranchController::class, 'store'])->name('store');
+        Route::get('/{branch}', [App\Http\Controllers\BranchController::class, 'show'])->name('show');
+        Route::get('/{branch}/edit', [App\Http\Controllers\BranchController::class, 'edit'])->name('edit');
+        Route::put('/{branch}', [App\Http\Controllers\BranchController::class, 'update'])->name('update');
+        Route::delete('/{branch}', [App\Http\Controllers\BranchController::class, 'destroy'])->name('destroy');
+        Route::get('/{branch}/staff', [App\Http\Controllers\BranchController::class, 'staff'])->name('staff');
+        Route::post('/{branch}/staff/assign', [App\Http\Controllers\BranchController::class, 'assignStaff'])->name('staff.assign');
+        Route::delete('/{branch}/staff/remove', [App\Http\Controllers\BranchController::class, 'removeStaff'])->name('staff.remove');
+        Route::get('/{branch}/analytics', [App\Http\Controllers\BranchController::class, 'analytics'])->name('analytics');
     });
 
     Route::prefix('roles')->name('roles.')->group(function () {
-        Route::get('/', function () { return view('roles.index'); })->name('index');
+        Route::get('/', [App\Http\Controllers\RoleController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\RoleController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\RoleController::class, 'store'])->name('store');
+        Route::get('/{role}', [App\Http\Controllers\RoleController::class, 'show'])->name('show');
+        Route::get('/{role}/edit', [App\Http\Controllers\RoleController::class, 'edit'])->name('edit');
+        Route::put('/{role}', [App\Http\Controllers\RoleController::class, 'update'])->name('update');
+        Route::delete('/{role}', [App\Http\Controllers\RoleController::class, 'destroy'])->name('destroy');
+        
+        // Role assignment routes
+        Route::post('/assign', [App\Http\Controllers\RoleController::class, 'assignRole'])->name('assign');
+        Route::post('/remove', [App\Http\Controllers\RoleController::class, 'removeRole'])->name('remove');
+        Route::post('/bulk-assign', [App\Http\Controllers\RoleController::class, 'bulkAssign'])->name('bulk-assign');
+        
+        // AJAX routes
+        Route::get('/{role}/permissions', [App\Http\Controllers\RoleController::class, 'permissions'])->name('permissions');
+        Route::post('/{role}/permissions', [App\Http\Controllers\RoleController::class, 'updatePermissions'])->name('permissions.update');
+        Route::get('/{role}/available-users', [App\Http\Controllers\RoleController::class, 'availableUsers'])->name('available-users');
     });
 
     Route::prefix('system')->name('system.')->group(function () {
-        Route::get('/settings', function () { return view('system.settings'); })->name('settings');
+        Route::get('/settings', [App\Http\Controllers\SystemController::class, 'settings'])->name('settings');
+        Route::post('/settings', [App\Http\Controllers\SystemController::class, 'updateSettings'])->name('settings.update');
+        Route::post('/settings/reset', [App\Http\Controllers\SystemController::class, 'resetSettings'])->name('settings.reset');
+        Route::get('/settings/export', [App\Http\Controllers\SystemController::class, 'exportSettings'])->name('settings.export');
+        Route::post('/settings/import', [App\Http\Controllers\SystemController::class, 'importSettings'])->name('settings.import');
     });
 
     // Notifications

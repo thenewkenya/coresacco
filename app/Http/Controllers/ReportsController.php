@@ -232,11 +232,17 @@ class ReportsController extends Controller
             case 'transactions':
                 $data = $this->generateTransactionReport($startDate, $endDate);
                 break;
-            case 'branch_performance':
-                $data = $this->generateBranchPerformance($startDate, $endDate);
-                break;
             case 'daily_summary':
                 $data = $this->generateDailySummary($startDate, $endDate);
+                break;
+            case 'hourly_analysis':
+                $data = $this->generateHourlyAnalysis($startDate, $endDate);
+                break;
+            case 'transaction_types':
+                $data = $this->generateTransactionTypeAnalysis($startDate, $endDate);
+                break;
+            case 'branch_performance':
+                $data = $this->generateBranchPerformance($startDate, $endDate);
                 break;
             case 'audit_trail':
                 $data = $this->generateAuditTrail($startDate, $endDate);
@@ -1342,12 +1348,24 @@ class ReportsController extends Controller
         $summary = [
             'total_transactions' => $transactions->count(),
             'total_amount' => $transactions->where('status', 'completed')->sum('amount'),
+            'completed_transactions' => $transactions->where('status', 'completed')->count(),
+            'pending_transactions' => $transactions->where('status', 'pending')->count(),
+            'failed_transactions' => $transactions->where('status', 'failed')->count(),
             'by_type' => $transactions->groupBy('type')->map(function($typeTransactions) {
                 return [
                     'count' => $typeTransactions->count(),
-                    'amount' => $typeTransactions->where('status', 'completed')->sum('amount')
+                    'amount' => $typeTransactions->where('status', 'completed')->sum('amount'),
+                    'avg_amount' => $typeTransactions->where('status', 'completed')->avg('amount') ?: 0
                 ];
             }),
+            'by_status' => $transactions->groupBy('status')->map(function($statusTransactions) {
+                return [
+                    'count' => $statusTransactions->count(),
+                    'amount' => $statusTransactions->sum('amount')
+                ];
+            }),
+            'peak_hour' => $this->calculatePeakTransactionHour($transactions),
+            'top_members' => $this->getTopTransactionMembers($transactions),
         ];
         
         return compact('transactions', 'summary');
@@ -1355,13 +1373,195 @@ class ReportsController extends Controller
 
     private function generateBranchPerformance($startDate, $endDate)
     {
-        // This would need a branches table with proper relationships
-        $branches = collect([
-            ['id' => 1, 'name' => 'Main Branch', 'members' => 0, 'deposits' => 0, 'loans' => 0],
-            ['id' => 2, 'name' => 'Secondary Branch', 'members' => 0, 'deposits' => 0, 'loans' => 0],
-        ]);
+        $branches = \App\Models\Branch::with(['manager', 'staff'])->get();
         
-        return compact('branches');
+        $branchPerformance = $branches->map(function($branch) use ($startDate, $endDate) {
+            // Get branch members
+            $branchMembers = User::where('branch_id', $branch->id)->where('role', 'member')->get();
+            $memberIds = $branchMembers->pluck('id');
+            
+            // Account balances for branch members
+            $accounts = Account::whereIn('member_id', $memberIds)->get();
+            $totalDeposits = $accounts->sum('balance');
+            
+            // Transaction analysis for the period
+            $transactions = Transaction::whereHas('account', function($q) use ($memberIds) {
+                $q->whereIn('member_id', $memberIds);
+            })->whereBetween('created_at', [$startDate, $endDate])->get();
+            
+            $deposits = $transactions->where('type', 'deposit')->where('status', 'completed');
+            $withdrawals = $transactions->where('type', 'withdrawal')->where('status', 'completed');
+            $loanRepayments = $transactions->where('type', 'loan_repayment')->where('status', 'completed');
+            
+            // Loan analysis for branch members
+            $loans = Loan::whereIn('member_id', $memberIds)->get();
+            $activeLoans = $loans->whereIn('status', ['active', 'disbursed']);
+            $completedLoans = $loans->where('status', 'completed');
+            $overdueLoans = $loans->where('status', 'active')->filter(function($loan) {
+                return $loan->due_date < now();
+            });
+            
+            // Period-specific loan disbursements
+            $periodLoans = Loan::whereIn('member_id', $memberIds)
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->get();
+            
+            // Growth metrics
+            $newMembers = User::where('branch_id', $branch->id)
+                ->where('role', 'member')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+            
+            // Calculate performance score (0-100)
+            $performanceScore = $this->calculateBranchPerformanceScore([
+                'total_deposits' => $totalDeposits,
+                'transaction_volume' => $transactions->where('status', 'completed')->sum('amount'),
+                'active_loans_count' => $activeLoans->count(),
+                'overdue_rate' => $loans->count() > 0 ? ($overdueLoans->count() / $loans->count()) * 100 : 0,
+                'member_growth' => $newMembers,
+                'collection_rate' => $this->calculateBranchCollectionRate($memberIds, $startDate, $endDate)
+            ]);
+            
+            return [
+                'branch' => $branch,
+                'total_members' => $branchMembers->count(),
+                'new_members' => $newMembers,
+                'total_deposits' => $totalDeposits,
+                'total_accounts' => $accounts->count(),
+                'transaction_volume' => $transactions->where('status', 'completed')->sum('amount'),
+                'transaction_count' => $transactions->where('status', 'completed')->count(),
+                'deposits' => [
+                    'count' => $deposits->count(),
+                    'amount' => $deposits->sum('amount'),
+                    'avg_amount' => $deposits->avg('amount') ?: 0
+                ],
+                'withdrawals' => [
+                    'count' => $withdrawals->count(),
+                    'amount' => $withdrawals->sum('amount'),
+                    'avg_amount' => $withdrawals->avg('amount') ?: 0
+                ],
+                'loan_repayments' => [
+                    'count' => $loanRepayments->count(),
+                    'amount' => $loanRepayments->sum('amount'),
+                    'avg_amount' => $loanRepayments->avg('amount') ?: 0
+                ],
+                'loans' => [
+                    'total_portfolio' => $loans->sum('amount'),
+                    'active_loans' => $activeLoans->count(),
+                    'active_amount' => $activeLoans->sum('amount'),
+                    'completed_loans' => $completedLoans->count(),
+                    'overdue_loans' => $overdueLoans->count(),
+                    'overdue_amount' => $overdueLoans->sum('amount'),
+                    'period_disbursements' => $periodLoans->sum('amount'),
+                    'period_count' => $periodLoans->count()
+                ],
+                'net_cash_flow' => $deposits->sum('amount') - $withdrawals->sum('amount'),
+                'performance_score' => $performanceScore,
+                'performance_rating' => $this->getBranchPerformanceRating($performanceScore),
+                'staff_count' => $branch->staff->count(),
+                'manager' => $branch->manager,
+                'is_active' => $branch->status === 'active'
+            ];
+        });
+        
+        // Overall statistics
+        $overallStats = [
+            'total_branches' => $branches->count(),
+            'active_branches' => $branches->where('status', 'active')->count(),
+            'total_members' => $branchPerformance->sum('total_members'),
+            'total_deposits' => $branchPerformance->sum('total_deposits'),
+            'total_transaction_volume' => $branchPerformance->sum('transaction_volume'),
+            'avg_performance_score' => $branchPerformance->avg('performance_score'),
+            'top_performing_branch' => $branchPerformance->sortByDesc('performance_score')->first(),
+            'most_deposits_branch' => $branchPerformance->sortByDesc('total_deposits')->first(),
+            'most_active_branch' => $branchPerformance->sortByDesc('transaction_count')->first(),
+            'fastest_growing_branch' => $branchPerformance->sortByDesc('new_members')->first()
+        ];
+        
+        // Rankings
+        $rankings = [
+            'by_performance' => $branchPerformance->sortByDesc('performance_score')->values(),
+            'by_deposits' => $branchPerformance->sortByDesc('total_deposits')->values(),
+            'by_members' => $branchPerformance->sortByDesc('total_members')->values(),
+            'by_growth' => $branchPerformance->sortByDesc('new_members')->values(),
+            'by_loan_portfolio' => $branchPerformance->sortByDesc('loans.total_portfolio')->values()
+        ];
+        
+        return compact('branchPerformance', 'overallStats', 'rankings');
+    }
+    
+    private function calculateBranchPerformanceScore($metrics)
+    {
+        $score = 0;
+        
+        // Deposit volume (25%)
+        if ($metrics['total_deposits'] > 1000000) $score += 25;
+        elseif ($metrics['total_deposits'] > 500000) $score += 20;
+        elseif ($metrics['total_deposits'] > 100000) $score += 15;
+        elseif ($metrics['total_deposits'] > 50000) $score += 10;
+        else $score += 5;
+        
+        // Transaction volume (20%)
+        if ($metrics['transaction_volume'] > 500000) $score += 20;
+        elseif ($metrics['transaction_volume'] > 250000) $score += 16;
+        elseif ($metrics['transaction_volume'] > 100000) $score += 12;
+        elseif ($metrics['transaction_volume'] > 50000) $score += 8;
+        else $score += 4;
+        
+        // Loan portfolio performance (20%)
+        if ($metrics['active_loans_count'] > 50) $score += 15;
+        elseif ($metrics['active_loans_count'] > 25) $score += 12;
+        elseif ($metrics['active_loans_count'] > 10) $score += 8;
+        else $score += 4;
+        
+        // Overdue rate penalty (15%)
+        if ($metrics['overdue_rate'] < 5) $score += 15;
+        elseif ($metrics['overdue_rate'] < 10) $score += 12;
+        elseif ($metrics['overdue_rate'] < 20) $score += 8;
+        elseif ($metrics['overdue_rate'] < 30) $score += 4;
+        else $score += 0;
+        
+        // Member growth (10%)
+        if ($metrics['member_growth'] > 20) $score += 10;
+        elseif ($metrics['member_growth'] > 10) $score += 8;
+        elseif ($metrics['member_growth'] > 5) $score += 6;
+        elseif ($metrics['member_growth'] > 0) $score += 4;
+        else $score += 0;
+        
+        // Collection rate (10%)
+        if ($metrics['collection_rate'] > 95) $score += 10;
+        elseif ($metrics['collection_rate'] > 90) $score += 8;
+        elseif ($metrics['collection_rate'] > 85) $score += 6;
+        elseif ($metrics['collection_rate'] > 80) $score += 4;
+        else $score += 2;
+        
+        return min(100, $score);
+    }
+    
+    private function getBranchPerformanceRating($score)
+    {
+        if ($score >= 90) return 'Excellent';
+        if ($score >= 80) return 'Very Good';
+        if ($score >= 70) return 'Good';
+        if ($score >= 60) return 'Average';
+        if ($score >= 50) return 'Below Average';
+        return 'Poor';
+    }
+    
+    private function calculateBranchCollectionRate($memberIds, $startDate, $endDate)
+    {
+        $expectedCollections = Loan::whereIn('member_id', $memberIds)
+            ->where('due_date', '>=', $startDate)
+            ->where('due_date', '<=', $endDate)
+            ->sum('amount');
+        
+        $actualCollections = Transaction::where('type', 'loan_repayment')
+            ->where('status', 'completed')
+            ->whereIn('member_id', $memberIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->sum('amount');
+        
+        return $expectedCollections > 0 ? round(($actualCollections / $expectedCollections) * 100, 2) : 0;
     }
 
     private function generateDailySummary($startDate, $endDate)
@@ -1374,31 +1574,60 @@ class ReportsController extends Controller
             $dayStart = $current->copy()->startOfDay();
             $dayEnd = $current->copy()->endOfDay();
             
+            $dayTransactions = Transaction::whereBetween('created_at', [$dayStart, $dayEnd])->get();
+            
+            $deposits = $dayTransactions->where('type', 'deposit')->where('status', 'completed');
+            $withdrawals = $dayTransactions->where('type', 'withdrawal')->where('status', 'completed');
+            $loanDisbursements = $dayTransactions->where('type', 'loan_disbursement')->where('status', 'completed');
+            $loanRepayments = $dayTransactions->where('type', 'loan_repayment')->where('status', 'completed');
+            
             $daily[] = [
                 'date' => $current->format('Y-m-d'),
-                'transactions' => Transaction::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
-                'deposits' => Transaction::where('type', 'deposit')
-                    ->whereBetween('created_at', [$dayStart, $dayEnd])
-                    ->where('status', 'completed')
-                    ->sum('amount'),
-                'withdrawals' => Transaction::where('type', 'withdrawal')
-                    ->whereBetween('created_at', [$dayStart, $dayEnd])
-                    ->where('status', 'completed')
-                    ->sum('amount'),
-                'loan_disbursements' => Transaction::where('type', 'loan_disbursement')
-                    ->whereBetween('created_at', [$dayStart, $dayEnd])
-                    ->where('status', 'completed')
-                    ->sum('amount'),
-                'loan_repayments' => Transaction::where('type', 'loan_repayment')
-                    ->whereBetween('created_at', [$dayStart, $dayEnd])
-                    ->where('status', 'completed')
-                    ->sum('amount'),
+                'day_name' => $current->format('l'),
+                'total_transactions' => $dayTransactions->count(),
+                'completed_transactions' => $dayTransactions->where('status', 'completed')->count(),
+                'pending_transactions' => $dayTransactions->where('status', 'pending')->count(),
+                'failed_transactions' => $dayTransactions->where('status', 'failed')->count(),
+                'total_amount' => $dayTransactions->where('status', 'completed')->sum('amount'),
+                'deposits' => [
+                    'count' => $deposits->count(),
+                    'amount' => $deposits->sum('amount'),
+                    'avg_amount' => $deposits->avg('amount') ?: 0
+                ],
+                'withdrawals' => [
+                    'count' => $withdrawals->count(),
+                    'amount' => $withdrawals->sum('amount'),
+                    'avg_amount' => $withdrawals->avg('amount') ?: 0
+                ],
+                'loan_disbursements' => [
+                    'count' => $loanDisbursements->count(),
+                    'amount' => $loanDisbursements->sum('amount'),
+                    'avg_amount' => $loanDisbursements->avg('amount') ?: 0
+                ],
+                'loan_repayments' => [
+                    'count' => $loanRepayments->count(),
+                    'amount' => $loanRepayments->sum('amount'),
+                    'avg_amount' => $loanRepayments->avg('amount') ?: 0
+                ],
+                'net_cash_flow' => $deposits->sum('amount') - $withdrawals->sum('amount'),
+                'unique_members' => $dayTransactions->where('status', 'completed')->unique('member_id')->count(),
+                'peak_hour' => $this->getDayPeakHour($dayTransactions),
             ];
             
             $current->addDay();
         }
         
-        return compact('daily');
+        // Calculate summary metrics
+        $summaryMetrics = [
+            'total_days' => count($daily),
+            'avg_daily_transactions' => collect($daily)->avg('total_transactions'),
+            'avg_daily_amount' => collect($daily)->avg('total_amount'),
+            'highest_transaction_day' => collect($daily)->sortByDesc('total_transactions')->first(),
+            'highest_amount_day' => collect($daily)->sortByDesc('total_amount')->first(),
+            'busiest_day_of_week' => $this->getBusiestDayOfWeek($daily),
+        ];
+        
+        return compact('daily', 'summaryMetrics');
     }
 
     private function generateAuditTrail($startDate, $endDate)
@@ -1545,5 +1774,136 @@ class ReportsController extends Controller
             ->sum('amount');
         
         return $expectedCollections > 0 ? round(($actualCollections / $expectedCollections) * 100, 2) : 0;
+    }
+
+    // Helper methods for enhanced transaction reporting
+    private function calculatePeakTransactionHour($transactions)
+    {
+        $hourlyData = $transactions->groupBy(function($transaction) {
+            return $transaction->created_at->format('H');
+        })->map(function($hourTransactions) {
+            return $hourTransactions->count();
+        })->sortByDesc(function($count) {
+            return $count;
+        });
+
+        $peakHour = $hourlyData->keys()->first();
+        return $peakHour ? [
+            'hour' => $peakHour,
+            'count' => $hourlyData->first(),
+            'formatted' => $peakHour . ':00 - ' . ($peakHour + 1) . ':00'
+        ] : null;
+    }
+
+    private function getTopTransactionMembers($transactions)
+    {
+        return $transactions->where('status', 'completed')
+            ->groupBy('member_id')
+            ->map(function($memberTransactions) {
+                $member = $memberTransactions->first()->member;
+                return [
+                    'member' => $member,
+                    'transaction_count' => $memberTransactions->count(),
+                    'total_amount' => $memberTransactions->sum('amount'),
+                    'avg_amount' => $memberTransactions->avg('amount')
+                ];
+            })
+            ->sortByDesc('transaction_count')
+            ->take(10)
+            ->values();
+    }
+
+    private function getDayPeakHour($dayTransactions)
+    {
+        if ($dayTransactions->isEmpty()) {
+            return null;
+        }
+
+        $hourlyData = $dayTransactions->groupBy(function($transaction) {
+            return $transaction->created_at->format('H');
+        })->map(function($hourTransactions) {
+            return $hourTransactions->count();
+        });
+
+        if ($hourlyData->isEmpty()) {
+            return null;
+        }
+
+        $peakHour = $hourlyData->sortByDesc(function($count) {
+            return $count;
+        })->keys()->first();
+
+        return [
+            'hour' => $peakHour,
+            'count' => $hourlyData[$peakHour],
+            'formatted' => $peakHour . ':00'
+        ];
+    }
+
+    private function getBusiestDayOfWeek($daily)
+    {
+        $dayTotals = collect($daily)->groupBy('day_name')->map(function($dayData) {
+            return $dayData->sum('total_transactions');
+        })->sortByDesc(function($total) {
+            return $total;
+        });
+
+        $busiestDay = $dayTotals->keys()->first();
+        return $busiestDay ? [
+            'day' => $busiestDay,
+            'total_transactions' => $dayTotals->first()
+        ] : null;
+    }
+
+    private function generateHourlyAnalysis($startDate, $endDate)
+    {
+        $transactions = Transaction::whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'completed')
+            ->get();
+
+        $hourlyData = [];
+        for ($hour = 0; $hour < 24; $hour++) {
+            $hourTransactions = $transactions->filter(function($transaction) use ($hour) {
+                return $transaction->created_at->format('H') == sprintf('%02d', $hour);
+            });
+
+            $hourlyData[] = [
+                'hour' => $hour,
+                'formatted_hour' => sprintf('%02d:00', $hour),
+                'transaction_count' => $hourTransactions->count(),
+                'total_amount' => $hourTransactions->sum('amount'),
+                'avg_amount' => $hourTransactions->avg('amount') ?: 0,
+                'deposits' => $hourTransactions->where('type', 'deposit')->count(),
+                'withdrawals' => $hourTransactions->where('type', 'withdrawal')->count(),
+                'loan_transactions' => $hourTransactions->whereIn('type', ['loan_disbursement', 'loan_repayment'])->count(),
+            ];
+        }
+
+        return compact('hourlyData');
+    }
+
+    private function generateTransactionTypeAnalysis($startDate, $endDate)
+    {
+        $transactions = Transaction::whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'completed')
+            ->get();
+
+        $totalTransactions = $transactions->count();
+
+        $typeAnalysis = $transactions->groupBy('type')->map(function($typeTransactions, $type) use ($totalTransactions, $startDate, $endDate) {
+            return [
+                'type' => $type,
+                'display_name' => ucwords(str_replace('_', ' ', $type)),
+                'count' => $typeTransactions->count(),
+                'total_amount' => $typeTransactions->sum('amount'),
+                'avg_amount' => $typeTransactions->avg('amount'),
+                'min_amount' => $typeTransactions->min('amount'),
+                'max_amount' => $typeTransactions->max('amount'),
+                'percentage_of_total' => $totalTransactions > 0 ? round(($typeTransactions->count() / $totalTransactions) * 100, 2) : 0,
+                'daily_average' => $typeTransactions->count() / max(1, Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1),
+            ];
+        })->sortByDesc('count');
+
+        return compact('typeAnalysis');
     }
 } 
