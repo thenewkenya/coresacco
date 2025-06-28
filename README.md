@@ -169,7 +169,7 @@ Your application includes these services:
 |---------|-----|-------------|
 | **Laravel App** | [http://localhost](http://localhost) | Main SACCO application |
 | **Mailpit** | [http://localhost:8025](http://localhost:8025) | Email testing interface |
-| **PostgreSQL** | `localhost:5432` | Database (accessible via Sail) |
+| **MySQL** | `localhost:3306` | Database (accessible via Sail) |
 | **Redis** | `localhost:6379` | Caching and sessions |
 
 ## Custom commands
