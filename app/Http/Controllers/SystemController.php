@@ -149,15 +149,52 @@ class SystemController extends Controller
         $this->authorize('resetSettings');
         
         $group = $request->get('group');
+        $settingsStructure = $this->getSettingsStructure();
+        
+        // Clear cache first
+        Setting::clearCache();
         
         if ($group && $group !== 'all') {
+            // Delete existing settings for the group
             Setting::where('group', $group)->delete();
+            
+            // Recreate with defaults if the group exists in structure
+            if (isset($settingsStructure[$group])) {
+                foreach ($settingsStructure[$group] as $key => $config) {
+                    Setting::create([
+                        'key' => $key,
+                        'value' => $config['type'] === 'boolean' ? ($config['default'] ? 'true' : 'false') : $config['default'],
+                        'type' => $config['type'],
+                        'group' => $group,
+                        'label' => $config['label'],
+                        'description' => $config['description']
+                    ]);
+                }
+            }
+            
             $message = "Reset {$group} settings to defaults.";
         } else {
+            // Delete all settings
             Setting::truncate();
+            
+            // Recreate all settings with defaults
+            foreach ($settingsStructure as $group => $settings) {
+                foreach ($settings as $key => $config) {
+                    Setting::create([
+                        'key' => $key,
+                        'value' => $config['type'] === 'boolean' ? ($config['default'] ? 'true' : 'false') : $config['default'],
+                        'type' => $config['type'],
+                        'group' => $group,
+                        'label' => $config['label'],
+                        'description' => $config['description']
+                    ]);
+                }
+            }
+            
             $message = "Reset all settings to defaults.";
         }
 
+        // Clear cache again after changes
         Setting::clearCache();
 
         return back()->with('success', $message);

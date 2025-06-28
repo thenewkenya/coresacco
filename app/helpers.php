@@ -49,7 +49,7 @@ if (!function_exists('organization_name')) {
      */
     function organization_name(): string
     {
-        return setting('organization_name', 'SACCO');
+        return setting('organization_name', 'Kenya SACCO Limited');
     }
 }
 

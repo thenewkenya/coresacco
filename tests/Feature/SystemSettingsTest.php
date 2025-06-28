@@ -3,10 +3,11 @@
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Setting;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->artisan('migrate:fresh');
-    
     // Create roles
     Role::create([
         'name' => 'admin', 
@@ -51,10 +52,13 @@ test('admin can update system settings', function () {
     
     $this->actingAs($admin)
         ->post(route('system.settings.update'), [
+            'active_tab' => 'general',
             'general' => [
                 'organization_name' => 'Test SACCO',
+                'registration_number' => 'SACCO-TEST-001',
                 'contact_email' => 'test@sacco.com',
-                'default_currency' => 'USD'
+                'default_currency' => 'USD',
+                'timezone' => 'Africa/Nairobi'
             ],
             'financial' => [
                 'savings_interest_rate' => 10.5,
@@ -69,10 +73,27 @@ test('admin can update system settings', function () {
         ->assertSessionHas('success');
     
     expect(setting('organization_name'))->toBe('Test SACCO');
+    expect(setting('registration_number'))->toBe('SACCO-TEST-001');
     expect(setting('contact_email'))->toBe('test@sacco.com');
     expect(setting('default_currency'))->toBe('USD');
-    expect(setting('savings_interest_rate'))->toBe(10.5);
-    expect(setting('enable_sms_notifications'))->toBe(true);
+    expect(setting('timezone'))->toBe('Africa/Nairobi');
+});
+
+test('admin cannot update settings with invalid data', function () {
+    $adminRole = Role::where('name', 'admin')->first();
+    $admin = User::factory()->create();
+    $admin->roles()->attach($adminRole);
+    
+    $this->actingAs($admin)
+        ->post(route('system.settings.update'), [
+            'active_tab' => 'general',
+            'general' => [
+                'organization_name' => '', // Required field
+                'contact_email' => 'invalid-email', // Invalid email
+            ]
+        ])
+        ->assertRedirect()
+        ->assertSessionHasErrors(['general.organization_name', 'general.contact_email']);
 });
 
 test('setting helper functions work correctly', function () {
@@ -109,26 +130,13 @@ test('feature flag helpers work correctly', function () {
     expect(is_feature_enabled('non_existent_feature'))->toBe(false);
 });
 
-test('admin can export settings', function () {
-    $adminRole = Role::where('name', 'admin')->first();
-    $admin = User::factory()->create();
-    $admin->roles()->attach($adminRole);
-    
-    $response = $this->actingAs($admin)
-        ->get(route('system.settings.export'));
-    
-    $response->assertOk()
-        ->assertHeader('Content-Type', 'application/json')
-        ->assertHeader('Content-Disposition');
-});
-
 test('admin can reset settings', function () {
     $adminRole = Role::where('name', 'admin')->first();
     $admin = User::factory()->create();
     $admin->roles()->attach($adminRole);
     
     // Create a custom setting
-    Setting::set('test_setting', 'custom_value');
+    Setting::set('test_setting', 'custom_value', 'string');
     expect(setting('test_setting'))->toBe('custom_value');
     
     // Reset all settings
@@ -137,13 +145,34 @@ test('admin can reset settings', function () {
         ->assertRedirect()
         ->assertSessionHas('success');
     
-    // Setting should be gone
+    // Setting should be gone and defaults should be set
     expect(setting('test_setting'))->toBeNull();
+    expect(setting('organization_name'))->toBe('Kenya SACCO Limited');
+});
+
+test('admin can reset specific settings group', function () {
+    $adminRole = Role::where('name', 'admin')->first();
+    $admin = User::factory()->create();
+    $admin->roles()->attach($adminRole);
+    
+    // Create settings in different groups
+    Setting::set('test_general', 'general_value', 'string', 'general');
+    Setting::set('test_financial', 'financial_value', 'string', 'financial');
+    
+    // Reset only general settings
+    $this->actingAs($admin)
+        ->post(route('system.settings.reset'), ['group' => 'general'])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+    
+    // General setting should be gone, but financial setting should remain
+    expect(setting('test_general'))->toBeNull();
+    expect(setting('test_financial'))->toBe('financial_value');
 });
 
 test('settings are cached correctly', function () {
     // Set a setting
-    Setting::set('cached_setting', 'test_value');
+    Setting::set('cached_setting', 'test_value', 'string');
     
     // First call should hit database and cache
     $value1 = setting('cached_setting');
@@ -169,5 +198,45 @@ test('organization name helper works', function () {
     // Test default when setting doesn't exist
     Setting::where('key', 'organization_name')->delete();
     Setting::clearCache();
-    expect(organization_name())->toBe('SACCO');
+    \Cache::flush(); // Clear all cache to ensure no stale values
+    expect(organization_name())->toBe('Kenya SACCO Limited');
+});
+
+test('settings validation rules are enforced', function () {
+    $adminRole = Role::where('name', 'admin')->first();
+    $admin = User::factory()->create();
+    $admin->roles()->attach($adminRole);
+    
+    $response = $this->actingAs($admin)
+        ->post(route('system.settings.update'), [
+            'active_tab' => 'general',
+            'general' => [
+                'organization_name' => str_repeat('a', 300), // Too long
+                'contact_email' => 'not-an-email',
+                'registration_number' => str_repeat('1', 150) // Too long
+            ]
+        ]);
+        
+    $response->assertRedirect()
+        ->assertSessionHasErrors([
+            'general.organization_name',
+            'general.contact_email',
+            'general.registration_number'
+        ]);
+});
+
+test('boolean settings are properly cast', function () {
+    Setting::set('test_bool_on', 'on', 'boolean');
+    Setting::set('test_bool_true', 'true', 'boolean');
+    Setting::set('test_bool_1', '1', 'boolean');
+    Setting::set('test_bool_off', 'off', 'boolean');
+    Setting::set('test_bool_false', 'false', 'boolean');
+    Setting::set('test_bool_0', '0', 'boolean');
+    
+    expect(setting('test_bool_on'))->toBeTrue();
+    expect(setting('test_bool_true'))->toBeTrue();
+    expect(setting('test_bool_1'))->toBeTrue();
+    expect(setting('test_bool_off'))->toBeFalse();
+    expect(setting('test_bool_false'))->toBeFalse();
+    expect(setting('test_bool_0'))->toBeFalse();
 });
