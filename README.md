@@ -15,8 +15,6 @@ A comprehensive Savings and Credit Cooperative (SACCO) management system.
 - [Configuration](#configuration)
 - [Production Deployment](#production-deployment)
 - [Troubleshooting](#troubleshooting)
-- [Security Notes](#security-notes)
-- [Documentation](#documentation)
 - [License](#license)
 
 ## Prerequisites
@@ -41,8 +39,8 @@ A comprehensive Savings and Credit Cooperative (SACCO) management system.
 For experienced developers who want the fastest setup:
 
 ```bash
-git clone https://github.com/thenewkenya/saccocore.git
-cd saccocore
+git clone https://github.com/thenewkenya/eSacco.git
+cd eSacco
 cp .env.example .env
 
 docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php82-composer:latest composer install --ignore-platform-reqs
@@ -59,8 +57,8 @@ docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/htm
 
 ### Step 1: Clone and Prepare
 ```bash
-git clone https://github.com/thenewkenya/saccocore.git
-cd saccocore
+git clone https://github.com/thenewkenya/eSacco.git
+cd eSacco
 cp .env.example .env
 ```
 
@@ -288,21 +286,6 @@ sail artisan optimize:clear
 - Database optimization and backups
 - SSL certificates and HTTPS
 - File permissions and security
-
-## Security Notes
-
-- **Change default passwords** in production
-- **Use strong passwords** for admin accounts
-- **Configure proper mail settings** for notifications
-- **Review .env file** before deployment
-- **Keep Docker images updated**: `sail build --no-cache`
-
-## Documentation
-
-- **Role & Permissions**: [ROLE_SYSTEM.md](ROLE_SYSTEM.md)
-- **Transaction Processing**: [TRANSACTION_PROCESSING_SUMMARY.md](TRANSACTION_PROCESSING_SUMMARY.md)
-- **Laravel Sail**: [Official Documentation](https://laravel.com/docs/12.x/sail)
-- **Laravel Framework**: [laravel.com/docs](https://laravel.com/docs)
 
 ## License
 
