@@ -86,6 +86,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/mobile-money', [App\Http\Controllers\PaymentsController::class, 'mobileMoney'])->name('mobile-money');
         Route::get('/reports/generate', [App\Http\Controllers\PaymentsController::class, 'report'])->name('report')->middleware('can:view-reports');
     });
+    
+    // Mobile Money Payment Routes (for quick access)
+    Route::prefix('mobile-money')->name('mobile-money.')->group(function () {
+        Route::get('/', function () {
+            return view('mobile-money.index');
+        })->name('index');
+    });
 
     // Member Services
     Route::prefix('members')->name('members.')->group(function () {
@@ -206,3 +213,10 @@ Route::middleware(['auth', 'verified'])->prefix('savings')->name('savings.')->gr
 });
 
 require __DIR__.'/auth.php';
+
+// Mobile Money Webhook Routes (no authentication required)
+Route::prefix('webhooks')->name('webhooks.')->group(function () {
+    Route::post('/mpesa/callback', [App\Http\Controllers\MobileMoneyWebhookController::class, 'mpesaCallback'])->name('mpesa.callback');
+    Route::post('/airtel/callback', [App\Http\Controllers\MobileMoneyWebhookController::class, 'airtelCallback'])->name('airtel.callback');
+    Route::post('/tkash/callback', [App\Http\Controllers\MobileMoneyWebhookController::class, 'tkashCallback'])->name('tkash.callback');
+});

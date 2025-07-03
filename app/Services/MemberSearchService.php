@@ -24,7 +24,7 @@ class MemberSearchService
     public function searchMembers(string $search, int $limit = 10, array $columns = ['*']): Collection
     {
         if (strlen($search) < 2) {
-            return collect();
+            return new Collection();
         }
 
         $cacheKey = "member_search:" . md5(strtolower($search) . $limit . implode('', $columns));
@@ -141,7 +141,7 @@ class MemberSearchService
     public function searchMembersForTransactions(string $search, int $limit = 10): Collection
     {
         if (strlen($search) < 2) {
-            return collect();
+            return new Collection();
         }
 
         $cacheKey = "member_transaction_search:" . md5(strtolower($search) . $limit);
