@@ -6,6 +6,11 @@ use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
 new #[Layout('components.layouts.app')] class extends Component {
+    
+    protected $listeners = [
+        'paymentConfirmed' => 'handlePaymentConfirmation',
+        'paymentFailed' => 'handlePaymentFailure',
+    ];
     public $member_id = '';
     public $account_id = '';
     public $amount = '';
@@ -19,11 +24,24 @@ new #[Layout('components.layouts.app')] class extends Component {
     public $selectedMember = null;
     public $selectedAccount = null;
     
+    // Mobile Money properties
+    public $mobileMoneyProvider = 'mpesa';
+    public $phoneNumber = '';
+    public $paymentStatus = '';
+    public $transactionId = '';
+    public $showMobileMoneyForm = false;
+    
     public $paymentMethods = [
         'cash' => 'Cash',
         'bank_transfer' => 'Bank Transfer',
         'mobile_money' => 'Mobile Money',
         'cheque' => 'Cheque',
+    ];
+    
+    public $mobileMoneyProviders = [
+        'mpesa' => ['name' => 'M-Pesa', 'icon' => '💚', 'enabled' => true],
+        'airtel' => ['name' => 'Airtel Money', 'icon' => '❤️', 'enabled' => true],
+        'tkash' => ['name' => 'T-Kash', 'icon' => '🧡', 'enabled' => true],
     ];
 
 
@@ -40,6 +58,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         if (!in_array(auth()->user()->email, ['admin@sacco.com'])) { // Simple admin check
             $this->member_id = auth()->id();
             $this->loadAccountsForMember();
+            $this->phoneNumber = auth()->user()->phone_number ?? '';
             
             // If a specific account was requested and user owns it, pre-select it
             if ($accountId) {
@@ -56,6 +75,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 $this->member_id = $account->member_id;
                 $this->selectedMember = $account->member;
                 $this->member_search = $account->member->name;
+                $this->phoneNumber = $account->member->phone_number ?? '';
                 $this->loadAccountsForMember();
                 $this->account_id = $accountId;
                 $this->selectedAccount = $account;
@@ -115,8 +135,91 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->reference_number = 'DEP' . time() . rand(1000, 9999);
     }
 
+    public function updatedPaymentMethod()
+    {
+        $this->showMobileMoneyForm = ($this->payment_method === 'mobile_money');
+        if ($this->showMobileMoneyForm) {
+            $this->resetMobileMoneyState();
+        }
+    }
+
+    public function resetMobileMoneyState()
+    {
+        $this->paymentStatus = '';
+        $this->transactionId = '';
+    }
+
+    public function initiateMobileMoneyPayment()
+    {
+        $this->validate([
+            'member_id' => 'required|exists:users,id',
+            'account_id' => 'required|exists:accounts,id',
+            'amount' => 'required|numeric|min:1|max:1000000',
+            'phoneNumber' => 'required|regex:/^(\+254|254|0)[0-9]{9}$/',
+            'mobileMoneyProvider' => 'required|in:mpesa,airtel,tkash',
+        ]);
+
+        try {
+            $account = Account::findOrFail($this->account_id);
+            
+            // Check authorization
+            if ($account->member_id !== auth()->id() && !in_array(auth()->user()->email, ['admin@sacco.com'])) {
+                $this->addError('general', 'Unauthorized access to this account.');
+                return;
+            }
+
+            $mobileMoneyService = app(\App\Services\MobileMoneyService::class);
+            
+            $result = match ($this->mobileMoneyProvider) {
+                'mpesa' => $mobileMoneyService->initiateMpesaPayment($account, (float) $this->amount, $this->phoneNumber),
+                'airtel' => $mobileMoneyService->initiateAirtelPayment($account, (float) $this->amount, $this->phoneNumber),
+                'tkash' => $mobileMoneyService->initiateTkashPayment($account, (float) $this->amount, $this->phoneNumber),
+                default => ['success' => false, 'message' => 'Invalid payment provider']
+            };
+
+            if ($result['success']) {
+                $this->transactionId = $result['transaction_id'];
+                $this->paymentStatus = 'pending';
+                
+                session()->flash('success', $result['message']);
+                
+                // Start polling for payment status
+                $this->dispatch('start-payment-polling', [
+                    'transactionId' => $this->transactionId,
+                    'provider' => $this->mobileMoneyProvider
+                ]);
+            } else {
+                $this->addError('general', $result['message']);
+            }
+        } catch (\Exception $e) {
+            $this->addError('general', 'Failed to initiate payment: ' . $e->getMessage());
+        }
+    }
+
+    public function handlePaymentConfirmation($data)
+    {
+        $this->paymentStatus = 'completed';
+        session()->flash('success', 'Mobile money payment completed successfully! Funds have been added to your account.');
+        
+        // Reset form
+        $this->reset(['amount', 'description', 'reference_number', 'paymentStatus', 'transactionId']);
+        $this->selectedAccount = Account::find($this->account_id); // Refresh account data
+    }
+
+    public function handlePaymentFailure($data)
+    {
+        $this->paymentStatus = 'failed';
+        $this->addError('general', $data['message'] ?? 'Mobile money payment failed. Please try again.');
+    }
+
     public function processDeposit()
     {
+        // If mobile money is selected, use mobile money flow instead
+        if ($this->payment_method === 'mobile_money') {
+            $this->initiateMobileMoneyPayment();
+            return;
+        }
+
         $this->validate([
             'member_id' => 'required|exists:users,id',
             'account_id' => 'required|exists:accounts,id',
@@ -292,9 +395,58 @@ new #[Layout('components.layouts.app')] class extends Component {
                                             <div class="flex justify-between">
                                                 <span class="text-blue-600 dark:text-blue-400">Current Balance:</span>
                                                 <span class="font-medium text-emerald-600 dark:text-emerald-400">KES {{ number_format($selectedAccount->balance, 2) }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                                    </div>
+    </div>
+</div>
+
+<!-- Real-time Payment Status Polling for Mobile Money -->
+<script>
+document.addEventListener('livewire:initialized', () => {
+    let pollingInterval;
+    
+    Livewire.on('start-payment-polling', (data) => {
+        // Clear any existing polling
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
+        
+        // Start polling for payment status every 5 seconds
+        pollingInterval = setInterval(() => {
+            fetch(`/api/transactions/${data[0].transactionId}/status`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'completed') {
+                        clearInterval(pollingInterval);
+                        Livewire.dispatch('paymentConfirmed', result);
+                    } else if (result.status === 'failed' || result.status === 'cancelled') {
+                        clearInterval(pollingInterval);
+                        Livewire.dispatch('paymentFailed', result);
+                    }
+                })
+                .catch(error => {
+                    console.error('Payment status polling error:', error);
+                });
+        }, 5000);
+        
+        // Stop polling after 5 minutes
+        setTimeout(() => {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                Livewire.dispatch('paymentFailed', {
+                    message: 'Payment timeout. Please check your transaction history.'
+                });
+            }
+        }, 300000);
+    });
+    
+    // Clean up polling when component is destroyed
+    Livewire.on('component-destroyed', () => {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
+    });
+});
+</script>
                                 @endif
                             </div>
                         @endif
@@ -356,7 +508,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                             Payment Method *
                                         </label>
                                         <select 
-                                            wire:model="payment_method" 
+                                            wire:model.live="payment_method" 
                                             id="payment_method" 
                                             required
                                             class="w-full px-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
@@ -370,6 +522,108 @@ new #[Layout('components.layouts.app')] class extends Component {
                                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                         @enderror
                                     </div>
+
+                                    <!-- Mobile Money Details (shown when Mobile Money is selected) -->
+                                    @if($payment_method === 'mobile_money')
+                                        <div class="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                            <h4 class="font-medium text-blue-900 dark:text-blue-100 flex items-center">
+                                                <span class="text-xl mr-2">📱</span>
+                                                Mobile Money Payment Details
+                                            </h4>
+
+                                            <!-- Provider Selection -->
+                                            <div>
+                                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
+                                                    Select Provider *
+                                                </label>
+                                                <div class="grid grid-cols-3 gap-3">
+                                                    @foreach($mobileMoneyProviders as $key => $provider)
+                                                        @if($provider['enabled'])
+                                                            <button 
+                                                                wire:click="$set('mobileMoneyProvider', '{{ $key }}')"
+                                                                type="button"
+                                                                class="relative flex items-center justify-center p-3 rounded-lg border-2 transition-all duration-200 hover:shadow-md 
+                                                                       {{ $mobileMoneyProvider === $key ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' : 'border-zinc-300 dark:border-zinc-600 hover:border-blue-300' }}">
+                                                                <div class="text-center">
+                                                                    <div class="text-2xl mb-1">{{ $provider['icon'] }}</div>
+                                                                    <div class="text-xs font-medium text-zinc-900 dark:text-zinc-100">{{ $provider['name'] }}</div>
+                                                                </div>
+                                                                @if($mobileMoneyProvider === $key)
+                                                                    <div class="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                                                        <flux:icon.check class="w-3 h-3 text-white" />
+                                                                    </div>
+                                                                @endif
+                                                            </button>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                                @error('mobileMoneyProvider')
+                                                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+
+                                            <!-- Phone Number -->
+                                            <div>
+                                                <label for="phoneNumber" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                                    {{ $mobileMoneyProviders[$mobileMoneyProvider]['name'] }} Phone Number *
+                                                </label>
+                                                <input 
+                                                    wire:model.live.debounce.500ms="phoneNumber"
+                                                    type="tel" 
+                                                    id="phoneNumber"
+                                                    placeholder="e.g., 0722123456"
+                                                    required
+                                                    class="w-full px-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
+                                                           focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                                           dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
+                                                @error('phoneNumber')
+                                                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                                @enderror
+                                                <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                                    Enter the phone number registered with {{ $mobileMoneyProviders[$mobileMoneyProvider]['name'] }}
+                                                </p>
+                                            </div>
+
+                                            <!-- Payment Status -->
+                                            @if($paymentStatus === 'pending')
+                                                <div class="flex items-center space-x-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                                                    <div class="animate-spin">
+                                                        <flux:icon.arrow-path class="w-5 h-5 text-yellow-600" />
+                                                    </div>
+                                                    <div>
+                                                        <div class="font-medium text-yellow-900 dark:text-yellow-100">Payment in Progress</div>
+                                                        <div class="text-sm text-yellow-700 dark:text-yellow-300">
+                                                            Please complete the payment on your phone. You will receive a {{ $mobileMoneyProviders[$mobileMoneyProvider]['name'] }} prompt.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+
+                                            @if($paymentStatus === 'completed')
+                                                <div class="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                                    <flux:icon.check-circle class="w-5 h-5 text-green-600" />
+                                                    <div>
+                                                        <div class="font-medium text-green-900 dark:text-green-100">Payment Completed</div>
+                                                        <div class="text-sm text-green-700 dark:text-green-300">
+                                                            Your deposit has been processed successfully!
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+
+                                            @if($paymentStatus === 'failed')
+                                                <div class="flex items-center space-x-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                                    <flux:icon.x-circle class="w-5 h-5 text-red-600" />
+                                                    <div>
+                                                        <div class="font-medium text-red-900 dark:text-red-100">Payment Failed</div>
+                                                        <div class="text-sm text-red-700 dark:text-red-300">
+                                                            Please try again or use a different payment method.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
 
                                     <!-- Reference Number -->
                                     <div>
@@ -425,14 +679,33 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 class="px-4 py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium">
                                 Cancel
                             </a>
-                            <button 
-                                wire:click="processDeposit" 
-                                type="button"
-                                {{ !$account_id || !$amount ? 'disabled' : '' }}
-                                class="bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-400 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center">
-                                <flux:icon.arrow-down class="w-5 h-5 mr-2" />
-                                Process Deposit
-                            </button>
+                            
+                            @if($payment_method === 'mobile_money')
+                                <button 
+                                    wire:click="processDeposit" 
+                                    type="button"
+                                    {{ !$account_id || !$amount || !$phoneNumber || $paymentStatus === 'pending' ? 'disabled' : '' }}
+                                    class="bg-green-600 hover:bg-green-700 disabled:bg-zinc-400 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center">
+                                    @if($paymentStatus === 'pending')
+                                        <div class="animate-spin mr-2">
+                                            <flux:icon.arrow-path class="w-5 h-5" />
+                                        </div>
+                                        Processing...
+                                    @else
+                                        <span class="text-lg mr-2">{{ $mobileMoneyProviders[$mobileMoneyProvider]['icon'] }}</span>
+                                        Pay with {{ $mobileMoneyProviders[$mobileMoneyProvider]['name'] }}
+                                    @endif
+                                </button>
+                            @else
+                                <button 
+                                    wire:click="processDeposit" 
+                                    type="button"
+                                    {{ !$account_id || !$amount ? 'disabled' : '' }}
+                                    class="bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-400 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center">
+                                    <flux:icon.arrow-down class="w-5 h-5 mr-2" />
+                                    Process Deposit
+                                </button>
+                            @endif
                         </div>
                     </form>
                 </div>
@@ -462,8 +735,20 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-sm text-zinc-600 dark:text-zinc-400">Payment Method:</span>
-                                    <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $paymentMethods[$payment_method] ?? 'Cash' }}</span>
+                                    <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                        @if($payment_method === 'mobile_money')
+                                            {{ $mobileMoneyProviders[$mobileMoneyProvider]['icon'] }} {{ $mobileMoneyProviders[$mobileMoneyProvider]['name'] }}
+                                        @else
+                                            {{ $paymentMethods[$payment_method] ?? 'Cash' }}
+                                        @endif
+                                    </span>
                                 </div>
+                                @if($payment_method === 'mobile_money' && $phoneNumber)
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-zinc-600 dark:text-zinc-400">Phone Number:</span>
+                                        <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $phoneNumber }}</span>
+                                    </div>
+                                @endif
                                 <div class="flex justify-between border-t border-zinc-200 dark:border-zinc-700 pt-3">
                                     <span class="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Balance After Deposit:</span>
                                     <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">KES {{ number_format($selectedAccount->balance + $amount, 2) }}</span>

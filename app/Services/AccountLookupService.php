@@ -30,7 +30,7 @@ class AccountLookupService
         $cacheKey = "account_details:{$accountId}";
 
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($accountId) {
-            return Account::with(['accountType', 'member'])->find($accountId);
+            return Account::with(['member'])->find($accountId);
         });
     }
 
@@ -62,8 +62,7 @@ class AccountLookupService
         $cacheKey = "member_accounts:{$memberId}:{$status}";
 
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($memberId, $status) {
-            return Account::with('accountType')
-                ->where('member_id', $memberId)
+            return Account::where('member_id', $memberId)
                 ->where('status', $status)
                 ->get();
         });
@@ -81,8 +80,7 @@ class AccountLookupService
         $cacheKey = "member_accounts_with_balance:{$memberId}:{$minBalance}";
 
         return Cache::remember($cacheKey, self::BALANCE_CACHE_DURATION, function () use ($memberId, $minBalance) {
-            return Account::with('accountType')
-                ->where('member_id', $memberId)
+            return Account::where('member_id', $memberId)
                 ->where('status', 'active')
                 ->where('balance', '>=', $minBalance)
                 ->get();
@@ -106,8 +104,8 @@ class AccountLookupService
                 'total_accounts' => $accounts->count(),
                 'active_accounts' => $accounts->where('status', 'active')->count(),
                 'total_balance' => $accounts->sum('balance'),
-                'savings_balance' => $accounts->where('account_type.type', 'savings')->sum('balance'),
-                'checking_balance' => $accounts->where('account_type.type', 'checking')->sum('balance'),
+                'savings_balance' => $accounts->where('account_type', 'savings')->sum('balance'),
+                'shares_balance' => $accounts->where('account_type', 'shares')->sum('balance'),
             ];
         });
     }
@@ -122,13 +120,13 @@ class AccountLookupService
     public function searchAccounts(string $search, int $limit = 10): Collection
     {
         if (strlen($search) < 2) {
-            return collect();
+            return new Collection();
         }
 
         $cacheKey = "account_search:" . md5(strtolower($search) . $limit);
 
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($search, $limit) {
-            return Account::with(['member', 'accountType'])
+            return Account::with(['member'])
                 ->where('account_number', 'like', '%' . $search . '%')
                 ->orWhereHas('member', function ($query) use ($search) {
                     $query->where('name', 'like', '%' . $search . '%')

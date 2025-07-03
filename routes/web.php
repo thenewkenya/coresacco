@@ -87,7 +87,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/generate', [App\Http\Controllers\PaymentsController::class, 'report'])->name('report')->middleware('can:view-reports');
     });
     
-    // Mobile Money Payment Routes
+    // Mobile Money Payment Routes (for quick access)
     Route::prefix('mobile-money')->name('mobile-money.')->group(function () {
         Route::get('/', function () {
             return view('mobile-money.index');
