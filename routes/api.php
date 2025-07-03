@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\MemberController;
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\LoanController;
+use App\Models\Transaction;
 
 /*
 |--------------------------------------------------------------------------
@@ -89,4 +90,23 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::post('loans/{loan}/repay', [LoanController::class, 'repay'])
         ->middleware('permission:process-transactions');
+        
+    // Payment status endpoint for mobile money polling
+    Route::get('transactions/{transaction}/status', function (Transaction $transaction) {
+        // Check if user owns this transaction or has permission to view it
+        $user = auth()->user();
+        if ($user->hasRole('member') && $transaction->member_id !== $user->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        
+        return response()->json([
+            'id' => $transaction->id,
+            'status' => $transaction->status,
+            'amount' => $transaction->amount,
+            'description' => $transaction->description,
+            'metadata' => $transaction->metadata,
+            'created_at' => $transaction->created_at,
+            'updated_at' => $transaction->updated_at,
+        ]);
+    });
 });
