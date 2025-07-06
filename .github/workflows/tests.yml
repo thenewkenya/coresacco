@@ -65,10 +65,8 @@ jobs:
       - name: Generate Application Key
         run: php artisan key:generate
 
-      - name: Create Database & Run Migrations
-        run: |
-          touch database/database.sqlite
-          php artisan migrate --env=testing --force
+      - name: Run Migrations
+        run: php artisan migrate --env=testing --force
 
       - name: Build Assets
         run: npm run build
