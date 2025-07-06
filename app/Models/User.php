@@ -158,4 +158,30 @@ class User extends Authenticatable
     {
         return $this->hasMany(Budget::class);
     }
+
+    /**
+     * Boot the model
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            if (empty($user->member_number)) {
+                $user->member_number = static::generateMemberNumber();
+            }
+        });
+    }
+
+    /**
+     * Generate a unique member number
+     */
+    private static function generateMemberNumber(): string
+    {
+        do {
+            $memberNumber = 'MEM' . str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
+        } while (static::where('member_number', $memberNumber)->exists());
+
+        return $memberNumber;
+    }
 }

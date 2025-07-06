@@ -215,7 +215,7 @@ class TransactionService
                 'account_id' => $fromAccount->id,
                 'member_id' => $fromAccount->member_id,
                 'type' => Transaction::TYPE_TRANSFER,
-                'amount' => -$amount, // Negative for debit
+                'amount' => $amount, // Store positive amount, metadata indicates direction
                 'description' => $description ?? "Transfer to {$toAccount->account_number}",
                 'reference_number' => $debitReference,
                 'status' => $status,
@@ -438,9 +438,7 @@ class TransactionService
     private function validateAccountStatus(Account $account): void
     {
         if ($account->status !== Account::STATUS_ACTIVE) {
-            throw ValidationException::withMessages([
-                'account' => 'Account is not active. Current status: ' . $account->status
-            ]);
+            throw new \Exception('Account is not active. Current status: ' . $account->status);
         }
     }
 
@@ -522,5 +520,164 @@ class TransactionService
 
         // Staff (admin, manager, staff) can transfer from any account
         // No additional validation needed for staff roles
+    }
+
+    /**
+     * Alias for processDeposit - for controller compatibility
+     */
+    public function createDeposit(Account $account, float $amount, ?string $description = null, ?User $processedBy = null): Transaction
+    {
+        $metadata = [];
+        if ($processedBy) {
+            $metadata['processed_by'] = $processedBy->id;
+        }
+        return $this->processDeposit($account, $amount, $description, $metadata);
+    }
+
+    /**
+     * Alias for processWithdrawal - for controller compatibility
+     */
+    public function createWithdrawal(Account $account, float $amount, ?string $description = null, ?User $processedBy = null): Transaction
+    {
+        $metadata = [];
+        if ($processedBy) {
+            $metadata['processed_by'] = $processedBy->id;
+        }
+        
+        $transaction = $this->processWithdrawal($account, $amount, $description, $metadata);
+        
+        // Check if fee should be applied (from request context)
+        $request = request();
+        if ($request && $request->has('apply_fee') && $request->apply_fee) {
+            $this->processFee($account, $amount, $description, $processedBy);
+        }
+        
+        return $transaction;
+    }
+
+    /**
+     * Process transaction fee
+     */
+    private function processFee(Account $account, float $transactionAmount, ?string $description = null, ?User $processedBy = null): Transaction
+    {
+        // Calculate fee (1% of transaction amount, minimum 5 KES)
+        $feeAmount = max(5.00, $transactionAmount * 0.01);
+        
+        // Create fee transaction
+        return Transaction::create([
+            'account_id' => $account->id,
+            'member_id' => $account->member_id,
+            'type' => Transaction::TYPE_FEE,
+            'amount' => $feeAmount,
+            'description' => $description ? $description . ' fee' : 'Transaction fee',
+            'reference_number' => $this->generateReferenceNumber(),
+            'status' => Transaction::STATUS_COMPLETED,
+            'balance_before' => $account->balance,
+            'balance_after' => $account->balance - $feeAmount,
+            'metadata' => [
+                'fee_for_amount' => $transactionAmount,
+                'fee_rate' => 0.01,
+                'processed_by' => $processedBy ? $processedBy->id : auth()->id(),
+                'processing_time' => now()->toISOString(),
+            ],
+        ]);
+    }
+
+    /**
+     * Alias for processTransfer - for controller compatibility
+     */
+    public function createTransfer(Account $fromAccount, Account $toAccount, float $amount, ?string $description = null, ?User $processedBy = null): Transaction
+    {
+        $metadata = [];
+        if ($processedBy) {
+            $metadata['processed_by'] = $processedBy->id;
+        }
+        $result = $this->processTransfer($fromAccount, $toAccount, $amount, $description, $metadata);
+        // Return the debit transaction (first transaction in the transfer)
+        return $result['debit_transaction'];
+    }
+
+    /**
+     * Reverse a completed transaction
+     */
+    public function reverseTransaction(Transaction $transaction, string $reason, User $reversedBy): Transaction
+    {
+        return DB::transaction(function () use ($transaction, $reason, $reversedBy) {
+            // Validate transaction can be reversed
+            if ($transaction->status !== Transaction::STATUS_COMPLETED) {
+                throw ValidationException::withMessages([
+                    'transaction' => 'Only completed transactions can be reversed.'
+                ]);
+            }
+
+            // Check if already reversed
+            if (isset($transaction->metadata['reversed']) && $transaction->metadata['reversed']) {
+                throw ValidationException::withMessages([
+                    'transaction' => 'Transaction has already been reversed.'
+                ]);
+            }
+
+            $account = $transaction->account;
+            $balanceBefore = $account->balance;
+
+            // Reverse the transaction effect on account balance
+            if ($transaction->type === Transaction::TYPE_DEPOSIT) {
+                // For deposit reversal, subtract the amount
+                $account->balance -= $transaction->amount;
+                $reversalType = Transaction::TYPE_WITHDRAWAL;
+            } else {
+                // For withdrawal reversal, add the amount back
+                $account->balance += $transaction->amount;
+                $reversalType = Transaction::TYPE_DEPOSIT;
+            }
+
+            $account->save();
+
+            // Create reversal transaction
+            $reversalTransaction = Transaction::create([
+                'account_id' => $account->id,
+                'member_id' => $account->member_id,
+                'type' => $reversalType,
+                'amount' => $transaction->amount,
+                'description' => "Reversal: {$reason}",
+                'reference_number' => $this->generateReferenceNumber(),
+                'status' => Transaction::STATUS_COMPLETED,
+                'balance_before' => $balanceBefore,
+                'balance_after' => $account->balance,
+                'metadata' => [
+                    'reversal_of' => $transaction->id,
+                    'reversal_reason' => $reason,
+                    'reversed_by' => $reversedBy->id,
+                    'reversal_time' => now()->toISOString(),
+                ],
+            ]);
+
+            // Mark original transaction as reversed
+            $originalMetadata = $transaction->metadata ?? [];
+            $originalMetadata['reversed'] = true;
+            $originalMetadata['reversed_by'] = $reversedBy->id;
+            $originalMetadata['reversal_transaction_id'] = $reversalTransaction->id;
+            $originalMetadata['reversal_time'] = now()->toISOString();
+            $originalMetadata['reversal_reason'] = $reason;
+            
+            $transaction->update([
+                'status' => Transaction::STATUS_REVERSED,
+                'metadata' => $originalMetadata
+            ]);
+
+            // Send notifications
+            $this->notificationService->sendTransactionNotification($reversalTransaction, 'created');
+
+            // Log the reversal
+            Log::info('Transaction reversed', [
+                'original_transaction_id' => $transaction->id,
+                'reversal_transaction_id' => $reversalTransaction->id,
+                'amount' => $transaction->amount,
+                'reason' => $reason,
+                'reversed_by' => $reversedBy->id,
+            ]);
+
+            return $reversalTransaction;
+        });
     }
 } 

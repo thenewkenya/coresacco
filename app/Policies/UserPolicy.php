@@ -3,59 +3,66 @@
 namespace App\Policies;
 
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 class UserPolicy
 {
     /**
-     * Determine whether the user can view any members.
+     * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ['admin', 'manager', 'staff']);
+        return $user->hasRole('admin') || $user->hasRole('staff') || $user->hasRole('manager');
     }
 
     /**
-     * Determine whether the user can view the member.
+     * Determine whether the user can view the model.
      */
-    public function view(User $user, User $member): bool
+    public function view(User $user, User $model): bool
     {
-        // Users can view their own profile
-        if ($user->id === $member->id) {
-            return true;
-        }
-
-        // Staff can view member profiles
-        return in_array($user->role, ['admin', 'manager', 'staff']);
+        // Users can view their own profile, staff can view any
+        return $user->id === $model->id || $user->hasRole('admin') || $user->hasRole('staff') || $user->hasRole('manager');
     }
 
     /**
-     * Determine whether the user can create members.
+     * Determine whether the user can create models.
      */
     public function create(User $user): bool
     {
-        return in_array($user->role, ['admin', 'manager', 'staff']);
+        return $user->hasRole('admin') || $user->hasRole('staff') || $user->hasRole('manager');
     }
 
     /**
-     * Determine whether the user can update the member.
+     * Determine whether the user can update the model.
      */
-    public function update(User $user, User $member): bool
+    public function update(User $user, User $model): bool
     {
-        // Users can update their own profile (limited fields)
-        if ($user->id === $member->id) {
-            return true;
-        }
-
-        // Staff can update member profiles
-        return in_array($user->role, ['admin', 'manager', 'staff']);
+        // Users can update their own profile, staff can update any
+        return $user->id === $model->id || $user->hasRole('admin') || $user->hasRole('staff') || $user->hasRole('manager');
     }
 
     /**
-     * Determine whether the user can delete the member.
+     * Determine whether the user can delete the model.
      */
-    public function delete(User $user, User $member): bool
+    public function delete(User $user, User $model): bool
     {
-        // Only admins and managers can delete members
-        return in_array($user->role, ['admin', 'manager']);
+        // Only admins can delete users, and not themselves
+        return $user->hasRole('admin') && $user->id !== $model->id;
+    }
+
+    /**
+     * Determine whether the user can restore the model.
+     */
+    public function restore(User $user, User $model): bool
+    {
+        return $user->hasRole('admin');
+    }
+
+    /**
+     * Determine whether the user can permanently delete the model.
+     */
+    public function forceDelete(User $user, User $model): bool
+    {
+        return $user->hasRole('admin');
     }
 } 
