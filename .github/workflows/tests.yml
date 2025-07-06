@@ -41,11 +41,34 @@ jobs:
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Copy Environment File
-        run: cp .env.example .env
+      - name: Create Environment File
+        run: |
+          echo "APP_NAME=eSacco" > .env
+          echo "APP_ENV=testing" >> .env
+          echo "APP_KEY=" >> .env
+          echo "APP_DEBUG=true" >> .env
+          echo "APP_TIMEZONE=UTC" >> .env
+          echo "APP_URL=http://localhost" >> .env
+          echo "" >> .env
+          echo "DB_CONNECTION=sqlite" >> .env
+          echo "DB_DATABASE=:memory:" >> .env
+          echo "" >> .env
+          echo "BROADCAST_DRIVER=log" >> .env
+          echo "CACHE_DRIVER=array" >> .env
+          echo "FILESYSTEM_DISK=local" >> .env
+          echo "QUEUE_CONNECTION=sync" >> .env
+          echo "SESSION_DRIVER=array" >> .env
+          echo "SESSION_LIFETIME=120" >> .env
+          echo "" >> .env
+          echo "MAIL_MAILER=array" >> .env
 
       - name: Generate Application Key
         run: php artisan key:generate
+
+      - name: Create Database & Run Migrations
+        run: |
+          touch database/database.sqlite
+          php artisan migrate --env=testing --force
 
       - name: Build Assets
         run: npm run build
