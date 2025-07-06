@@ -63,9 +63,9 @@
                     id="account"
                 >
                     @foreach($accounts as $account)
-                        <flux:option value="{{ $account['id'] }}">
+                        <option value="{{ $account['id'] }}">
                             {{ $account['label'] }} (Balance: KES {{ number_format($account['balance'], 2) }})
-                        </flux:option>
+                        </option>
                     @endforeach
                 </flux:select>
                 @error('selectedAccountId') 
