@@ -355,7 +355,7 @@ class SavingsController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => ['required', Rule::in([Account::STATUS_ACTIVE, Account::STATUS_SUSPENDED, Account::STATUS_CLOSED])],
+            'status' => ['required', Rule::in([Account::STATUS_ACTIVE, Account::STATUS_INACTIVE, Account::STATUS_FROZEN, Account::STATUS_CLOSED])],
             'reason' => 'nullable|string|max:255',
         ]);
 

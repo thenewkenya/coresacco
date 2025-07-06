@@ -662,4 +662,174 @@ class TransactionController extends Controller
         // We'll implement PDF generation in the next step
         return view('transactions.receipt-pdf', compact('transaction'));
     }
+
+    public function store(Request $request)
+    {
+        // Check authorization first
+        $user = auth()->user();
+        if ($user->hasRole('member')) {
+            abort(403, 'Members cannot process transactions directly. Please contact staff.');
+        }
+
+        $request->validate([
+            'account_id' => 'required|exists:accounts,id',
+            'type' => 'required|in:' . implode(',', [
+                Transaction::TYPE_DEPOSIT,
+                Transaction::TYPE_WITHDRAWAL,
+                Transaction::TYPE_TRANSFER
+            ]),
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'required|string|max:255',
+            'to_account_id' => 'required_if:type,' . Transaction::TYPE_TRANSFER . '|exists:accounts,id',
+        ]);
+
+        try {
+            $account = Account::findOrFail($request->account_id);
+            
+            // Authorization checks
+            $user = Auth::user();
+            if ($user->hasRole('member') && $account->member_id !== $user->id) {
+                abort(403, 'You can only process transactions for your own accounts.');
+            }
+            
+            if ($user->hasRole('member')) {
+                abort(403, 'Members cannot process transactions directly.');
+            }
+
+            // Process based on transaction type
+            if ($request->type === Transaction::TYPE_DEPOSIT) {
+                $transaction = $this->transactionService->createDeposit(
+                    $account,
+                    $request->amount,
+                    $request->description ?? 'Deposit transaction',
+                    Auth::user()
+                );
+            } elseif ($request->type === Transaction::TYPE_WITHDRAWAL) {
+                if ($request->amount > $account->balance) {
+                    return back()->withErrors(['amount' => 'Insufficient balance for withdrawal.']);
+                }
+                
+                $transaction = $this->transactionService->createWithdrawal(
+                    $account,
+                    $request->amount,
+                    $request->description ?? 'Withdrawal transaction',
+                    Auth::user()
+                );
+            } elseif ($request->type === Transaction::TYPE_TRANSFER) {
+                $toAccount = Account::findOrFail($request->to_account_id);
+                
+                if ($account->id === $toAccount->id) {
+                    return back()->withErrors(['to_account_id' => 'Cannot transfer to the same account.']);
+                }
+                
+                if ($request->amount > ($account->balance - 1000)) { // Account for minimum balance
+                    return back()->withErrors(['amount' => 'Insufficient balance for transfer. Must maintain minimum balance of KES 1,000.']);
+                }
+                
+                $transaction = $this->transactionService->createTransfer(
+                    $account,
+                    $toAccount,
+                    $request->amount,
+                    $request->description ?? 'Transfer transaction',
+                    Auth::user()
+                );
+            }
+
+            return redirect()->route('transactions.show', $transaction)
+                           ->with('success', 'Transaction processed successfully.');
+                           
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Re-throw validation exceptions to maintain proper error handling
+            throw $e;
+        } catch (\Exception $e) {
+            // Handle specific transaction errors
+            $message = $e->getMessage();
+            
+            if (str_contains($message, 'not active') || str_contains($message, 'frozen') || str_contains($message, 'inactive')) {
+                return back()->withErrors(['account_id' => $message])->withInput();
+            }
+            
+            if (str_contains($message, 'Insufficient funds') || str_contains($message, 'insufficient balance')) {
+                return back()->withErrors(['amount' => $message])->withInput();
+            }
+            
+            return back()->withErrors(['error' => 'Transaction failed: ' . $message])->withInput();
+        }
+    }
+
+    public function my()
+    {
+        $user = Auth::user();
+        $transactions = $user->transactions()
+                            ->with(['account'])
+                            ->latest()
+                            ->paginate(20);
+        
+        return view('transactions.my', compact('transactions'));
+    }
+
+    public function reverse(Request $request, Transaction $transaction)
+    {
+        $request->validate([
+            'reason' => 'required|string|max:500'
+        ]);
+        
+        // Only admins can reverse transactions
+        if (!Auth::user()->hasRole('admin')) {
+            abort(403, 'Only administrators can reverse transactions.');
+        }
+        
+        try {
+            $reversedTransaction = $this->transactionService->reverseTransaction(
+                $transaction,
+                $request->reason,
+                Auth::user()
+            );
+            
+            return redirect()->route('transactions.show', $reversedTransaction)
+                           ->with('success', 'Transaction reversed successfully.');
+                           
+        } catch (\Exception $e) {
+            return back()->withErrors(['transaction' => 'Failed to reverse transaction: ' . $e->getMessage()]);
+        }
+    }
+
+    public function bulkDeposit(Request $request)
+    {
+        $request->validate([
+            'transactions' => 'required|array|min:1',
+            'transactions.*.account_id' => 'required|exists:accounts,id',
+            'transactions.*.amount' => 'required|numeric|min:0.01',
+            'description' => 'required|string|max:255'
+        ]);
+        
+        // Only admins can do bulk deposits
+        if (!Auth::user()->hasRole('admin')) {
+            abort(403, 'Only administrators can process bulk deposits.');
+        }
+
+        try {
+            $processedTransactions = [];
+            
+            foreach ($request->transactions as $transactionData) {
+                $account = Account::findOrFail($transactionData['account_id']);
+                
+                $transaction = $this->transactionService->createDeposit(
+                    $account,
+                    $transactionData['amount'],
+                    $request->description,
+                    Auth::user()
+                );
+                
+                $processedTransactions[] = $transaction;
+            }
+
+            return redirect()->route('transactions.index')
+                           ->with('success', 'Bulk deposit processed successfully. ' . count($processedTransactions) . ' transactions created.');
+                           
+        } catch (\Exception $e) {
+            return back()->withErrors(['transactions' => 'Bulk deposit failed: ' . $e->getMessage()])
+                        ->withInput();
+        }
+    }
 } 

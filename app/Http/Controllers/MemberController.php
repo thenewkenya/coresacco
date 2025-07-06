@@ -261,4 +261,27 @@ class MemberController extends Controller
 
         return view('members.profile', compact('member', 'stats'));
     }
+
+    /**
+     * Get member's transaction history
+     */
+    public function transactions(User $member)
+    {
+        // Check if user can view this member's transactions
+        $user = auth()->user();
+        if ($user->hasRole('member') && $user->id !== $member->id) {
+            abort(403, 'You can only view your own transaction history.');
+        }
+        
+        if (!$user->hasRole('admin') && !$user->hasRole('staff') && !$user->hasRole('manager') && $user->id !== $member->id) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $transactions = $member->transactions()
+                             ->with(['account'])
+                             ->latest()
+                             ->paginate(20);
+        
+        return view('members.transactions', compact('member', 'transactions'));
+    }
 } 

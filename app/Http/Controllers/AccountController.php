@@ -98,10 +98,21 @@ class AccountController extends Controller
 
     public function store(AccountRequest $request)
     {
+        $user = Auth::user();
+        
+        // Check authorization - members can only create accounts for themselves
+        if ($user->hasRole('member') && $request->member_id && $request->member_id !== $user->id) {
+            abort(403, 'Members can only create accounts for themselves.');
+        }
+        
+        // Non-members (staff/admin) must have permission to create accounts
+        if (!$user->hasRole('member')) {
+            $this->authorize('create', Account::class);
+        }
+        
         try {
             DB::beginTransaction();
             
-            $user = Auth::user();
             $memberId = $user->hasRole('member') ? $user->id : $request->member_id;
             
             // Generate account number
@@ -111,7 +122,7 @@ class AccountController extends Controller
                 'member_id' => $memberId,
                 'account_number' => $accountNumber,
                 'account_type' => $request->account_type,
-                'balance' => 0,
+                'balance' => $request->initial_deposit ?? 0,
                 'status' => Account::STATUS_ACTIVE,
             ]);
             
@@ -158,26 +169,78 @@ class AccountController extends Controller
         $request->validate([
             'status' => 'required|in:' . implode(',', [
                 Account::STATUS_ACTIVE,
-                Account::STATUS_DORMANT,
+                Account::STATUS_INACTIVE,
                 Account::STATUS_FROZEN,
                 Account::STATUS_CLOSED
             ]),
-            'reason' => 'required_if:status,' . Account::STATUS_FROZEN . ',' . Account::STATUS_CLOSED . '|string|max:500'
+            'status_reason' => 'required_if:status,' . Account::STATUS_FROZEN . ',' . Account::STATUS_CLOSED . '|string|max:500'
         ]);
         
         $account->update([
             'status' => $request->status,
-            'status_reason' => $request->reason
+            'status_reason' => $request->status_reason
         ]);
         
         $statusLabels = [
             Account::STATUS_ACTIVE => 'activated',
-            Account::STATUS_DORMANT => 'marked as dormant', 
+            Account::STATUS_INACTIVE => 'marked as inactive', 
             Account::STATUS_FROZEN => 'frozen',
             Account::STATUS_CLOSED => 'closed'
         ];
         
         return back()->with('success', 'Account has been ' . $statusLabels[$request->status] . ' successfully.');
+    }
+
+    public function my()
+    {
+        $user = Auth::user();
+        $accounts = $user->accounts()->with('member')->latest()->get();
+        return view('accounts.my', compact('accounts'));
+    }
+
+    public function destroy(Account $account)
+    {
+        $this->authorize('manage', $account);
+        
+        // Verify account has zero balance
+        if ($account->balance > 0) {
+            return back()->withErrors(['balance' => 'Cannot close account with positive balance. Please withdraw all funds first.']);
+        }
+        
+        $account->update([
+            'status' => Account::STATUS_CLOSED,
+            'status_reason' => 'Account closure requested'
+        ]);
+        
+        return redirect()->route('accounts.index')->with('success', 'Account closed successfully.');
+    }
+
+    public function statement(Account $account)
+    {
+        $user = Auth::user();
+        if ($user->hasRole('member') && $account->member_id !== $user->id) {
+            abort(403, 'You can only view your own account statements.');
+        }
+        
+        // Generate PDF statement (placeholder implementation)
+        return response('PDF Statement Content', 200)
+               ->header('Content-Type', 'application/pdf');
+    }
+
+    public function closeRequest(Request $request, Account $account)
+    {
+        $request->validate([
+            'reason' => 'required|string|max:500'
+        ]);
+        
+        // Create notification for admin approval
+        $account->member->notify(new \App\Notifications\SystemNotification(
+            'Account Closure Request',
+            "Account closure request for {$account->account_number}. Reason: {$request->reason}",
+            ['account_id' => $account->id, 'type' => 'account_closure_request']
+        ));
+        
+        return back()->with('success', 'Account closure request submitted successfully.');
     }
 
     private function generateAccountNumber($accountType)

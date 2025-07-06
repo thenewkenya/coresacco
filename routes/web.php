@@ -21,7 +21,11 @@ Route::middleware(['auth'])->group(function () {
     // Transaction Processing System
     Route::prefix('transactions')->name('transactions.')->group(function () {
         Route::get('/', [App\Http\Controllers\TransactionController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\TransactionController::class, 'store'])->name('store');
+        Route::get('/my', [App\Http\Controllers\TransactionController::class, 'my'])->name('my');
         Route::get('/{transaction}', [App\Http\Controllers\TransactionController::class, 'show'])->name('show');
+        Route::post('/{transaction}/reverse', [App\Http\Controllers\TransactionController::class, 'reverse'])->name('reverse');
+        Route::post('/bulk-deposit', [App\Http\Controllers\TransactionController::class, 'bulkDeposit'])->name('bulk-deposit');
         
         // Deposit routes
         Volt::route('/create/deposit', 'transactions.create-deposit')->name('deposit.create');
@@ -99,6 +103,7 @@ Route::middleware(['auth'])->group(function () {
         Volt::route('/', 'members.manage-members')->name('index');
         Route::get('/profile', [App\Http\Controllers\MemberController::class, 'profile'])->name('profile');
         Route::get('/{member}', [App\Http\Controllers\MemberController::class, 'show'])->name('show');
+        Route::get('/{member}/transactions', [App\Http\Controllers\MemberController::class, 'transactions'])->name('transactions');
     });
 
     Route::prefix('goals')->name('goals.')->group(function () {
@@ -199,12 +204,16 @@ Route::middleware(['auth'])->group(function () {
     // Account Management Routes
     Route::prefix('accounts')->name('accounts.')->group(function () {
         Route::get('/', [App\Http\Controllers\AccountController::class, 'index'])->name('index');
+        Route::get('/my', [App\Http\Controllers\AccountController::class, 'my'])->name('my');
         Route::get('/create', [App\Http\Controllers\AccountController::class, 'create'])->name('create');
         Route::post('/', [App\Http\Controllers\AccountController::class, 'store'])->name('store');
         Route::get('/{account}', [App\Http\Controllers\AccountController::class, 'show'])->name('show');
         Route::patch('/{account}/status', [App\Http\Controllers\AccountController::class, 'updateStatus'])
             ->name('update-status')
             ->middleware('can:manage,account');
+        Route::delete('/{account}', [App\Http\Controllers\AccountController::class, 'destroy'])->name('destroy');
+        Route::get('/{account}/statement', [App\Http\Controllers\AccountController::class, 'statement'])->name('statement');
+        Route::post('/{account}/close-request', [App\Http\Controllers\AccountController::class, 'closeRequest'])->name('close-request');
     });
 });
 

@@ -49,9 +49,7 @@ class Account extends Model
 
     // Account statuses
     const STATUS_ACTIVE = 'active';
-    const STATUS_DORMANT = 'dormant';
     const STATUS_INACTIVE = 'inactive';
-    const STATUS_SUSPENDED = 'suspended';
     const STATUS_FROZEN = 'frozen';
     const STATUS_CLOSED = 'closed';
 
