@@ -128,8 +128,37 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('insurance')->name('insurance.')->group(function () {
-        Route::get('/', function () { return view('insurance.index'); })->name('index');
-        Route::get('/my', function () { return view('insurance.my'); })->name('my');
+        // Public Insurance Routes
+        Route::get('/', [App\Http\Controllers\InsuranceController::class, 'index'])->name('index');
+        Route::get('/products', [App\Http\Controllers\InsuranceController::class, 'products'])->name('products');
+        Route::get('/products/{product}', [App\Http\Controllers\InsuranceController::class, 'showProduct'])->name('product.show');
+        
+        // Member Insurance Routes
+        Route::get('/apply/{product}', [App\Http\Controllers\InsuranceController::class, 'apply'])->name('apply');
+        Route::post('/apply/{product}', [App\Http\Controllers\InsuranceController::class, 'storeApplication'])->name('application.store');
+        Route::get('/my-policies', [App\Http\Controllers\InsuranceController::class, 'myPolicies'])->name('my-policies');
+        Route::get('/policy/{policy}', [App\Http\Controllers\InsuranceController::class, 'policy'])->name('policy');
+        
+        // Claims Routes
+        Route::get('/claims', [App\Http\Controllers\InsuranceController::class, 'claims'])->name('claims');
+        Route::get('/claims/create/{policy}', [App\Http\Controllers\InsuranceController::class, 'createClaim'])->name('claim.create');
+        Route::post('/claims/create/{policy}', [App\Http\Controllers\InsuranceController::class, 'storeClaim'])->name('claim.store');
+        Route::get('/claims/{claim}', [App\Http\Controllers\InsuranceController::class, 'claimDetails'])->name('claim.show');
+        
+        // Premium Payment Routes
+        Route::get('/premium/{premium}/pay', [App\Http\Controllers\InsuranceController::class, 'payPremium'])->name('premium.pay');
+        Route::post('/premium/{premium}/pay', [App\Http\Controllers\InsuranceController::class, 'processPremiumPayment'])->name('premium.process');
+        
+        // Admin Routes
+        Route::prefix('admin')->name('admin.')->middleware('can:manage,App\Models\InsuranceProduct')->group(function () {
+            Route::get('/products', [App\Http\Controllers\InsuranceController::class, 'manageProducts'])->name('products');
+            Route::get('/products/create', [App\Http\Controllers\InsuranceController::class, 'createProduct'])->name('product.create');
+            Route::post('/products', [App\Http\Controllers\InsuranceController::class, 'storeProduct'])->name('product.store');
+            Route::get('/claims', [App\Http\Controllers\InsuranceController::class, 'manageClaims'])->name('claims');
+            Route::post('/claims/{claim}/process', [App\Http\Controllers\InsuranceController::class, 'processClaimAdmin'])->name('claim.process');
+            Route::post('/claims/{claim}/pay', [App\Http\Controllers\InsuranceController::class, 'payClaimAdmin'])->name('claim.pay');
+            Route::get('/analytics', [App\Http\Controllers\InsuranceController::class, 'analytics'])->name('analytics');
+        });
     });
 
     // Management & Analytics
