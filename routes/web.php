@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
+use App\Http\Controllers\InvestmentController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -214,6 +215,30 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{account}', [App\Http\Controllers\AccountController::class, 'destroy'])->name('destroy');
         Route::get('/{account}/statement', [App\Http\Controllers\AccountController::class, 'statement'])->name('statement');
         Route::post('/{account}/close-request', [App\Http\Controllers\AccountController::class, 'closeRequest'])->name('close-request');
+    });
+
+    // Investment routes
+    Route::prefix('investments')->name('investments.')->group(function () {
+        Route::get('/', [InvestmentController::class, 'index'])->name('index');
+        Route::get('/products', [InvestmentController::class, 'products'])->name('products');
+        Route::get('/products/{product}', [InvestmentController::class, 'showProduct'])->name('product.show');
+        Route::get('/products/{product}/invest', [InvestmentController::class, 'create'])->name('create');
+        Route::post('/products/{product}/invest', [InvestmentController::class, 'store'])->name('store');
+        Route::get('/portfolio/{portfolio}', [InvestmentController::class, 'portfolio'])->name('portfolio');
+        Route::get('/my-investments', [InvestmentController::class, 'myInvestments'])->name('my');
+        Route::get('/portfolio/{portfolio}/withdraw', [InvestmentController::class, 'withdrawalForm'])->name('withdrawal.form');
+        Route::post('/portfolio/{portfolio}/withdraw', [InvestmentController::class, 'processWithdrawal'])->name('withdrawal.process');
+        Route::get('/transactions', [InvestmentController::class, 'transactions'])->name('transactions');
+        Route::get('/portfolio/{portfolio}/statement', [InvestmentController::class, 'statement'])->name('statement');
+    });
+
+    // Admin investment routes
+    Route::prefix('admin/investments')->name('admin.investments.')->middleware('can:manage,App\Models\InvestmentProduct')->group(function () {
+        Route::get('/products', [InvestmentController::class, 'manageProducts'])->name('products');
+        Route::get('/products/create', [InvestmentController::class, 'createProduct'])->name('create-product');
+        Route::post('/products', [InvestmentController::class, 'storeProduct'])->name('store-product');
+        Route::post('/products/{product}/dividends', [InvestmentController::class, 'distributeDividends'])->name('distribute-dividends');
+        Route::get('/analytics', [InvestmentController::class, 'analytics'])->name('analytics');
     });
 });
 
