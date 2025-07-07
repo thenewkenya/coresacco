@@ -32,21 +32,6 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
-
-        // Create insurance claims table
-        Schema::create('insurance_claims', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('insurance_id')->constrained('insurance')->onDelete('restrict');
-            $table->string('claim_number')->unique();
-            $table->decimal('amount', 15, 2);
-            $table->text('description');
-            $table->enum('status', ['pending', 'approved', 'rejected', 'paid'])->default('pending');
-            $table->json('documents')->nullable();
-            $table->text('rejection_reason')->nullable();
-            $table->timestamp('processed_at')->nullable();
-            $table->timestamps();
-            $table->softDeletes();
-        });
     }
 
     /**
@@ -54,7 +39,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('insurance_claims');
         Schema::dropIfExists('insurance');
     }
 };
