@@ -32,26 +32,7 @@ A comprehensive Savings and Credit Cooperative (SACCO) management system.
 - **macOS**: Docker Desktop includes everything needed
 - **Linux**: Ensure Docker and Docker Compose are installed
 
-**Note**: No local PHP, Composer, PostgreSQL, or Node.js installation required! Laravel Sail provides everything through Docker containers.
-
-## Quick Start
-
-For experienced developers who want the fastest setup:
-
-```bash
-git clone https://github.com/thenewkenya/eSacco.git
-cd eSacco
-cp .env.example .env
-
-docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php82-composer:latest composer install --ignore-platform-reqs
-
-docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php82-composer:latest bash -c "composer require laravel/sail --dev && php artisan sail:install"
-
-./vendor/bin/sail up -d
-./vendor/bin/sail artisan key:generate
-```
-
-> Need full setup instructions? See [Detailed Installation](#detailed-installation)
+**Note**: No local PHP, Composer, PostgreSQL, or npm installation required! Laravel Sail provides everything through Docker containers.
 
 ## Detailed Installation
 
@@ -89,7 +70,7 @@ docker run --rm \
 ./vendor/bin/sail artisan key:generate
 ```
 
-> ⚠️ **Note**: Always use Sail's npm inside the container. Local Node.js versions may differ.
+> ⚠️ **Note**: Always use Sail's npm inside the container.
 
 ### Step 5: Database Setup
 ```bash
@@ -99,6 +80,7 @@ docker run --rm \
 
 ### Step 6: Initial Configuration
 ```bash
+# Set up admin user
 ./vendor/bin/sail artisan sacco:setup-roles \
     --admin-email=admin@sacco.com \
     --admin-password=YourSecurePassword123
@@ -132,7 +114,7 @@ docker run --rm \
 ./vendor/bin/sail npm install
 ```
 
-## Shell alias (highly recommended)
+## Shell alias
 
 Save time by creating a shell alias:
 
@@ -153,6 +135,7 @@ sail npm run dev
 ## Testing
 
 ```bash
+# Sail pest and sail test work as well
 sail artisan test
 sail artisan test --coverage
 sail artisan test tests/Feature/DashboardTest.php
