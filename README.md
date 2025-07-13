@@ -1,5 +1,3 @@
-# SACCO Core Management System
-
 A comprehensive Savings and Credit Cooperative (SACCO) management system.
 
 ## Table of Contents
