@@ -171,7 +171,7 @@
                 {{ __('Repository') }}
             </flux:navlist.item>
 
-            <flux:navlist.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
+            <flux:navlist.item icon="book-open-text" href="{{ route('documentation') }}" wire:navigate>
                 {{ __('Documentation') }}
             </flux:navlist.item>
         </flux:navlist>
@@ -402,8 +402,8 @@
                             <flux:navbar.item
                                 class="hidden xl:block"
                                 icon="book-open-text"
-                                href="https://laravel.com/docs/starter-kits#livewire"
-                                target="_blank"
+                                href="{{ route('documentation') }}"
+                                wire:navigate
                             />
                         </flux:tooltip>
                     </div>

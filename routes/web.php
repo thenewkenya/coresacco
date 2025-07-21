@@ -215,6 +215,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{account}/statement', [App\Http\Controllers\AccountController::class, 'statement'])->name('statement');
         Route::post('/{account}/close-request', [App\Http\Controllers\AccountController::class, 'closeRequest'])->name('close-request');
     });
+
+    // Documentation Route
+    Route::get('/documentation', function () {
+        return view('documentation.index');
+    })->name('documentation');
 });
 
 Route::middleware(['auth', 'verified'])->prefix('savings')->name('savings.')->group(function () {
