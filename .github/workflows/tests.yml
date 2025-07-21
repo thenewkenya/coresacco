@@ -50,7 +50,7 @@ jobs:
           echo "APP_TIMEZONE=UTC" >> .env
           echo "APP_URL=http://localhost" >> .env
           echo "" >> .env
-          echo "DB_CONNECTION=sqlite" >> .env
+          echo "DB_CONNECTION=mysql" >> .env
           echo "DB_DATABASE=:memory:" >> .env
           echo "" >> .env
           echo "BROADCAST_DRIVER=log" >> .env
