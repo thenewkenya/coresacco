@@ -52,6 +52,7 @@ jobs:
           echo "" >> .env
           echo "DB_CONNECTION=sqlite" >> .env
           echo "DB_DATABASE=:memory:" >> .env
+          echo "DB_FOREIGN_KEYS=true" >> .env
           echo "" >> .env
           echo "BROADCAST_DRIVER=log" >> .env
           echo "CACHE_DRIVER=array" >> .env
