@@ -38,7 +38,7 @@
                 </nav>
             </div>
 
-            <div class="space-y-8" x-data="{ activeTab: 'getting-started' }">
+            <div class="space-y-8">
                 
                 <!-- Getting Started Tab -->
                 <div x-show="activeTab === 'getting-started'" x-transition>
