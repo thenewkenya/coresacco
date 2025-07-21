@@ -30,7 +30,7 @@ A comprehensive Savings and Credit Cooperative (SACCO) management system.
 - **macOS**: Docker Desktop includes everything needed
 - **Linux**: Ensure Docker and Docker Compose are installed
 
-**Note**: No local PHP, Composer, PostgreSQL, or npm installation required! Laravel Sail provides everything through Docker containers.
+**Note**: No local PHP, Composer, MySQL, or npm installation required! Laravel Sail provides everything through Docker containers.
 
 ## Detailed Installation
 
@@ -106,7 +106,7 @@ docker run --rm \
 ```bash
 ./vendor/bin/sail logs
 ./vendor/bin/sail shell
-./vendor/bin/sail psql
+./vendor/bin/sail mysql
 ./vendor/bin/sail artisan [command]
 ./vendor/bin/sail composer install
 ./vendor/bin/sail npm install
@@ -148,7 +148,7 @@ Your application includes these services:
 |---------|-----|-------------|
 | **Laravel App** | [http://localhost](http://localhost) | Main SACCO application |
 | **Mailpit** | [http://localhost:8025](http://localhost:8025) | Email testing interface |
-| **MySQL** | `localhost:3306` | Database (accessible via Sail) |
+| **MySQL** | `localhost:3306` | MySQL 8.0 Database (accessible via Sail) |
 | **Redis** | `localhost:6379` | Caching and sessions |
 
 ## Custom commands
@@ -194,10 +194,10 @@ APP_DEBUG=true
 APP_URL=http://localhost
 
 # Database (automatically configured by Sail)
-DB_CONNECTION=pgsql
-DB_HOST=pgsql
-DB_PORT=5432
-DB_DATABASE=saccocore
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=laravel
 DB_USERNAME=sail
 DB_PASSWORD=password
 
@@ -211,11 +211,11 @@ MAIL_PASSWORD=your-password
 
 ### Database Configuration
 
-Sail automatically configures a PostgreSQL database. No manual setup required!
+Sail automatically configures a MySQL database. No manual setup required!
 
-- **Host**: `pgsql` (from within containers) or `localhost` (from host)
-- **Port**: `5432`
-- **Database**: `saccocore`
+- **Host**: `mysql` (from within containers) or `localhost` (from host)
+- **Port**: `3306`
+- **Database**: `laravel`
 - **Username**: `sail`
 - **Password**: `password`
 
@@ -249,6 +249,7 @@ services:
 sail artisan migrate:fresh --seed
 sail artisan tinker
 >>> DB::connection()->getPdo();
+sail mysql  # Access MySQL CLI directly
 ```
 
 ### Performance Issues
