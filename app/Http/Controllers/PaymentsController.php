@@ -345,7 +345,7 @@ class PaymentsController extends Controller
                 return back()->withInput()->with('error', 'Invalid payment type.');
         }
 
-            return redirect()->route('payments.my')
+            return redirect()->route('transactions.receipt', $transaction)
                 ->with('success', $message);
 
         } catch (\Exception $e) {

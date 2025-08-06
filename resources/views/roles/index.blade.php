@@ -121,9 +121,11 @@
                         <flux:button variant="outline" size="sm" :href="route('roles.show', $role)" wire:navigate class="flex-1">
                             {{ __('View Details') }}
                         </flux:button>
-                        <!-- Temporarily always show Edit button for testing -->
                         <flux:button variant="ghost" size="sm" :href="route('roles.edit', $role)" wire:navigate>
                             <flux:icon.pencil class="h-4 w-4" />
+                        </flux:button>
+                        <flux:button variant="ghost" size="sm" onclick="showPermissionsModal('{{ $role->id }}', '{{ $role->name }}', {{ json_encode($role->permissions ?? []) }})">
+                            <flux:icon.eye class="h-4 w-4" />
                         </flux:button>
                     </div>
                 </div>
@@ -382,4 +384,108 @@
         });
     </script>
     @endpush
+
+    <!-- Permissions Modal -->
+    <div id="permissionsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+            <div class="p-6 border-b border-zinc-200 dark:border-zinc-700">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100" id="modalRoleName">
+                        Role Permissions
+                    </h3>
+                    <button onclick="closePermissionsModal()" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+                        <flux:icon.x-mark class="h-6 w-6" />
+                    </button>
+                </div>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-96">
+                <div id="modalPermissionsList" class="space-y-3">
+                    <!-- Permissions will be populated here -->
+                </div>
+            </div>
+            <div class="p-6 border-t border-zinc-200 dark:border-zinc-700 flex justify-end space-x-3">
+                <flux:button variant="ghost" onclick="closePermissionsModal()">
+                    {{ __('Close') }}
+                </flux:button>
+                <flux:button variant="primary" onclick="editRoleFromModal()">
+                    {{ __('Edit Permissions') }}
+                </flux:button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRoleId = null;
+
+        function showPermissionsModal(roleId, roleName, permissions) {
+            currentRoleId = roleId;
+            document.getElementById('modalRoleName').textContent = roleName + ' Permissions';
+            
+            const permissionsList = document.getElementById('modalPermissionsList');
+            permissionsList.innerHTML = '';
+            
+            if (permissions.length === 0) {
+                permissionsList.innerHTML = '<p class="text-zinc-500 dark:text-zinc-400 text-center py-4">No permissions assigned</p>';
+            } else {
+                const permissionGroups = {
+                    'Member Management': ['view-members', 'create-members', 'edit-members', 'delete-members'],
+                    'Account Management': ['view-accounts', 'create-accounts', 'edit-accounts', 'delete-accounts', 'process-transactions'],
+                    'Loan Management': ['view-loans', 'create-loans', 'edit-loans', 'delete-loans', 'approve-loans', 'disburse-loans'],
+                    'Branch Management': ['view-branches', 'manage-branches'],
+                    'Reports & Settings': ['view-reports', 'export-reports', 'manage-settings', 'manage-roles']
+                };
+                
+                Object.entries(permissionGroups).forEach(([groupName, groupPermissions]) => {
+                    const hasPermissions = groupPermissions.some(p => permissions.includes(p));
+                    if (hasPermissions) {
+                        const groupDiv = document.createElement('div');
+                        groupDiv.className = 'mb-4';
+                        
+                        const groupTitle = document.createElement('h4');
+                        groupTitle.className = 'font-medium text-zinc-900 dark:text-zinc-100 mb-2';
+                        groupTitle.textContent = groupName;
+                        groupDiv.appendChild(groupTitle);
+                        
+                        const permissionsGrid = document.createElement('div');
+                        permissionsGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-2';
+                        
+                        groupPermissions.forEach(permission => {
+                            if (permissions.includes(permission)) {
+                                const permDiv = document.createElement('div');
+                                permDiv.className = 'flex items-center space-x-2 text-sm text-zinc-600 dark:text-zinc-400';
+                                permDiv.innerHTML = `
+                                    <flux:icon.check class="h-4 w-4 text-emerald-500" />
+                                    <span>${permission.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                                `;
+                                permissionsGrid.appendChild(permDiv);
+                            }
+                        });
+                        
+                        groupDiv.appendChild(permissionsGrid);
+                        permissionsList.appendChild(groupDiv);
+                    }
+                });
+            }
+            
+            document.getElementById('permissionsModal').classList.remove('hidden');
+        }
+
+        function closePermissionsModal() {
+            document.getElementById('permissionsModal').classList.add('hidden');
+            currentRoleId = null;
+        }
+
+        function editRoleFromModal() {
+            if (currentRoleId) {
+                window.location.href = `/roles/${currentRoleId}/edit`;
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('permissionsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePermissionsModal();
+            }
+        });
+    </script>
 </x-layouts.app> 

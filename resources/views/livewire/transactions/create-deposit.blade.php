@@ -250,11 +250,8 @@ new #[Layout('components.layouts.app')] class extends Component {
             $transactionService = app(\App\Services\TransactionService::class);
             $transaction = $transactionService->processDeposit($account, (float) $this->amount, $description, $metadata);
 
-            session()->flash('success', 'Deposit processed successfully! Transaction ID: ' . $transaction->reference_number);
-            
-            // Reset form
-            $this->reset(['amount', 'description', 'reference_number']);
-            $this->selectedAccount = Account::find($this->account_id); // Refresh account data
+            // Redirect to receipt page
+            return $this->redirect(route('transactions.receipt', $transaction), navigate: true);
             
         } catch (\Exception $e) {
             $this->addError('general', 'Failed to process deposit: ' . $e->getMessage());
