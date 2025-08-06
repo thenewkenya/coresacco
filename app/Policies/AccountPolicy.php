@@ -30,7 +30,8 @@ class AccountPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole('admin') || $user->hasRole('staff') || $user->hasRole('manager');
+        // Members can create accounts for themselves, staff can create for any member
+        return $user->hasRole('admin') || $user->hasRole('staff') || $user->hasRole('manager') || $user->hasRole('member');
     }
 
     /**

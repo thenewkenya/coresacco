@@ -54,8 +54,9 @@ class RoleSeeder extends Seeder
                 'name' => 'Member',
                 'description' => 'SACCO member with basic access',
                 'permissions' => [
-                    'view-accounts', // Can view their own accounts
-                    'view-loans',    // Can view their own loans
+                    'view-accounts',   // Can view their own accounts
+                    'create-accounts', // Can create accounts for themselves
+                    'view-loans',      // Can view their own loans
                 ]
             ]
         );
