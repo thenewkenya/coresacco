@@ -20,8 +20,18 @@ class AccountRequest extends FormRequest
             'currency' => 'sometimes|string|size:3',
         ];
 
-        // Only require member_id for staff users, not for members creating their own accounts
-        if (!auth()->user()->hasRole('member')) {
+        if (auth()->user()->hasRole('member')) {
+            // For members, if member_id is provided, it must be their own ID
+            if ($this->has('member_id')) {
+                $rules['member_id'] = 'required|in:' . auth()->user()->id;
+            }
+            
+            // Prevent duplicate account types for the member
+            if ($this->account_type) {
+                $rules['account_type'][] = 'unique:accounts,account_type,NULL,id,member_id,' . auth()->user()->id;
+            }
+        } else {
+            // Staff users must specify a valid member_id
             $rules['member_id'] = 'required|exists:users,id';
             
             // Prevent duplicate account types for the same member

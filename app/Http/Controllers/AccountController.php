@@ -100,12 +100,7 @@ class AccountController extends Controller
     {
         $user = Auth::user();
         
-        // Check authorization - members can only create accounts for themselves
-        if ($user->hasRole('member') && $request->member_id && $request->member_id !== $user->id) {
-            abort(403, 'Members can only create accounts for themselves.');
-        }
-        
-        // Non-members (staff/admin) must have permission to create accounts
+        // Authorization check for non-members (staff/admin)
         if (!$user->hasRole('member')) {
             $this->authorize('create', Account::class);
         }
