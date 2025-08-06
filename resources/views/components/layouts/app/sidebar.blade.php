@@ -44,10 +44,6 @@
                 <flux:navlist.item icon="currency-dollar" :href="route('payments.index')" :current="request()->routeIs('payments.*')" wire:navigate>
                     {{ __('Payment Processing') }}
                 </flux:navlist.item>
-
-                <flux:navlist.item icon="device-phone-mobile" :href="route('mobile-money.index')" :current="request()->routeIs('mobile-money.*')" wire:navigate>
-                    {{ __('Mobile Money') }}
-                </flux:navlist.item>
             </flux:navlist.group>
 
             <!-- Member Services -->
@@ -106,9 +102,6 @@
                 <flux:navlist.item icon="currency-dollar" :href="route('payments.index')" :current="request()->routeIs('payments.*')" wire:navigate>
                     {{ __('Payment Processing') }}
                 </flux:navlist.item>
-                <flux:navlist.item icon="device-phone-mobile" :href="route('mobile-money.index')" :current="request()->routeIs('mobile-money.*')" wire:navigate>
-                    {{ __('Mobile Money') }}
-                </flux:navlist.item>
                 <flux:navlist.item icon="users" :href="route('members.index')" :current="request()->routeIs('members.*')" wire:navigate>
                     {{ __('Members') }}
                 </flux:navlist.item>
@@ -143,9 +136,6 @@
                 </flux:navlist.item>
                 <flux:navlist.item icon="currency-dollar" :href="route('payments.my')" :current="request()->routeIs('payments.*')" wire:navigate>
                     {{ __('My Payments') }}
-                </flux:navlist.item>
-                <flux:navlist.item icon="device-phone-mobile" :href="route('mobile-money.index')" :current="request()->routeIs('mobile-money.*')" wire:navigate>
-                    {{ __('Mobile Money') }}
                 </flux:navlist.item>
                 <flux:navlist.item icon="user" :href="route('members.profile')" :current="request()->routeIs('members.profile')" wire:navigate>
                     {{ __('My Profile') }}

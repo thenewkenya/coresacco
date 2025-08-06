@@ -29,9 +29,11 @@ Route::middleware(['auth'])->group(function () {
         
         // Deposit routes
         Volt::route('/create/deposit', 'transactions.create-deposit')->name('deposit.create');
+        Route::post('/deposit', [App\Http\Controllers\TransactionController::class, 'storeDeposit'])->name('deposit.store');
         
         // Withdrawal routes
         Volt::route('/create/withdrawal', 'transactions.create-withdrawal')->name('withdrawal.create');
+        Route::post('/withdrawal', [App\Http\Controllers\TransactionController::class, 'storeWithdrawal'])->name('withdrawal.store');
         
         // Transfer routes
         Route::get('/create/transfer', [App\Http\Controllers\TransactionController::class, 'createTransfer'])->name('transfer.create');

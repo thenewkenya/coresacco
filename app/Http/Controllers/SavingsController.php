@@ -257,7 +257,8 @@ class SavingsController extends Controller
                 ['processed_by' => $user->id]
             );
 
-            return back()->with('success', 'Deposit of KES ' . number_format($validated['amount']) . ' processed successfully.');
+            return redirect()->route('transactions.receipt', $transaction)
+                ->with('success', 'Deposit of KES ' . number_format($validated['amount']) . ' processed successfully.');
 
         } catch (\Exception $e) {
             return back()->withInput()->with('error', 'Deposit failed: ' . $e->getMessage());
@@ -293,7 +294,8 @@ class SavingsController extends Controller
                 ? 'Withdrawal request submitted for approval (amount exceeds limit).'
                 : 'Withdrawal of KES ' . number_format($validated['amount']) . ' processed successfully.';
 
-            return back()->with('success', $message);
+            return redirect()->route('transactions.receipt', $transaction)
+                ->with('success', $message);
 
         } catch (\Exception $e) {
             return back()->withInput()->with('error', 'Withdrawal failed: ' . $e->getMessage());

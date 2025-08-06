@@ -22,8 +22,8 @@ class RoleController extends Controller
      */
     public function index(Request $request)
     {
-        // Check if user has permission to view roles
-        if (!Auth::user()->hasAnyRole(['admin', 'manager'])) {
+        // Check if user has permission to manage roles
+        if (!Auth::user()->hasPermission('manage-roles') && !Auth::user()->hasAnyRole(['admin', 'manager'])) {
             abort(403, 'Unauthorized to access role management.');
         }
 
@@ -146,7 +146,21 @@ class RoleController extends Controller
             'name' => ['required', 'string', 'max:255', Rule::unique('roles')->ignore($role)],
             'description' => 'nullable|string|max:1000',
             'permissions' => 'nullable|array',
-            'permissions.*' => 'string|in:' . implode(',', Role::PERMISSIONS),
+            'permissions.*' => 'string',
+        ]);
+
+        // Always handle permissions from the request
+        $validated['permissions'] = $request->input('permissions', []);
+
+        // Debug: Log what we're trying to update
+        \Log::info('Role Update Debug', [
+            'role_id' => $role->id,
+            'role_name' => $role->name,
+            'old_permissions' => $role->permissions,
+            'new_permissions' => $validated['permissions'] ?? 'NOT_SET',
+            'request_permissions' => $request->input('permissions'),
+            'has_permissions_submitted' => $request->has('permissions_submitted'),
+            'all_request_data' => $request->all()
         ]);
 
         // Only update slug if name changed and it's not a protected role
@@ -154,10 +168,27 @@ class RoleController extends Controller
             $validated['slug'] = Str::slug($validated['name']);
         }
 
-        $role->update($validated);
+        try {
+            $role->update($validated);
 
-        return redirect()->route('roles.index')
-            ->with('success', 'Role updated successfully.');
+            // Debug: Log after update
+            \Log::info('Role Update Complete', [
+                'role_id' => $role->id,
+                'final_permissions' => $role->fresh()->permissions
+            ]);
+
+            return redirect()->route('roles.edit', $role)
+                ->with('success', 'Role updated successfully. Permissions: ' . implode(', ', $role->fresh()->permissions ?? []));
+        } catch (\Exception $e) {
+            \Log::error('Role Update Failed', [
+                'error' => $e->getMessage(),
+                'role_id' => $role->id,
+                'validated_data' => $validated
+            ]);
+
+            return redirect()->route('roles.edit', $role)
+                ->with('error', 'Failed to update role: ' . $e->getMessage());
+        }
     }
 
     /**

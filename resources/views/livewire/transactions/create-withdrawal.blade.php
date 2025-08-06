@@ -183,11 +183,8 @@ new #[Layout('components.layouts.app')] class extends Component {
             $transactionService = app(\App\Services\TransactionService::class);
             $transaction = $transactionService->processWithdrawal($account, $this->getTotalAmount(), $description, $metadata);
 
-            session()->flash('success', 'Withdrawal processed successfully! Transaction ID: ' . $transaction->reference_number);
-            
-            // Reset form
-            $this->reset(['amount', 'purpose', 'reference_number', 'notes']);
-            $this->selectedAccount = Account::find($this->account_id); // Refresh account data
+            // Redirect to receipt page
+            return $this->redirect(route('transactions.receipt', $transaction), navigate: true);
             
         } catch (\Exception $e) {
             $this->addError('general', 'Failed to process withdrawal: ' . $e->getMessage());

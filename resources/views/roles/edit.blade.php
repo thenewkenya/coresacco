@@ -76,6 +76,9 @@
                                 <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-6">
                                     {{ __('Permissions') }}
                                 </h3>
+                                
+                                <!-- Hidden input to ensure permissions array is always sent -->
+                                <input type="hidden" name="permissions_submitted" value="1">
 
                                 @php
                                     $permissionGroups = [
@@ -303,4 +306,71 @@
         });
     </script>
     @endpush
-</x-layouts.app> 
+</x-layouts.app>    
+ <!-- Quick Save via AJAX -->
+    <script>
+        // Add quick save functionality
+        function quickSavePermissions() {
+            const form = document.querySelector('form');
+            const formData = new FormData(form);
+            
+            // Show loading state
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Saving...';
+            submitBtn.disabled = true;
+            
+            fetch(`/roles/{{ $role->id }}/permissions`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    showNotification('Permissions updated successfully!', 'success');
+                } else {
+                    showNotification('Error updating permissions', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error updating permissions', 'error');
+            })
+            .finally(() => {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            });
+        }
+        
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // Add quick save button
+        document.addEventListener('DOMContentLoaded', function() {
+            const submitBtn = document.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                const quickSaveBtn = document.createElement('button');
+                quickSaveBtn.type = 'button';
+                quickSaveBtn.className = 'w-full mb-2 px-4 py-2 text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50';
+                quickSaveBtn.textContent = 'Quick Save (AJAX)';
+                quickSaveBtn.onclick = quickSavePermissions;
+                
+                submitBtn.parentNode.insertBefore(quickSaveBtn, submitBtn);
+            }
+        });
+    </script>

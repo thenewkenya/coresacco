@@ -100,19 +100,42 @@
                         <h3 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white mb-6">Payment Details</h3>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Account Selection -->
+                            <!-- Payment Source Account -->
                             <div>
                                 <flux:field>
-                                    <flux:label>Account</flux:label>
-                                    <flux:select name="account_id" required>
-                                        <option value="">Select Account</option>
+                                    <flux:label>Pay From Account</flux:label>
+                                    <flux:select name="account_id" required id="source_account">
+                                        <option value="">Select your account to pay from</option>
                                         @foreach($accounts as $account)
                                         <option value="{{ $account->id }}">
                                             {{ $account->account_number }} - {{ $account->getDisplayName() }} (KES {{ number_format($account->balance, 2) }})
                                         </option>
                                         @endforeach
                                     </flux:select>
+                                    <flux:description>Choose which of your accounts to deduct the payment from</flux:description>
                                     <flux:error name="account_id" />
+                                </flux:field>
+                            </div>
+
+                            <!-- Payment Destination (Dynamic based on payment type) -->
+                            <div>
+                                <flux:field>
+                                    <flux:label>Paying To</flux:label>
+                                    <div class="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-3">
+                                                <flux:icon.building-office class="w-4 h-4 text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-blue-900 dark:text-blue-100" id="payment_destination">
+                                                    {{ organization_name() }} SACCO
+                                                </p>
+                                                <p class="text-xs text-blue-700 dark:text-blue-300" id="payment_purpose">
+                                                    Select a payment type above
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </flux:field>
                             </div>
 
@@ -263,7 +286,7 @@
                         
                         <div class="space-y-4">
                             <div class="flex justify-between text-sm">
-                                <span class="text-zinc-600 dark:text-zinc-400">Account Balance</span>
+                                <span class="text-zinc-600 dark:text-zinc-400">Available Balance (Source)</span>
                                 <span class="font-medium text-zinc-900 dark:text-white" id="account-balance">
                                     @if($accounts->count() > 0)
                                         KSh {{ number_format($accounts->first()->balance, 2) }}
@@ -297,9 +320,10 @@
                             
                             <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4">
                                 <div class="flex justify-between">
-                                    <span class="font-medium text-zinc-900 dark:text-white">Payment Amount</span>
-                                    <span class="font-bold text-emerald-600" id="payment-amount">KSh 0.00</span>
+                                    <span class="font-medium text-zinc-900 dark:text-white">Payment to SACCO</span>
+                                    <span class="font-bold text-blue-600" id="payment-amount">KSh 0.00</span>
                                 </div>
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Amount being paid to the SACCO system</p>
                             </div>
                         </div>
                     </div>
@@ -309,23 +333,23 @@
                         <div class="flex items-start">
                             <flux:icon.information-circle class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3 flex-shrink-0" />
                             <div class="text-sm text-blue-800 dark:text-blue-200">
-                                <p class="font-medium mb-2">Payment Processing Information</p>
+                                <p class="font-medium mb-2">SACCO Payment Information</p>
                                 <ul class="space-y-1 text-blue-700 dark:text-blue-300">
                                     <li class="flex items-start">
                                         <span class="w-1 h-1 bg-blue-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                                        <span>Cash payments are processed immediately</span>
+                                        <span>Payments are deducted from your selected account</span>
                                     </li>
                                     <li class="flex items-start">
                                         <span class="w-1 h-1 bg-blue-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                                        <span>Mobile money payments may take up to 5 minutes to reflect</span>
+                                        <span>Loan payments reduce your outstanding balance</span>
                                     </li>
                                     <li class="flex items-start">
                                         <span class="w-1 h-1 bg-blue-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                                        <span>Bank transfers may take 1-2 business days to process</span>
+                                        <span>Membership fees are annual and mandatory</span>
                                     </li>
                                     <li class="flex items-start">
                                         <span class="w-1 h-1 bg-blue-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                                        <span>Large withdrawals may require approval</span>
+                                        <span>You'll receive a receipt after payment confirmation</span>
                                     </li>
                                 </ul>
                             </div>
@@ -463,6 +487,7 @@
             // Handle payment type changes
             paymentTypeRadios.forEach(radio => {
                 radio.addEventListener('change', function() {
+                    // Show/hide loan selection
                     if (this.value === 'loan_repayment' || this.value === 'loan_processing_fee') {
                         loanSelection.style.display = 'block';
                         loanSelection.querySelector('select').required = true;
@@ -470,8 +495,52 @@
                         loanSelection.style.display = 'none';
                         loanSelection.querySelector('select').required = false;
                     }
+                    
+                    // Update payment destination
+                    updatePaymentDestination(this.value);
                 });
             });
+
+            // Function to update payment destination based on payment type
+            function updatePaymentDestination(paymentType) {
+                const destinationElement = document.getElementById('payment_destination');
+                const purposeElement = document.getElementById('payment_purpose');
+                
+                const paymentInfo = {
+                    'loan_repayment': {
+                        destination: '{{ organization_name() }} SACCO - Loan Department',
+                        purpose: 'Loan repayment to reduce your outstanding loan balance'
+                    },
+                    'membership_fee': {
+                        destination: '{{ organization_name() }} SACCO - Membership Services',
+                        purpose: 'Annual membership fee payment'
+                    },
+                    'insurance_premium': {
+                        destination: '{{ organization_name() }} SACCO - Insurance Department',
+                        purpose: 'Life/credit insurance premium payment'
+                    },
+                    'loan_processing_fee': {
+                        destination: '{{ organization_name() }} SACCO - Loan Department',
+                        purpose: 'One-time loan processing and administration fee'
+                    },
+                    'monthly_contribution': {
+                        destination: '{{ organization_name() }} SACCO - Savings Department',
+                        purpose: 'Monthly savings contribution'
+                    },
+                    'share_capital': {
+                        destination: '{{ organization_name() }} SACCO - Share Capital',
+                        purpose: 'Share capital purchase to increase ownership'
+                    }
+                };
+                
+                if (paymentInfo[paymentType]) {
+                    destinationElement.textContent = paymentInfo[paymentType].destination;
+                    purposeElement.textContent = paymentInfo[paymentType].purpose;
+                } else {
+                    destinationElement.textContent = '{{ organization_name() }} SACCO';
+                    purposeElement.textContent = 'Select a payment type above';
+                }
+            }
 
             // Handle payment method changes
             paymentMethodSelect.addEventListener('change', function() {
@@ -529,9 +598,13 @@
 
             // Initialize form based on current payment type
             const checkedPaymentType = document.querySelector('input[name="payment_type"]:checked');
-            if (checkedPaymentType && (checkedPaymentType.value === 'loan_repayment' || checkedPaymentType.value === 'loan_processing_fee')) {
-                loanSelection.style.display = 'block';
-                loanSelection.querySelector('select').required = true;
+            if (checkedPaymentType) {
+                if (checkedPaymentType.value === 'loan_repayment' || checkedPaymentType.value === 'loan_processing_fee') {
+                    loanSelection.style.display = 'block';
+                    loanSelection.querySelector('select').required = true;
+                }
+                // Update payment destination on page load
+                updatePaymentDestination(checkedPaymentType.value);
             }
         });
 
