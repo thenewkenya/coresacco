@@ -315,8 +315,153 @@
                         </div>
                     </div>
                     @endif
+
+                    <!-- Admin/Manager Actions for Pending Loans -->
+                    @if($loan->status === 'pending' && auth()->user()->hasAnyRole(['admin', 'manager']))
+                    <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
+                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+                            {{ __('Loan Review') }}
+                        </h3>
+                        <div class="space-y-3">
+                            <!-- Approve Loan Button -->
+                            <button type="button" 
+                                    onclick="openApprovalModal()"
+                                    class="w-full flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                {{ __('Approve Loan') }}
+                            </button>
+                            
+                            <!-- Reject Loan Button -->
+                            <button type="button" 
+                                    onclick="openRejectionModal()"
+                                    class="w-full flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                {{ __('Reject Loan') }}
+                            </button>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Approval Modal -->
+    <div id="approvalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white dark:bg-zinc-800 rounded-xl max-w-md w-full p-6">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+                    {{ __('Approve Loan') }}
+                </h3>
+                <form method="POST" action="{{ route('loans.approve', $loan) }}">
+                    @csrf
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                {{ __('Disbursement Account') }}
+                            </label>
+                            <select name="disbursement_account_id" required 
+                                    class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-zinc-700 dark:text-zinc-100">
+                                <option value="">{{ __('Select Account') }}</option>
+                                @foreach($loan->member->accounts as $account)
+                                    <option value="{{ $account->id }}">
+                                        {{ $account->getDisplayName() }} ({{ $account->account_number }}) - KES {{ number_format($account->balance) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                {{ __('Approval Notes') }} ({{ __('Optional') }})
+                            </label>
+                            <textarea name="notes" rows="3" 
+                                      class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-zinc-700 dark:text-zinc-100"
+                                      placeholder="{{ __('Add any notes about this approval...') }}"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3 mt-6">
+                        <button type="submit" 
+                                class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                            {{ __('Approve & Disburse') }}
+                        </button>
+                        <button type="button" 
+                                onclick="closeApprovalModal()"
+                                class="flex-1 bg-zinc-300 hover:bg-zinc-400 dark:bg-zinc-600 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-medium py-2 px-4 rounded-lg transition-colors">
+                            {{ __('Cancel') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Modal -->
+    <div id="rejectionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white dark:bg-zinc-800 rounded-xl max-w-md w-full p-6">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+                    {{ __('Reject Loan') }}
+                </h3>
+                <form method="POST" action="{{ route('loans.reject', $loan) }}">
+                    @csrf
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                {{ __('Rejection Reason') }}
+                            </label>
+                            <textarea name="rejection_reason" rows="4" required 
+                                      class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-zinc-700 dark:text-zinc-100"
+                                      placeholder="{{ __('Please provide a reason for rejecting this loan application...') }}"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3 mt-6">
+                        <button type="submit" 
+                                class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                            {{ __('Reject Loan') }}
+                        </button>
+                        <button type="button" 
+                                onclick="closeRejectionModal()"
+                                class="flex-1 bg-zinc-300 hover:bg-zinc-400 dark:bg-zinc-600 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-medium py-2 px-4 rounded-lg transition-colors">
+                            {{ __('Cancel') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openApprovalModal() {
+            document.getElementById('approvalModal').classList.remove('hidden');
+        }
+
+        function closeApprovalModal() {
+            document.getElementById('approvalModal').classList.add('hidden');
+        }
+
+        function openRejectionModal() {
+            document.getElementById('rejectionModal').classList.remove('hidden');
+        }
+
+        function closeRejectionModal() {
+            document.getElementById('rejectionModal').classList.add('hidden');
+        }
+
+        // Close modals when clicking outside
+        document.getElementById('approvalModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeApprovalModal();
+            }
+        });
+
+        document.getElementById('rejectionModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeRejectionModal();
+            }
+        });
+    </script>
 </x-layouts.app> 

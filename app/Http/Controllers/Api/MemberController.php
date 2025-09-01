@@ -52,7 +52,7 @@ class MemberController extends ApiController
 
     public function show(Member $member): JsonResponse
     {
-        $member->load(['accounts', 'loans', 'insurancePolicies']);
+        $member->load(['accounts', 'loans']);
         return $this->successResponse($member);
     }
 

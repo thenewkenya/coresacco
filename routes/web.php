@@ -11,6 +11,58 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+    // Loan Application Routes (for members) - must be outside auth group
+    Route::get('/loans/apply', [App\Http\Controllers\LoanApplicationController::class, 'create'])->name('loans.apply')->middleware('auth');
+    Route::post('/loans/apply', [App\Http\Controllers\LoanApplicationController::class, 'store'])->name('loans.apply.store')->middleware('auth');
+    
+    // Member eligibility check route
+    Route::get('/members/{member}/eligibility', [App\Http\Controllers\LoanApplicationController::class, 'checkMemberEligibility'])->name('members.eligibility')->middleware('auth');
+    
+    // Test route for eligibility
+    Route::get('/test-eligibility/{member}', function($memberId) {
+        try {
+            $member = \App\Models\Member::find($memberId);
+            if (!$member) {
+                return response()->json(['success' => false, 'message' => 'Member not found'], 404);
+            }
+            
+            $savingsBalance = $member->getTotalSavingsBalance();
+            $sharesBalance = $member->getTotalSharesBalance();
+            $totalBalance = $member->getTotalBalance();
+            $monthsInSacco = $member->getMonthsInSacco();
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'member_id' => $member->id,
+                    'member_name' => $member->name,
+                    'savings_balance' => $savingsBalance,
+                    'shares_balance' => $sharesBalance,
+                    'total_balance' => $totalBalance,
+                    'months_in_sacco' => $monthsInSacco,
+                    'max_loan_amount' => $savingsBalance * 3.0,
+                    'overall_eligible' => $savingsBalance >= 1000 && $monthsInSacco >= 6
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    })->middleware('auth');
+    
+    // Test route for form submission
+    Route::post('/test-loan-submission', function(\Illuminate\Http\Request $request) {
+        return response()->json([
+            'success' => true,
+            'message' => 'Form submission test successful',
+            'data' => $request->all()
+        ]);
+    })->middleware('auth');
+
+// Test route to verify routing is working
+Route::get('/test-apply', function() {
+    return 'Test route working!';
+})->name('test.apply');
+
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
 
@@ -67,16 +119,36 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/generate', [App\Http\Controllers\SavingsController::class, 'report'])->name('report')->middleware('can:view-reports');
     });
 
-    Route::prefix('loans')->name('loans.')->group(function () {
-        Route::get('/', [App\Http\Controllers\LoansController::class, 'index'])->name('index');
-        Volt::route('/my', 'member.my-loans')->name('my');
-        Route::get('/create', [App\Http\Controllers\LoansController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\LoansController::class, 'store'])->name('store');
-        Route::get('/{loan}', [App\Http\Controllers\LoansController::class, 'show'])->name('show');
-        Route::post('/{loan}/approve', [App\Http\Controllers\LoansController::class, 'approve'])->name('approve')->middleware('can:approve,loan');
-        Route::post('/{loan}/reject', [App\Http\Controllers\LoansController::class, 'reject'])->name('reject')->middleware('can:approve,loan');
-        Route::post('/{loan}/repayment', [App\Http\Controllers\LoansController::class, 'repayment'])->name('repayment');
-        Route::get('/reports/generate', [App\Http\Controllers\LoansController::class, 'report'])->name('report')->middleware('can:view-reports');
+        Route::prefix('loans')->name('loans.')->group(function () {
+        // Member loan access (must come before {loan} route)
+        Route::get('/my', [App\Http\Controllers\LoansController::class, 'my'])->name('my')->middleware('auth');
+        
+        // Staff/Admin loan management
+        Route::middleware(['auth'])->group(function () {
+            Route::get('/', [App\Http\Controllers\LoansController::class, 'index'])->name('index')
+                ->middleware('role:admin,manager,staff');
+            Route::get('/create', [App\Http\Controllers\LoansController::class, 'create'])->name('create')
+                ->middleware('role:admin,manager,staff');
+            Route::post('/', [App\Http\Controllers\LoansController::class, 'store'])->name('store')
+                ->middleware('role:admin,manager,staff');
+            Route::get('/{loan}', [App\Http\Controllers\LoansController::class, 'show'])->name('show');
+            Route::post('/{loan}/approve', [App\Http\Controllers\LoansController::class, 'approve'])->name('approve')
+                ->middleware('role:admin,manager');
+            Route::post('/{loan}/reject', [App\Http\Controllers\LoansController::class, 'reject'])->name('reject')
+                ->middleware('role:admin,manager');
+            Route::post('/{loan}/repayment', [App\Http\Controllers\LoansController::class, 'repayment'])->name('repayment');
+            Route::get('/reports/generate', [App\Http\Controllers\LoansController::class, 'report'])->name('report')
+                ->middleware('role:admin,manager');
+        });
+    });
+
+    // Loan Applications with Borrowing Criteria
+    Route::prefix('loan-applications')->name('loan-applications.')->group(function () {
+        Route::get('/', [App\Http\Controllers\LoanApplicationController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\LoanApplicationController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\LoanApplicationController::class, 'store'])->name('store');
+        Route::get('/{loan}', [App\Http\Controllers\LoanApplicationController::class, 'show'])->name('show');
+        Route::get('/{loan}/eligibility', [App\Http\Controllers\LoanApplicationController::class, 'getEligibilityReport'])->name('eligibility');
     });
 
     Route::prefix('payments')->name('payments.')->group(function () {
@@ -128,10 +200,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{budget}/report', [App\Http\Controllers\BudgetController::class, 'report'])->name('report');
     });
 
-    Route::prefix('insurance')->name('insurance.')->group(function () {
-        Route::get('/', function () { return view('insurance.index'); })->name('index');
-        Route::get('/my', function () { return view('insurance.my'); })->name('my');
-    });
+
 
     // Management & Analytics
     Route::prefix('analytics')->name('analytics.')->group(function () {
@@ -223,6 +292,8 @@ Route::middleware(['auth'])->group(function () {
         return view('documentation.index');
     })->name('documentation');
 });
+
+
 
 Route::middleware(['auth', 'verified'])->prefix('savings')->name('savings.')->group(function () {
     // ... existing code ...

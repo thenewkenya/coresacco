@@ -13,7 +13,7 @@ class LoanPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole(['admin', 'staff', 'manager']);
+        return $user->hasAnyRole(['admin', 'staff', 'manager']);
     }
 
     /**
@@ -22,7 +22,7 @@ class LoanPolicy
     public function view(User $user, Loan $loan): bool
     {
         // Users can view their own loans, staff can view any
-        return $user->id === $loan->user_id || $user->hasRole(['admin', 'staff', 'manager']);
+        return $user->id === $loan->user_id || $user->hasAnyRole(['admin', 'staff', 'manager']);
     }
 
     /**
@@ -40,7 +40,7 @@ class LoanPolicy
     public function update(User $user, Loan $loan): bool
     {
         // Only staff can update loans, members can only update pending applications
-        if ($user->hasRole(['admin', 'staff', 'manager'])) {
+        if ($user->hasAnyRole(['admin', 'staff', 'manager'])) {
             return true;
         }
         
@@ -54,7 +54,7 @@ class LoanPolicy
     public function delete(User $user, Loan $loan): bool
     {
         // Only admins can delete loans, and only if pending or rejected
-        return $user->hasRole(['admin']) && in_array($loan->status, ['pending', 'rejected']);
+        return $user->hasRole('admin') && in_array($loan->status, ['pending', 'rejected']);
     }
 
     /**
@@ -62,7 +62,7 @@ class LoanPolicy
      */
     public function restore(User $user, Loan $loan): bool
     {
-        return $user->hasRole(['admin']);
+        return $user->hasRole('admin');
     }
 
     /**
@@ -70,7 +70,7 @@ class LoanPolicy
      */
     public function forceDelete(User $user, Loan $loan): bool
     {
-        return $user->hasRole(['admin']);
+        return $user->hasRole('admin');
     }
 
     /**
@@ -78,7 +78,7 @@ class LoanPolicy
      */
     public function approve(User $user, Loan $loan): bool
     {
-        return $user->hasRole(['admin', 'manager']) && $loan->status === 'pending';
+        return $user->hasAnyRole(['admin', 'manager']) && $loan->status === 'pending';
     }
 
     /**
@@ -86,7 +86,7 @@ class LoanPolicy
      */
     public function reject(User $user, Loan $loan): bool
     {
-        return $user->hasRole(['admin', 'manager']) && $loan->status === 'pending';
+        return $user->hasAnyRole(['admin', 'manager']) && $loan->status === 'pending';
     }
 
     /**
@@ -95,7 +95,7 @@ class LoanPolicy
     public function repay(User $user, Loan $loan): bool
     {
         // Users can repay their own active loans, staff can process any active loan repayment
-        $canAccess = $user->id === $loan->user_id || $user->hasRole(['admin', 'staff', 'manager']);
+        $canAccess = $user->id === $loan->user_id || $user->hasAnyRole(['admin', 'staff', 'manager']);
         return $canAccess && $loan->status === 'active';
     }
 }

@@ -13,7 +13,7 @@
                         </p>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <flux:button variant="primary" icon="plus" :href="route('loans.create')" wire:navigate>
+                        <flux:button variant="primary" icon="plus" :href="route('loans.apply')" wire:navigate>
                             {{ __('Apply for Loan') }}
                         </flux:button>
                     </div>
@@ -30,12 +30,12 @@
                         <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                             <flux:icon.credit-card class="w-6 h-6 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <span class="text-sm text-blue-600 dark:text-blue-400 font-medium">Active</span>
+                        <span class="text-sm text-blue-600 dark:text-blue-400 font-medium">{{ __('Total') }}</span>
                     </div>
                     <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Total Outstanding') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KSh 125,000</p>
-                        <p class="text-xs text-zinc-600 dark:text-zinc-400">{{ __('2 active loans') }}</p>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Total Borrowed') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KSh {{ number_format($totalBorrowed) }}</p>
+                        <p class="text-xs text-zinc-600 dark:text-zinc-400">{{ $loans->count() }} {{ __('loan(s)') }}</p>
                     </div>
                 </div>
 
@@ -44,26 +44,38 @@
                         <div class="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
                             <flux:icon.calendar class="w-6 h-6 text-amber-600 dark:text-amber-400" />
                         </div>
-                        <span class="text-sm text-amber-600 dark:text-amber-400 font-medium">Due Soon</span>
+                        <span class="text-sm text-amber-600 dark:text-amber-400 font-medium">{{ __('Repaid') }}</span>
                     </div>
                     <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Next Payment') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KSh 8,500</p>
-                        <p class="text-xs text-amber-600 dark:text-amber-400">{{ __('Due Dec 28, 2024') }}</p>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Total Repaid') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">KSh {{ number_format($totalRepaid) }}</p>
+                        <p class="text-xs text-amber-600 dark:text-amber-400">{{ __('All time') }}</p>
                     </div>
                 </div>
 
                 <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
                     <div class="flex items-center justify-between mb-4">
                         <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                            <flux:icon.chart-bar class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                            <flux:icon.check-circle class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                         </div>
-                        <span class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">On Track</span>
+                        <span class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">{{ __('Status') }}</span>
                     </div>
                     <div>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Credit Score') }}</p>
-                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">742</p>
-                        <p class="text-xs text-emerald-600 dark:text-emerald-400">{{ __('Excellent') }}</p>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Can Apply') }}</p>
+                        <p class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                            @if($canApplyForLoan)
+                                <span class="text-emerald-600">{{ __('Yes') }}</span>
+                            @else
+                                <span class="text-red-600">{{ __('No') }}</span>
+                            @endif
+                        </p>
+                        <p class="text-xs text-emerald-600 dark:text-emerald-400">
+                            @if($canApplyForLoan)
+                                {{ __('Eligible for new loan') }}
+                            @else
+                                {{ __('Active loan exists') }}
+                            @endif
+                        </p>
                     </div>
                 </div>
             </div>
@@ -72,146 +84,85 @@
             <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 mb-8">
                 <div class="p-6 border-b border-zinc-200 dark:border-zinc-700">
                     <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                        {{ __('Active Loans') }}
+                        {{ __('My Loans') }}
                     </h3>
                 </div>
 
                 <div class="divide-y divide-zinc-200 dark:divide-zinc-700">
-                    @foreach([
-                        [
-                            'id' => 'LN-001',
-                            'type' => 'Personal Loan',
-                            'amount' => '75000',
-                            'outstanding' => '45000',
-                            'rate' => '12.5%',
-                            'term' => '24 months',
-                            'next_payment' => '2024-12-28',
-                            'payment_amount' => '3500',
-                            'status' => 'current'
-                        ],
-                        [
-                            'id' => 'LN-002',
-                            'type' => 'Emergency Loan',
-                            'amount' => '100000',
-                            'outstanding' => '80000',
-                            'rate' => '15.0%',
-                            'term' => '18 months',
-                            'next_payment' => '2024-12-30',
-                            'payment_amount' => '5000',
-                            'status' => 'current'
-                        ]
-                    ] as $loan)
+                    @forelse($loans as $loan)
                     <div class="p-6">
                         <div class="flex items-center justify-between mb-4">
                             <div>
-                                <div class="flex items-center space-x-3">
-                                    <h4 class="font-semibold text-zinc-900 dark:text-zinc-100">
-                                        {{ $loan['type'] }}
-                                    </h4>
-                                    <span class="px-2 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full">
-                                        {{ ucfirst($loan['status']) }}
-                                    </span>
-                                </div>
+                                <h4 class="font-semibold text-zinc-900 dark:text-zinc-100">
+                                    {{ $loan->loanType->name ?? 'Loan' }} #{{ $loan->id }}
+                                </h4>
                                 <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                                    {{ $loan['id'] }} • {{ $loan['rate'] }} APR • {{ $loan['term'] }}
+                                    {{ $loan->purpose ?? 'No purpose specified' }}
                                 </p>
                             </div>
                             <div class="text-right">
                                 <p class="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                                    KSh {{ number_format($loan['outstanding']) }}
+                                    KSh {{ number_format($loan->amount) }}
                                 </p>
                                 <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                                    of KSh {{ number_format($loan['amount']) }}
+                                    {{ ucfirst($loan->status) }}
                                 </p>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="bg-zinc-50 dark:bg-zinc-700 rounded-lg p-4">
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Next Payment') }}</p>
+                                <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Interest Rate') }}</p>
                                 <p class="font-semibold text-zinc-900 dark:text-zinc-100">
-                                    KSh {{ number_format($loan['payment_amount']) }}
+                                    {{ $loan->interest_rate }}%
                                 </p>
                                 <p class="text-xs text-zinc-600 dark:text-zinc-400">
-                                    {{ \Carbon\Carbon::parse($loan['next_payment'])->format('M d, Y') }}
+                                    {{ $loan->term_period }} months
                                 </p>
                             </div>
 
                             <div class="bg-zinc-50 dark:bg-zinc-700 rounded-lg p-4">
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Progress') }}</p>
-                                <div class="w-full bg-zinc-200 dark:bg-zinc-600 rounded-full h-2 mb-2">
-                                    <div class="bg-emerald-600 h-2 rounded-full" style="width: {{ 100 - (($loan['outstanding'] / $loan['amount']) * 100) }}%"></div>
-                                </div>
+                                <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Applied Date') }}</p>
+                                <p class="font-semibold text-zinc-900 dark:text-zinc-100">
+                                    {{ $loan->created_at->format('M d, Y') }}
+                                </p>
                                 <p class="text-xs text-zinc-600 dark:text-zinc-400">
-                                    {{ number_format(100 - (($loan['outstanding'] / $loan['amount']) * 100), 1) }}% paid
+                                    {{ $loan->created_at->diffForHumans() }}
                                 </p>
                             </div>
 
                             <div class="flex items-center justify-end space-x-2">
-                                <flux:button variant="outline" size="sm">
+                                <flux:button variant="outline" size="sm" :href="route('loans.show', $loan->id)">
                                     {{ __('View Details') }}
                                 </flux:button>
-                                <flux:button variant="primary" size="sm">
+                                @if($loan->status === 'active')
+                                <flux:button variant="primary" size="sm" :href="route('loans.repayment', $loan->id)">
                                     {{ __('Make Payment') }}
                                 </flux:button>
+                                @endif
                             </div>
                         </div>
                     </div>
-                    @endforeach
-                </div>
-            </div>
-
-            <!-- Recent Payments -->
-            <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                <div class="p-6 border-b border-zinc-200 dark:border-zinc-700">
-                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                        {{ __('Recent Payments') }}
-                    </h3>
-                </div>
-
-                <div class="divide-y divide-zinc-200 dark:divide-zinc-700">
-                    @foreach([
-                        ['loan_id' => 'LN-001', 'amount' => '3500', 'date' => '2024-11-28', 'status' => 'completed'],
-                        ['loan_id' => 'LN-002', 'amount' => '5000', 'date' => '2024-11-30', 'status' => 'completed'],
-                        ['loan_id' => 'LN-001', 'amount' => '3500', 'date' => '2024-10-28', 'status' => 'completed'],
-                        ['loan_id' => 'LN-002', 'amount' => '5000', 'date' => '2024-10-30', 'status' => 'completed']
-                    ] as $payment)
-                    <div class="p-6">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-4">
-                                <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                                    <flux:icon.check class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                </div>
-                                <div>
-                                    <p class="font-medium text-zinc-900 dark:text-zinc-100">
-                                        {{ __('Loan Payment') }} - {{ $payment['loan_id'] }}
-                                    </p>
-                                    <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                                        {{ \Carbon\Carbon::parse($payment['date'])->format('M d, Y') }}
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-semibold text-zinc-900 dark:text-zinc-100">
-                                    KSh {{ number_format($payment['amount']) }}
-                                </p>
-                                <span class="px-2 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full">
-                                    {{ ucfirst($payment['status']) }}
-                                </span>
-                            </div>
+                    @empty
+                    <div class="p-6 text-center">
+                        <div class="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+                            <flux:icon.credit-card class="w-12 h-12 text-zinc-400 mx-auto mb-4" />
+                            <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+                                {{ __('No Loans Yet') }}
+                            </h3>
+                            <p class="text-zinc-600 dark:text-zinc-400 mb-4">
+                                {{ __('You haven\'t applied for any loans yet.') }}
+                            </p>
+                            <flux:button variant="primary" :href="route('loans.apply')" wire:navigate>
+                                {{ __('Apply for Your First Loan') }}
+                            </flux:button>
                         </div>
                     </div>
-                    @endforeach
+                    @endforelse
                 </div>
             </div>
 
-            <!-- Empty State -->
-            <div class="text-center py-8">
-                <p class="text-gray-500 dark:text-gray-400 mb-6">You haven't applied for any loans yet.</p>
-                <flux:button variant="primary" :href="route('loans.create')" wire:navigate>
-                    {{ __('Apply for Your First Loan') }}
-                </flux:button>
-            </div>
+
         </div>
     </div>
 </x-layouts.app> 

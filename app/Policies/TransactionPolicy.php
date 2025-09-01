@@ -12,7 +12,7 @@ class TransactionPolicy
      */
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ['admin', 'manager', 'staff']);
+        return $user->hasAnyRole(['admin', 'manager', 'staff']);
     }
 
     /**
@@ -21,7 +21,7 @@ class TransactionPolicy
     public function view(User $user, Transaction $transaction): bool
     {
         // Staff can view all transactions
-        if (in_array($user->role, ['admin', 'manager', 'staff'])) {
+        if ($user->hasAnyRole(['admin', 'manager', 'staff'])) {
             return true;
         }
 
@@ -43,7 +43,7 @@ class TransactionPolicy
     public function update(User $user, Transaction $transaction): bool
     {
         // Only staff can update transactions
-        if (in_array($user->role, ['admin', 'manager', 'staff'])) {
+        if ($user->hasAnyRole(['admin', 'manager', 'staff'])) {
             return true;
         }
 
@@ -57,7 +57,7 @@ class TransactionPolicy
     public function delete(User $user, Transaction $transaction): bool
     {
         // Only admins can delete transactions
-        return $user->role === 'admin';
+        return $user->hasRole('admin');
     }
 
     /**
@@ -66,7 +66,7 @@ class TransactionPolicy
     public function approve(User $user, ?Transaction $transaction = null): bool
     {
         // Only staff can approve transactions
-        if (!in_array($user->role, ['admin', 'manager', 'staff'])) {
+        if (!$user->hasAnyRole(['admin', 'manager', 'staff'])) {
             return false;
         }
 
@@ -97,7 +97,7 @@ class TransactionPolicy
      */
     public function bulkApprove(User $user): bool
     {
-        return in_array($user->role, ['admin', 'manager', 'staff']);
+        return $user->hasAnyRole(['admin', 'manager', 'staff']);
     }
 
     /**
@@ -105,7 +105,7 @@ class TransactionPolicy
      */
     public function bulkReject(User $user): bool
     {
-        return in_array($user->role, ['admin', 'manager', 'staff']);
+        return $user->hasAnyRole(['admin', 'manager', 'staff']);
     }
 
     /**
@@ -113,7 +113,7 @@ class TransactionPolicy
      */
     public function viewApprovalStats(User $user): bool
     {
-        return in_array($user->role, ['admin', 'manager', 'staff']);
+        return $user->hasAnyRole(['admin', 'manager', 'staff']);
     }
 
     /**
@@ -121,6 +121,6 @@ class TransactionPolicy
      */
     public function viewApprovalDashboard(User $user): bool
     {
-        return in_array($user->role, ['admin', 'manager', 'staff']);
+        return $user->hasAnyRole(['admin', 'manager', 'staff']);
     }
 } 

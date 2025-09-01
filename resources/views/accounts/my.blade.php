@@ -29,19 +29,19 @@
                                 'savings' => 'emerald', 'shares' => 'blue', 'deposits' => 'purple',
                                 'emergency_fund' => 'red', 'holiday_savings' => 'yellow', 'retirement' => 'indigo',
                                 'education' => 'cyan', 'development' => 'orange', 'welfare' => 'pink',
-                                'loan_guarantee' => 'gray', 'insurance' => 'teal', 'investment' => 'amber'
+                                'loan_guarantee' => 'gray', 'investment' => 'amber'
                             ];
                             $accountIcons = [
                                 'savings' => 'banknotes', 'shares' => 'building-library', 'deposits' => 'safe',
                                 'emergency_fund' => 'shield-check', 'holiday_savings' => 'sun', 'retirement' => 'home',
                                 'education' => 'academic-cap', 'development' => 'building-office-2', 'welfare' => 'heart',
-                                'loan_guarantee' => 'shield-exclamation', 'insurance' => 'shield-check', 'investment' => 'chart-bar'
+                                'loan_guarantee' => 'shield-exclamation', 'investment' => 'chart-bar'
                             ];
                             $accountRates = [
                                 'savings' => 8.5, 'shares' => 12.0, 'deposits' => 15.0,
                                 'emergency_fund' => 6.0, 'holiday_savings' => 7.0, 'retirement' => 10.0,
                                 'education' => 9.0, 'development' => 8.0, 'welfare' => 6.5,
-                                'loan_guarantee' => 5.0, 'insurance' => 4.0, 'investment' => 18.0
+                                'loan_guarantee' => 5.0, 'investment' => 18.0
                             ];
                             $color = $accountColors[$account->account_type] ?? 'zinc';
                             $icon = $accountIcons[$account->account_type] ?? 'banknotes';

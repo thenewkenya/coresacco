@@ -34,7 +34,6 @@ return new class extends Migration
                 'welfare',           // Welfare fund
                 'investment',        // Investment account
                 'loan_guarantee',    // Loan guarantee fund
-                'insurance',         // Insurance fund
             ])->after('member_id')->default('savings');
         });
     }

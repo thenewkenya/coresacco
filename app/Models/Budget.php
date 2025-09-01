@@ -44,7 +44,6 @@ class Budget extends Model
         'entertainment' => 'Entertainment',
         'savings' => 'Savings & Investments',
         'debt' => 'Debt Payments',
-        'insurance' => 'Insurance',
         'personal' => 'Personal Care',
         'other' => 'Other Expenses'
     ];
@@ -59,7 +58,6 @@ class Budget extends Model
         'entertainment' => ['min' => 5, 'max' => 10, 'optimal' => 8],
         'savings' => ['min' => 20, 'max' => 30, 'optimal' => 25],
         'debt' => ['min' => 0, 'max' => 20, 'optimal' => 10],
-        'insurance' => ['min' => 3, 'max' => 8, 'optimal' => 5],
         'personal' => ['min' => 3, 'max' => 8, 'optimal' => 5],
         'other' => ['min' => 0, 'max' => 10, 'optimal' => 5]
     ];

@@ -65,19 +65,7 @@
                                     </label>
                                 </div>
                                 
-                                <div class="relative">
-                                    <input type="radio" name="payment_type" value="insurance_premium" id="type_insurance_premium" 
-                                           class="sr-only peer" {{ $paymentType === 'insurance_premium' ? 'checked' : '' }}>
-                                    <label for="type_insurance_premium" class="flex items-center p-4 border-2 border-zinc-200 dark:border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700/50 peer-checked:border-orange-500 peer-checked:bg-orange-50 dark:peer-checked:bg-orange-900/20 transition-all h-20">
-                                        <div class="w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                                            <flux:icon.shield-check class="w-4 h-4 text-orange-600" />
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <p class="font-medium text-zinc-900 dark:text-white truncate">Insurance Premium</p>
-                                            <p class="text-xs text-zinc-500 truncate">Life/credit insurance</p>
-                                        </div>
-                                    </label>
-                                </div>
+
                                 
                                 <div class="relative">
                                     <input type="radio" name="payment_type" value="loan_processing_fee" id="type_loan_processing_fee" 
@@ -514,10 +502,6 @@
                     'membership_fee': {
                         destination: '{{ organization_name() }} SACCO - Membership Services',
                         purpose: 'Annual membership fee payment'
-                    },
-                    'insurance_premium': {
-                        destination: '{{ organization_name() }} SACCO - Insurance Department',
-                        purpose: 'Life/credit insurance premium payment'
                     },
                     'loan_processing_fee': {
                         destination: '{{ organization_name() }} SACCO - Loan Department',

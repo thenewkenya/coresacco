@@ -405,30 +405,7 @@ $branchPerformance = Branch::all()->map(function($branch) {
                                     <flux:badge variant="success" size="sm">Active</flux:badge>
                                 </td>
                             </tr>
-                            <tr>
-                                <td class="py-4">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
-                                            <flux:icon.shield-check class="w-4 h-4 text-emerald-600" />
-                                        </div>
-                                        <div>
-                                            <div class="font-medium text-zinc-900 dark:text-white">Insurance</div>
-                                            <div class="text-xs text-zinc-500">Coverage plans</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="py-4 text-zinc-900 dark:text-white">156</td>
-                                <td class="py-4 text-zinc-900 dark:text-white">KES 450K</td>
-                                <td class="py-4">
-                                    <span class="text-red-600 flex items-center">
-                                        <flux:icon.arrow-down class="w-3 h-3 mr-1" />
-                                        -2%
-                                    </span>
-                                </td>
-                                <td class="py-4">
-                                    <flux:badge variant="warning" size="sm">Low stock</flux:badge>
-                                </td>
-                            </tr>
+
                         </tbody>
                     </table>
                 </div>

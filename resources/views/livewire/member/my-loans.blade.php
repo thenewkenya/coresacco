@@ -74,7 +74,7 @@ $formatCurrency = function ($amount) {
                 </p>
             </div>
             <div class="flex items-center space-x-2 sm:space-x-3">
-                <flux:button variant="primary" size="sm" icon="plus" href="{{ route('loans.create') }}" wire:navigate class="flex-1 sm:flex-none">
+                <flux:button variant="primary" size="sm" icon="plus" href="{{ route('loans.apply') }}" wire:navigate class="flex-1 sm:flex-none">
                     <span class="hidden sm:inline">Apply for Loan</span>
                     <span class="sm:hidden">Apply</span>
                 </flux:button>

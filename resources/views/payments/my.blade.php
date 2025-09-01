@@ -205,7 +205,6 @@
                             @foreach([
                                 ['type' => 'Loan Payment', 'amount' => '8500', 'status' => 'completed', 'method' => 'M-Pesa', 'date' => '2024-12-15'],
                                 ['type' => 'Deposit', 'amount' => '15000', 'status' => 'completed', 'method' => 'Bank Transfer', 'date' => '2024-12-10'],
-                                ['type' => 'Insurance Premium', 'amount' => '2500', 'status' => 'completed', 'method' => 'Auto-debit', 'date' => '2024-12-05'],
                                 ['type' => 'Loan Payment', 'amount' => '8500', 'status' => 'completed', 'method' => 'Cash', 'date' => '2024-11-28']
                             ] as $payment)
                             <tr class="border-b border-zinc-100 dark:border-zinc-700/50">

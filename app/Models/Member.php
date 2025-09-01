@@ -1,8 +1,7 @@
 <?php
 
 /* Member (extends User) manages member info and r/ships,
-tracks membership status and links accts,
-loans and insurances policies */
+tracks membership status and links accts and loans */
 
 namespace App\Models;
 
@@ -10,10 +9,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Member extends User
 {
     use HasFactory, SoftDeletes;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'users';
 
     protected $fillable = [
         'member_number',
@@ -42,10 +49,7 @@ class Member extends User
         return $this->hasMany(Loan::class);
     }
 
-    public function insurancePolicies(): HasMany
-    {
-        return $this->hasMany(Insurance::class);
-    }
+
 
     public function transactions(): HasMany
     {
@@ -55,5 +59,39 @@ class Member extends User
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function guarantor(): HasOne
+    {
+        return $this->hasOne(Guarantor::class);
+    }
+
+    // Helper methods for borrowing criteria
+    public function getTotalSavingsBalance(): float
+    {
+        return $this->accounts()->where('account_type', Account::TYPE_SAVINGS)->sum('balance');
+    }
+
+    public function getTotalSharesBalance(): float
+    {
+        return $this->accounts()->where('account_type', Account::TYPE_SHARES)->sum('balance');
+    }
+
+    public function getTotalBalance(): float
+    {
+        return $this->getTotalSavingsBalance() + $this->getTotalSharesBalance();
+    }
+
+    public function getMonthsInSacco(): int
+    {
+        return $this->joining_date ? $this->joining_date->diffInMonths(now()) : 0;
+    }
+
+    public function canBorrow(float $amount, float $multiplier = 3.0, float $minimumBalance = 0): bool
+    {
+        $savingsBalance = $this->getTotalSavingsBalance();
+        $maxLoanAmount = $savingsBalance * $multiplier;
+        
+        return $savingsBalance >= $minimumBalance && $amount <= $maxLoanAmount;
     }
 } 
