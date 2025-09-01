@@ -52,9 +52,7 @@
                     {{ __('Members') }}
                 </flux:navlist.item>
 
-                <flux:navlist.item icon="shield-check" :href="route('insurance.index')" :current="request()->routeIs('insurance.*')" wire:navigate>
-                    {{ __('Insurance') }}
-                </flux:navlist.item>
+
             </flux:navlist.group>
 
             <!-- Management & Analytics -->
@@ -105,9 +103,7 @@
                 <flux:navlist.item icon="users" :href="route('members.index')" :current="request()->routeIs('members.*')" wire:navigate>
                     {{ __('Members') }}
                 </flux:navlist.item>
-                <flux:navlist.item icon="heart" :href="route('insurance.index')" :current="request()->routeIs('insurance.*')" wire:navigate>
-                    {{ __('Insurance') }}
-                </flux:navlist.item>
+
             </flux:navlist.group>
 
             @role('manager')
@@ -146,9 +142,7 @@
                 <flux:navlist.item icon="currency-dollar" :href="route('budget.index')" :current="request()->routeIs('budget.*')" wire:navigate>
                     {{ __('Budget Planner') }}
                 </flux:navlist.item>
-                <flux:navlist.item icon="heart" :href="route('insurance.my')" :current="request()->routeIs('insurance.*')" wire:navigate>
-                    {{ __('My Insurance') }}
-                </flux:navlist.item>
+
             </flux:navlist.group>
             @endrole
         </flux:navlist>

@@ -54,7 +54,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'amount' => '', 
                 'key' => 'healthcare', 
                 'recommended_percentage' => 8,
-                'tip' => 'Medical bills, insurance, pharmacy'
+                'tip' => 'Medical bills, pharmacy, health services'
             ],
             [
                 'name' => 'Savings', 

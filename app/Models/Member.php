@@ -1,8 +1,7 @@
 <?php
 
 /* Member (extends User) manages member info and r/ships,
-tracks membership status and links accts,
-loans and insurances policies */
+tracks membership status and links accts and loans */
 
 namespace App\Models;
 
@@ -42,10 +41,7 @@ class Member extends User
         return $this->hasMany(Loan::class);
     }
 
-    public function insurancePolicies(): HasMany
-    {
-        return $this->hasMany(Insurance::class);
-    }
+
 
     public function transactions(): HasMany
     {

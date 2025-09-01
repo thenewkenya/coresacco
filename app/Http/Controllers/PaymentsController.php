@@ -185,7 +185,7 @@ class PaymentsController extends Controller
         $user = Auth::user();
         
         $validated = $request->validate([
-            'payment_type' => ['required', Rule::in(['loan_repayment', 'monthly_contribution', 'share_capital', 'insurance_premium', 'loan_processing_fee', 'membership_fee'])],
+            'payment_type' => ['required', Rule::in(['loan_repayment', 'monthly_contribution', 'share_capital', 'loan_processing_fee', 'membership_fee'])],
             'amount' => 'required|numeric|min:1',
             'account_id' => 'required|exists:accounts,id',
             'loan_id' => 'nullable|exists:loans,id',
@@ -298,16 +298,7 @@ class PaymentsController extends Controller
                 $message = 'Share capital payment processed successfully.';
                 break;
 
-            case 'insurance_premium':
-                $metadata['payment_type'] = 'insurance_premium';
-                $transaction = $this->transactionService->processWithdrawal(
-                    $account,
-                    $validated['amount'],
-                    $validated['description'] ?? 'Insurance premium payment',
-                    $metadata
-                );
-                $message = 'Insurance premium payment processed successfully.';
-                break;
+
 
             case 'loan_processing_fee':
                 if (!$validated['loan_id']) {
@@ -570,7 +561,7 @@ class PaymentsController extends Controller
             'mobile_number' => 'required|string|max:15',
             'provider' => ['required', Rule::in(['mpesa', 'airtel', 'tkash'])],
             'account_id' => 'required|exists:accounts,id',
-            'payment_type' => ['required', Rule::in(['loan_repayment', 'monthly_contribution', 'share_capital', 'insurance_premium', 'loan_processing_fee', 'membership_fee'])],
+            'payment_type' => ['required', Rule::in(['loan_repayment', 'monthly_contribution', 'share_capital', 'loan_processing_fee', 'membership_fee'])],
             'loan_id' => 'nullable|exists:loans,id',
         ]);
 

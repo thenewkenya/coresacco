@@ -128,10 +128,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{budget}/report', [App\Http\Controllers\BudgetController::class, 'report'])->name('report');
     });
 
-    Route::prefix('insurance')->name('insurance.')->group(function () {
-        Route::get('/', function () { return view('insurance.index'); })->name('index');
-        Route::get('/my', function () { return view('insurance.my'); })->name('my');
-    });
+
 
     // Management & Analytics
     Route::prefix('analytics')->name('analytics.')->group(function () {

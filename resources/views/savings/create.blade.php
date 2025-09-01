@@ -185,14 +185,6 @@
                                 'min_balance' => 5000,
                                 'interest_rate' => 5.0,
                                 'icon' => 'document-check'
-                            ],
-                            [
-                                'type' => 'insurance',
-                                'name' => 'Insurance Fund',
-                                'description' => 'Life and credit insurance contributions',
-                                'min_balance' => 1000,
-                                'interest_rate' => 4.0,
-                                'icon' => 'shield-check'
                             ]
                         ] as $accountType)
                         <div class="relative">

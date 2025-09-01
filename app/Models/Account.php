@@ -45,7 +45,6 @@ class Account extends Model
     const TYPE_WELFARE = 'welfare';
     const TYPE_INVESTMENT = 'investment';
     const TYPE_LOAN_GUARANTEE = 'loan_guarantee';
-    const TYPE_INSURANCE = 'insurance';
 
     // Account statuses
     const STATUS_ACTIVE = 'active';
@@ -116,7 +115,6 @@ class Account extends Model
             self::TYPE_WELFARE,
             self::TYPE_INVESTMENT,
             self::TYPE_LOAN_GUARANTEE,
-            self::TYPE_INSURANCE,
         ];
     }
 
@@ -134,7 +132,6 @@ class Account extends Model
         'development',
         'welfare',
         'loan_guarantee',
-        'insurance',
         'investment'
     ];
 
@@ -155,7 +152,6 @@ class Account extends Model
             self::TYPE_WELFARE => 'Welfare Fund',
             self::TYPE_INVESTMENT => 'Investment Account',
             self::TYPE_LOAN_GUARANTEE => 'Loan Guarantee Fund',
-            self::TYPE_INSURANCE => 'Insurance Fund',
         ];
     }
 

@@ -258,7 +258,6 @@ class AccountController extends Controller
             'development' => 'Community development fund for local projects',
             'welfare' => 'Member welfare fund for support during difficult times',
             'loan_guarantee' => 'Fund used as collateral for loan applications',
-            'insurance' => 'Insurance premium fund for life and credit protection',
             'investment' => 'High-yield investment account for substantial returns'
         ];
         
@@ -271,7 +270,7 @@ class AccountController extends Controller
             'savings' => 8.5, 'shares' => 12.0, 'deposits' => 15.0,
             'emergency_fund' => 6.0, 'holiday_savings' => 7.0, 'retirement' => 10.0,
             'education' => 9.0, 'development' => 8.0, 'welfare' => 6.5,
-            'loan_guarantee' => 5.0, 'insurance' => 4.0, 'investment' => 18.0
+            'loan_guarantee' => 5.0, 'investment' => 18.0
         ];
         
         return $rates[$type] ?? 7.0;
@@ -283,7 +282,7 @@ class AccountController extends Controller
             'savings' => 1000, 'shares' => 5000, 'deposits' => 10000,
             'emergency_fund' => 500, 'holiday_savings' => 500, 'retirement' => 2000,
             'education' => 1000, 'development' => 1000, 'welfare' => 500,
-            'loan_guarantee' => 5000, 'insurance' => 1000, 'investment' => 25000
+            'loan_guarantee' => 5000, 'investment' => 25000
         ];
         
         return $minimums[$type] ?? 1000;
@@ -295,7 +294,7 @@ class AccountController extends Controller
             'savings' => 'banknotes', 'shares' => 'building-library', 'deposits' => 'safe',
             'emergency_fund' => 'shield-check', 'holiday_savings' => 'sun', 'retirement' => 'home',
             'education' => 'academic-cap', 'development' => 'building-office-2', 'welfare' => 'heart',
-            'loan_guarantee' => 'shield-exclamation', 'insurance' => 'shield-check', 'investment' => 'chart-bar'
+            'loan_guarantee' => 'shield-exclamation', 'investment' => 'chart-bar'
         ];
         
         return $icons[$type] ?? 'banknotes';
@@ -307,7 +306,7 @@ class AccountController extends Controller
             'savings' => 'emerald', 'shares' => 'blue', 'deposits' => 'purple',
             'emergency_fund' => 'red', 'holiday_savings' => 'yellow', 'retirement' => 'indigo',
             'education' => 'cyan', 'development' => 'orange', 'welfare' => 'pink',
-            'loan_guarantee' => 'gray', 'insurance' => 'teal', 'investment' => 'amber'
+            'loan_guarantee' => 'gray', 'investment' => 'amber'
         ];
         
         return $colors[$type] ?? 'gray';

@@ -45,7 +45,6 @@
                                         'development' => 'orange',
                                         'welfare' => 'pink',
                                         'loan_guarantee' => 'slate',
-                                        'insurance' => 'teal',
                                         'investment' => 'amber'
                                     ];
                                     $accountIcons = [
@@ -59,7 +58,6 @@
                                         'development' => 'building-office-2',
                                         'welfare' => 'heart',
                                         'loan_guarantee' => 'shield-exclamation',
-                                        'insurance' => 'shield-check',
                                         'investment' => 'chart-bar'
                                     ];
                                     $color = $accountColors[$type['value']] ?? 'zinc';
