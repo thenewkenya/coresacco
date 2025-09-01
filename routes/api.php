@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\MemberController;
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\LoanController;
+use App\Http\Controllers\LoanApplicationController;
 use App\Models\Transaction;
 
 /*
@@ -90,6 +91,26 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::post('loans/{loan}/repay', [LoanController::class, 'repay'])
         ->middleware('permission:process-transactions');
+
+    // Loan Application routes with borrowing criteria and guarantors
+    Route::middleware('permission:view-loans')->group(function () {
+        Route::get('loan-applications', [LoanApplicationController::class, 'index']);
+        Route::get('loan-applications/{loan}', [LoanApplicationController::class, 'show']);
+        Route::get('loan-applications/{loan}/eligibility', [LoanApplicationController::class, 'getEligibilityReport']);
+        Route::get('members/{member}/eligibility', [LoanApplicationController::class, 'checkMemberEligibility']);
+        Route::get('members/{member}/available-guarantors', [LoanApplicationController::class, 'getAvailableGuarantors']);
+    });
+    
+    Route::middleware('permission:create-loans')->group(function () {
+        Route::post('loan-applications', [LoanApplicationController::class, 'store']);
+    });
+    
+    Route::middleware('permission:approve-loans')->group(function () {
+        Route::post('loan-applications/{loan}/approve', [LoanApplicationController::class, 'approveLoan']);
+        Route::post('loan-applications/{loan}/reject', [LoanApplicationController::class, 'rejectLoan']);
+        Route::post('loan-applications/{loan}/guarantors/{guarantor}/approve', [LoanApplicationController::class, 'approveGuarantor']);
+        Route::post('loan-applications/{loan}/guarantors/{guarantor}/reject', [LoanApplicationController::class, 'rejectGuarantor']);
+    });
         
     // Payment status endpoint for mobile money polling
     Route::get('transactions/{transaction}/status', function (Transaction $transaction) {

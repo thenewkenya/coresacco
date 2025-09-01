@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Loan extends Model
 {
@@ -28,6 +29,21 @@ class Loan extends Model
         'due_date',
         'collateral_details',
         'metadata',
+        'required_savings_multiplier',
+        'minimum_savings_balance',
+        'member_savings_balance',
+        'member_shares_balance',
+        'member_total_balance',
+        'minimum_membership_months',
+        'member_months_in_sacco',
+        'meets_savings_criteria',
+        'meets_membership_criteria',
+        'criteria_evaluation_notes',
+        'required_guarantors',
+        'approved_guarantors',
+        'total_guarantee_amount',
+        'required_guarantee_amount',
+        'meets_guarantor_criteria',
     ];
 
     protected $casts = [
@@ -38,6 +54,20 @@ class Loan extends Model
         'due_date' => 'datetime',
         'collateral_details' => 'array',
         'metadata' => 'array',
+        'required_savings_multiplier' => 'decimal:2',
+        'minimum_savings_balance' => 'decimal:2',
+        'member_savings_balance' => 'decimal:2',
+        'member_shares_balance' => 'decimal:2',
+        'member_total_balance' => 'decimal:2',
+        'minimum_membership_months' => 'integer',
+        'member_months_in_sacco' => 'integer',
+        'meets_savings_criteria' => 'boolean',
+        'meets_membership_criteria' => 'boolean',
+        'required_guarantors' => 'integer',
+        'approved_guarantors' => 'integer',
+        'total_guarantee_amount' => 'decimal:2',
+        'required_guarantee_amount' => 'decimal:2',
+        'meets_guarantor_criteria' => 'boolean',
     ];
 
     // Loan statuses
@@ -65,6 +95,13 @@ class Loan extends Model
         return $this->hasMany(Transaction::class);
     }
 
+    public function guarantors(): BelongsToMany
+    {
+        return $this->belongsToMany(Guarantor::class, 'loan_guarantors')
+                    ->withPivot(['guarantee_amount', 'status', 'approved_at', 'rejection_reason'])
+                    ->withTimestamps();
+    }
+
     // Helper methods
     public function calculateInterest(): float
     {
@@ -87,5 +124,99 @@ class Loan extends Model
     public function isDefaulted(): bool
     {
         return $this->due_date < now() && $this->status === self::STATUS_ACTIVE;
+    }
+
+    // Borrowing criteria methods
+    public function evaluateBorrowingCriteria(): array
+    {
+        $member = $this->member;
+        $evaluation = [
+            'savings_criteria' => $this->evaluateSavingsCriteria($member),
+            'membership_criteria' => $this->evaluateMembershipCriteria($member),
+            'guarantor_criteria' => $this->evaluateGuarantorCriteria(),
+            'overall_eligible' => false,
+            'notes' => []
+        ];
+
+        $evaluation['overall_eligible'] = $evaluation['savings_criteria']['meets'] && 
+                                        $evaluation['membership_criteria']['meets'] && 
+                                        $evaluation['guarantor_criteria']['meets'];
+
+        return $evaluation;
+    }
+
+    public function evaluateSavingsCriteria($member): array
+    {
+        $savingsAccounts = $member->accounts()->where('account_type', Account::TYPE_SAVINGS)->get();
+        $sharesAccounts = $member->accounts()->where('account_type', Account::TYPE_SHARES)->get();
+        
+        $savingsBalance = $savingsAccounts->sum('balance');
+        $sharesBalance = $sharesAccounts->sum('balance');
+        $totalBalance = $savingsBalance + $sharesBalance;
+
+        $maxLoanAmount = $savingsBalance * $this->required_savings_multiplier;
+        $meetsMinimumBalance = $savingsBalance >= $this->minimum_savings_balance;
+        $meetsLoanAmount = $this->amount <= $maxLoanAmount;
+
+        $meetsSavingsCriteria = $meetsMinimumBalance && $meetsLoanAmount;
+
+        return [
+            'meets' => $meetsSavingsCriteria,
+            'savings_balance' => $savingsBalance,
+            'shares_balance' => $sharesBalance,
+            'total_balance' => $totalBalance,
+            'max_loan_amount' => $maxLoanAmount,
+            'minimum_balance_met' => $meetsMinimumBalance,
+            'loan_amount_met' => $meetsLoanAmount,
+            'multiplier' => $this->required_savings_multiplier,
+            'minimum_required' => $this->minimum_savings_balance
+        ];
+    }
+
+    public function evaluateMembershipCriteria($member): array
+    {
+        $joiningDate = $member->joining_date;
+        $monthsInSacco = $joiningDate ? $joiningDate->diffInMonths(now()) : 0;
+        
+        $meetsMembershipCriteria = $monthsInSacco >= $this->minimum_membership_months;
+
+        return [
+            'meets' => $meetsMembershipCriteria,
+            'months_in_sacco' => $monthsInSacco,
+            'minimum_required' => $this->minimum_membership_months,
+            'joining_date' => $joiningDate
+        ];
+    }
+
+    public function evaluateGuarantorCriteria(): array
+    {
+        $approvedGuarantors = $this->guarantors()->wherePivot('status', 'approved')->count();
+        $totalGuaranteeAmount = $this->guarantors()->wherePivot('status', 'approved')->sum('loan_guarantors.guarantee_amount');
+        
+        $meetsGuarantorCount = $approvedGuarantors >= $this->required_guarantors;
+        $meetsGuaranteeAmount = $totalGuaranteeAmount >= $this->required_guarantee_amount;
+        
+        $meetsGuarantorCriteria = $meetsGuarantorCount && $meetsGuaranteeAmount;
+
+        return [
+            'meets' => $meetsGuarantorCriteria,
+            'approved_guarantors' => $approvedGuarantors,
+            'required_guarantors' => $this->required_guarantors,
+            'total_guarantee_amount' => $totalGuaranteeAmount,
+            'required_guarantee_amount' => $this->required_guarantee_amount,
+            'count_met' => $meetsGuarantorCount,
+            'amount_met' => $meetsGuaranteeAmount
+        ];
+    }
+
+    public function isEligibleForLoan(): bool
+    {
+        $evaluation = $this->evaluateBorrowingCriteria();
+        return $evaluation['overall_eligible'];
+    }
+
+    public function getEligibilityReport(): array
+    {
+        return $this->evaluateBorrowingCriteria();
     }
 } 

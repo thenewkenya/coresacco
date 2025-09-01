@@ -43,6 +43,8 @@
                                     <div class="flex-shrink-0">
                                         @php
                                             $color = $notification['color'] ?? 'zinc';
+                                            // Ensure color is a string and handle any unexpected values
+                                            $color = is_string($color) ? $color : 'zinc';
                                             $iconColorClass = match($color) {
                                                 'blue' => 'text-blue-500',
                                                 'green' => 'text-green-500',
