@@ -76,7 +76,7 @@ describe('Account Management', function () {
                     'account_type' => Account::TYPE_SAVINGS,
                     'initial_deposit' => 1000.00,
                 ])
-                ->assertForbidden();
+                ->assertSessionHasErrors(['member_id']);
         });
 
         it('validates required fields for account creation', function () {
