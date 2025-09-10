@@ -26,6 +26,8 @@ new #[Layout('components.layouts.auth')] class extends Component {
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
+        $validated['membership_status'] = 'inactive'; // New members need admin approval
+        $validated['role'] = 'member';
 
         event(new Registered(($user = User::create($validated))));
 

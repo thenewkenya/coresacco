@@ -1,4 +1,4 @@
-A comprehensive Savings and Credit Cooperative (SACCO) management system.
+  A comprehensive Savings and Credit Cooperative (SACCO) management system.
 
 ## Table of Contents
 
@@ -80,13 +80,86 @@ docker run --rm \
 ```bash
 # Set up admin user
 ./vendor/bin/sail artisan sacco:setup-roles \
-    --admin-email=admin@sacco.com \
+    --admin-email=admin@yourdomain.com \
     --admin-password=YourSecurePassword123
 
 ./vendor/bin/sail npm run build
 ```
 
 **Your application is now available at [http://localhost](http://localhost)**
+
+> 💡 **Quick Tip**: After setup, your admin account is automatically verified and ready to use. New users who register will need to be verified by an admin before they can access their accounts. You can manage user verification from the Members page.
+
+## User Verification System
+
+The SACCO system includes a comprehensive user verification system to ensure only approved members can access their accounts and perform transactions.
+
+### How User Verification Works
+
+#### For New Users (Members)
+1. **Registration**: New users register with basic information (name, email, password)
+2. **Default Status**: New users are automatically set to `inactive` status
+3. **Limited Access**: Inactive users cannot:
+   - View their accounts
+   - Make deposits or withdrawals
+   - Access transaction history
+4. **Verification Required**: Users must be verified by an admin/manager before gaining full access
+
+#### For Admin Users
+1. **Auto-Verification**: Admin accounts created via `sacco:setup-roles` are automatically verified
+2. **Full Access**: Admins can immediately access all system features
+3. **User Management**: Admins can verify, suspend, or reactivate other users
+
+### Verifying Users
+
+#### Method 1: Web Interface (Recommended)
+1. **Login as Admin**: Use your admin credentials to access the system
+2. **Navigate to Members**: Go to `/members` in your browser
+3. **View Users**: See all users with their current status (Active, Inactive, Suspended)
+4. **Verify Users**: Click "Verify" next to inactive users to activate them
+5. **Manage Status**: Suspend active users or reactivate suspended ones as needed
+
+#### Method 2: Command Line
+```bash
+# Verify a specific user
+./vendor/bin/sail artisan sacco:verify-user user@example.com --status=active
+
+# Suspend a user
+./vendor/bin/sail artisan sacco:verify-user user@example.com --status=suspended
+
+# Reactivate a suspended user
+./vendor/bin/sail artisan sacco:verify-user user@example.com --status=active
+```
+
+### User Status Types
+
+| Status | Description | Access Level |
+|--------|-------------|--------------|
+| **Active** | Fully verified member | Full access to all features |
+| **Inactive** | Pending verification | Limited access, cannot transact |
+| **Suspended** | Temporarily disabled | No access to accounts/transactions |
+
+### User Experience Flow
+
+#### For New Members:
+1. **Register** → Account created with `inactive` status
+2. **Login** → See "No Active Accounts Found" message
+3. **Contact SACCO** → Request verification from admin
+4. **Admin Verifies** → Status changed to `active`
+5. **Full Access** → Can now open accounts and transact
+
+#### For Admins:
+1. **Setup** → Admin account auto-verified during setup
+2. **Login** → Immediate full access
+3. **Manage Users** → Verify new members via web interface
+4. **Monitor** → View user statistics and status
+
+### Security Features
+
+- **Role-Based Access**: Uses proper Laravel authorization instead of hardcoded emails
+- **Flexible Admin Creation**: Any email can be used for admin accounts
+- **Status Validation**: Account access is validated against user status
+- **Audit Trail**: All status changes are logged and trackable
 
 ## Development Workflow
 
@@ -155,7 +228,15 @@ Your application includes these services:
 
 ### SACCO-Specific Commands
 ```bash
+# Set up roles and create admin user
 sail artisan sacco:setup-roles --admin-email=admin@example.com --admin-password=password
+
+# User verification commands
+sail artisan sacco:verify-user user@example.com --status=active
+sail artisan sacco:verify-user user@example.com --status=suspended
+sail artisan sacco:verify-user user@example.com --status=inactive
+
+# Generate sample notifications
 sail artisan sacco:generate-sample-notifications
 ```
 

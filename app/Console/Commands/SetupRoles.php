@@ -52,6 +52,8 @@ class SetupRoles extends Command
                     'name' => 'System Administrator',
                     'password' => Hash::make($adminPassword),
                     'email_verified_at' => now(),
+                    'membership_status' => 'active',
+                    'role' => 'admin',
                 ]
             );
 

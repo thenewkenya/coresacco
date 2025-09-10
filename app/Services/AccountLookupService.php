@@ -62,6 +62,12 @@ class AccountLookupService
         $cacheKey = "member_accounts:{$memberId}:{$status}";
 
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($memberId, $status) {
+            // Check if member exists and is not suspended before returning accounts
+            $member = User::find($memberId);
+            if (!$member || $member->membership_status === 'suspended') {
+                return new Collection();
+            }
+
             return Account::where('member_id', $memberId)
                 ->where('status', $status)
                 ->get();

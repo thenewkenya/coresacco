@@ -247,9 +247,8 @@ Route::middleware(['auth'])->group(function () {
         
         // AJAX routes
         Route::get('/{role}/permissions', [App\Http\Controllers\RoleController::class, 'permissions'])->name('permissions');
-        Route::post('/{role}/permissions', [App\Http\Controllers\RoleController::class, 'updatePermissions'])->name('permissions.update');
-        Route::get('/{role}/available-users', [App\Http\Controllers\RoleController::class, 'availableUsers'])->name('available-users');
     });
+
 
     Route::prefix('system')->name('system.')->group(function () {
         Route::get('/settings', [App\Http\Controllers\SystemController::class, 'settings'])->name('settings');

@@ -35,7 +35,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public $memberStatuses = [
         'active' => 'Active',
-        'inactive' => 'Inactive',
+        'inactive' => 'Inactive (Pending)',
         'suspended' => 'Suspended',
     ];
 
@@ -48,7 +48,12 @@ new #[Layout('components.layouts.app')] class extends Component {
                   ->orWhere('member_number', 'like', '%' . $this->search . '%')
             )
             ->when($this->statusFilter, fn($q) => 
-                $q->where('membership_status', $this->statusFilter)
+                $this->statusFilter === 'inactive' 
+                    ? $q->where(function($query) {
+                        $query->where('membership_status', 'inactive')
+                              ->orWhereNull('membership_status');
+                    })
+                    : $q->where('membership_status', $this->statusFilter)
             )
             ->when($this->branchFilter, fn($q) => 
                 $q->where('branch_id', $this->branchFilter)
@@ -61,7 +66,10 @@ new #[Layout('components.layouts.app')] class extends Component {
         // Stats for dashboard
         $totalMembers = User::count();
         $activeMembers = User::where('membership_status', 'active')->count();
-        $pendingMembers = User::where('membership_status', 'inactive')->count();
+        $pendingMembers = User::where(function($q) {
+            $q->where('membership_status', 'inactive')
+              ->orWhereNull('membership_status');
+        })->count();
         $suspendedMembers = User::where('membership_status', 'suspended')->count();
 
         return [
@@ -244,6 +252,21 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->showViewModal = false;
         $this->resetForm();
     }
+
+    public function verifyUser($userId, $status = 'active')
+    {
+        $user = User::findOrFail($userId);
+        $this->authorize('update', $user);
+        
+        $user->update(['membership_status' => $status]);
+
+        session()->flash('success', "User '{$user->name}' has been {$status}.");
+    }
+
+    public function suspendUser($userId)
+    {
+        $this->verifyUser($userId, 'suspended');
+    }
 }; ?>
 
 <div>
@@ -398,7 +421,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     <flux:badge 
                                         variant="{{ $member->membership_status === 'active' ? 'lime' : ($member->membership_status === 'suspended' ? 'red' : 'amber') }}"
                                     >
-                                        {{ ucfirst($member->membership_status) }}
+                                        {{ ucfirst($member->membership_status ?? 'inactive') }}
                                     </flux:badge>
                                 </td>
                                 <td class="px-6 py-4">
@@ -416,6 +439,21 @@ new #[Layout('components.layouts.app')] class extends Component {
                                             <flux:menu.item wire:click="openEditModal({{ $member->id }})" icon="pencil">
                                                 Edit Member
                                             </flux:menu.item>
+                                            @if($member->membership_status === 'inactive' || $member->membership_status === null)
+                                                <flux:menu.item wire:click="verifyUser({{ $member->id }})" icon="check-circle">
+                                                    Verify
+                                                </flux:menu.item>
+                                            @endif
+                                            @if($member->membership_status === 'active')
+                                                <flux:menu.item wire:click="suspendUser({{ $member->id }})" icon="x-circle" variant="danger">
+                                                    Suspend
+                                                </flux:menu.item>
+                                            @endif
+                                            @if($member->membership_status === 'suspended')
+                                                <flux:menu.item wire:click="verifyUser({{ $member->id }})" icon="arrow-path">
+                                                    Reactivate
+                                                </flux:menu.item>
+                                            @endif
                                             <flux:menu.separator />
                                             <flux:menu.item 
                                                 wire:click="deleteMember({{ $member->id }})"
@@ -470,7 +508,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                             <flux:badge 
                                 variant="{{ $member->membership_status === 'active' ? 'lime' : ($member->membership_status === 'suspended' ? 'red' : 'amber') }}"
                             >
-                                {{ ucfirst($member->membership_status) }}
+                                {{ ucfirst($member->membership_status ?? 'inactive') }}
                             </flux:badge>
                             <div class="text-right">
                                 <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $member->accounts->count() }} accounts</div>
@@ -486,15 +524,19 @@ new #[Layout('components.layouts.app')] class extends Component {
                             <flux:button variant="outline" size="sm" wire:click="openEditModal({{ $member->id }})" class="flex-1">
                                 Edit
                             </flux:button>
-                            <flux:button 
-                                variant="outline" 
-                                size="sm" 
-                                wire:click="deleteMember({{ $member->id }})"
-                                wire:confirm="Are you sure?"
-                                class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                            >
-                                <flux:icon.trash class="w-4 h-4" />
-                            </flux:button>
+                            @if($member->membership_status === 'inactive' || $member->membership_status === null)
+                                <flux:button variant="primary" size="sm" wire:click="verifyUser({{ $member->id }})" class="flex-1">
+                                    Verify
+                                </flux:button>
+                            @elseif($member->membership_status === 'active')
+                                <flux:button variant="danger" size="sm" wire:click="suspendUser({{ $member->id }})" class="flex-1">
+                                    Suspend
+                                </flux:button>
+                            @elseif($member->membership_status === 'suspended')
+                                <flux:button variant="primary" size="sm" wire:click="verifyUser({{ $member->id }})" class="flex-1">
+                                    Reactivate
+                                </flux:button>
+                            @endif
                         </div>
                     </div>
                 @endforeach
@@ -721,7 +763,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                             <flux:badge 
                                 variant="{{ $selectedMember->membership_status === 'active' ? 'lime' : ($selectedMember->membership_status === 'suspended' ? 'red' : 'amber') }}"
                             >
-                                {{ ucfirst($selectedMember->membership_status) }}
+                                {{ ucfirst($selectedMember->membership_status ?? 'inactive') }}
                             </flux:badge>
                         </div>
                     </div>

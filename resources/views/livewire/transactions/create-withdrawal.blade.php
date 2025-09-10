@@ -36,7 +36,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->loadMembers();
         
         // If user is not admin, auto-select their own account
-        if (!in_array(auth()->user()->email, ['admin@sacco.com'])) { // Simple admin check
+        if (!auth()->user()->hasAnyRole(['admin', 'manager', 'staff'])) {
             $this->member_id = auth()->id();
             $this->loadAccountsForMember();
             
@@ -155,7 +155,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             $account = Account::findOrFail($this->account_id);
             
             // Check authorization - simplified
-            if ($account->member_id !== auth()->id() && !in_array(auth()->user()->email, ['admin@sacco.com'])) {
+            if ($account->member_id !== auth()->id() && !auth()->user()->hasAnyRole(['admin', 'manager', 'staff'])) {
                 $this->addError('general', 'Unauthorized access to this account.');
                 return;
             }
@@ -223,7 +223,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <form wire:submit="processWithdrawal" class="space-y-6">
                         
                         <!-- Member Selection (for admin users) -->
-                        @if(in_array(auth()->user()->email, ['admin@sacco.com']))
+                        @if(auth()->user()->hasAnyRole(['admin', 'manager', 'staff']))
                             <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
                                 <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-4">
                                     {{ __('Select Member') }}
