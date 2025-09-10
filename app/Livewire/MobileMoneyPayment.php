@@ -43,7 +43,7 @@ class MobileMoneyPayment extends Component
         return [
             'selectedAccountId' => 'required|exists:accounts,id',
             'amount' => 'required|numeric|min:10|max:500000',
-            'phoneNumber' => 'required|regex:/^(\+254|254|0)[0-9]{9}$/',
+            'phoneNumber' => 'required|string|min:10|max:15',
             'provider' => 'required|in:mpesa,airtel,tkash',
         ];
     }

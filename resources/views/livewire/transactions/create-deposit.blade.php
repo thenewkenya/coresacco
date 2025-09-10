@@ -30,6 +30,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     public $paymentStatus = '';
     public $transactionId = '';
     public $showMobileMoneyForm = false;
+    public $showPaymentModal = false;
     
     // Bank Transfer properties
     public $bank_name = '';
@@ -158,7 +159,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'member_id' => 'required|exists:users,id',
             'account_id' => 'required|exists:accounts,id',
             'amount' => 'required|numeric|min:1|max:1000000',
-            'phoneNumber' => 'required|regex:/^(\+254|254|0)[0-9]{9}$/',
+            'phoneNumber' => 'required|string|min:10|max:15',
             'mobileMoneyProvider' => 'required|in:mpesa,airtel,tkash',
         ]);
 
@@ -171,32 +172,48 @@ new #[Layout('components.layouts.app')] class extends Component {
                 return;
             }
 
-            $mobileMoneyService = app(\App\Services\MobileMoneyService::class);
+            // Mock payment initiation - replace with actual service later
+            $this->transactionId = 'TXN' . time() . rand(1000, 9999);
+            $this->paymentStatus = 'pending';
+            $this->showPaymentModal = true;
             
-            $result = match ($this->mobileMoneyProvider) {
-                'mpesa' => $mobileMoneyService->initiateMpesaPayment($account, (float) $this->amount, $this->phoneNumber),
-                'airtel' => $mobileMoneyService->initiateAirtelPayment($account, (float) $this->amount, $this->phoneNumber),
-                'tkash' => $mobileMoneyService->initiateTkashPayment($account, (float) $this->amount, $this->phoneNumber),
-                default => ['success' => false, 'message' => 'Invalid payment provider']
-            };
-
-            if ($result['success']) {
-                $this->transactionId = $result['transaction_id'];
-                $this->paymentStatus = 'pending';
-                
-                session()->flash('success', $result['message']);
-                
-                // Start polling for payment status
-                $this->dispatch('start-payment-polling', [
-                    'transactionId' => $this->transactionId,
-                    'provider' => $this->mobileMoneyProvider
-                ]);
-            } else {
-                $this->addError('general', $result['message']);
-            }
+            session()->flash('success', 'M-Pesa payment initiated. Please check your phone for the payment prompt.');
+            
+            // Start polling for payment status (mock)
+            $this->dispatch('start-payment-polling', [
+                'transactionId' => $this->transactionId,
+                'provider' => $this->mobileMoneyProvider
+            ]);
+            
         } catch (\Exception $e) {
             $this->addError('general', 'Failed to initiate payment: ' . $e->getMessage());
         }
+    }
+
+    public function completeMockPayment()
+    {
+        $this->paymentStatus = 'completed';
+        $this->showPaymentModal = false;
+        session()->flash('success', 'Payment completed successfully!');
+    }
+
+    public function cancelMockPayment()
+    {
+        $this->paymentStatus = 'failed';
+        $this->transactionId = '';
+        $this->showPaymentModal = false;
+        session()->flash('error', 'Payment was cancelled.');
+    }
+
+    public function closePaymentModal()
+    {
+        $this->showPaymentModal = false;
+    }
+
+    public function preventModalClose()
+    {
+        // Do nothing - this prevents the modal from closing
+        // The modal should only close via explicit actions
     }
 
     public function handlePaymentConfirmation($data)
@@ -514,7 +531,7 @@ document.addEventListener('livewire:initialized', () => {
                                                 <span class="text-zinc-500 dark:text-zinc-400">KES</span>
                                             </div>
                                             <input 
-                                                wire:model.live="amount"
+                                                wire:model.blur="amount"
                                                 type="number" 
                                                 id="amount" 
                                                 required
@@ -574,7 +591,7 @@ document.addEventListener('livewire:initialized', () => {
                                                 <flux:field>
                                                     <flux:label>M-Pesa Phone Number</flux:label>
                                                     <flux:input 
-                                                        wire:model.live.debounce.500ms="phoneNumber"
+                                                        wire:model.blur="phoneNumber"
                                                         type="tel" 
                                                         placeholder="07XXXXXXXX" />
                                                     <flux:error name="phoneNumber" />
@@ -644,7 +661,7 @@ document.addEventListener('livewire:initialized', () => {
                                                 <flux:field>
                                                     <flux:label>Bank Name</flux:label>
                                                     <flux:input 
-                                                        wire:model="bank_name"
+                                                        wire:model.blur="bank_name"
                                                         type="text" 
                                                         placeholder="e.g., Equity Bank" />
                                                     <flux:error name="bank_name" />
@@ -654,7 +671,7 @@ document.addEventListener('livewire:initialized', () => {
                                                 <flux:field>
                                                     <flux:label>Account Number</flux:label>
                                                     <flux:input 
-                                                        wire:model="bank_account"
+                                                        wire:model.blur="bank_account"
                                                         type="text" 
                                                         placeholder="e.g., 1234567890" />
                                                     <flux:error name="bank_account" />
@@ -670,7 +687,7 @@ document.addEventListener('livewire:initialized', () => {
                                         </label>
                                         <div class="flex gap-2">
                                             <input 
-                                                wire:model="reference_number"
+                                                wire:model.blur="reference_number"
                                                 type="text" 
                                                 id="reference_number" 
                                                 placeholder="Optional external reference"
@@ -696,7 +713,7 @@ document.addEventListener('livewire:initialized', () => {
                                             Description (Optional)
                                         </label>
                                         <textarea 
-                                            wire:model="description"
+                                            wire:model.blur="description"
                                             id="description" 
                                             rows="3" 
                                             placeholder="Enter a description for this deposit..."
@@ -769,7 +786,7 @@ document.addEventListener('livewire:initialized', () => {
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-sm text-zinc-600 dark:text-zinc-400">Deposit Amount:</span>
-                                    <span class="text-sm font-medium text-emerald-600 dark:text-emerald-400">+ KES {{ number_format($amount, 2) }}</span>
+                                    <span class="text-sm font-medium text-emerald-600 dark:text-emerald-400">+ KES {{ number_format((float) $amount, 2) }}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-sm text-zinc-600 dark:text-zinc-400">Payment Method:</span>
@@ -799,7 +816,7 @@ document.addEventListener('livewire:initialized', () => {
                                 @endif
                                 <div class="flex justify-between border-t border-zinc-200 dark:border-zinc-700 pt-3">
                                     <span class="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Balance After Deposit:</span>
-                                    <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">KES {{ number_format($selectedAccount->balance + $amount, 2) }}</span>
+                                    <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">KES {{ number_format($selectedAccount->balance + (float) $amount, 2) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -842,4 +859,92 @@ document.addEventListener('livewire:initialized', () => {
             </div>
         </div>
     </div>
+
+    <!-- M-Pesa Payment Modal -->
+    <flux:modal wire:model="showPaymentModal" class="md:w-7xl max-h-[80vh]" @click.away="preventModalClose">
+        <div class="space-y-4">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <flux:icon.phone class="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
+                <flux:heading size="lg" class="dark:text-zinc-100">M-Pesa Payment</flux:heading>
+                <flux:subheading class="dark:text-zinc-400">Please check your phone for the payment prompt</flux:subheading>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="space-y-4">
+                <flux:heading size="base" class="dark:text-zinc-100">Payment Details</flux:heading>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Amount Card - Most Important -->
+                    <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-emerald-200 dark:border-emerald-700 rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-sm font-medium text-emerald-700 dark:text-emerald-300">Payment Amount</div>
+                            <flux:icon.currency-dollar class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <div class="text-2xl font-bold text-emerald-800 dark:text-emerald-200">KES {{ number_format((float) $amount, 2) }}</div>
+                    </div>
+                    
+                    <!-- Phone Number Card -->
+                    <div class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-sm font-medium text-zinc-600 dark:text-zinc-400">M-Pesa Number</div>
+                            <flux:icon.phone class="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                        </div>
+                        <div class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ $phoneNumber }}</div>
+                    </div>
+                    
+                    <!-- Account Card -->
+                    <div class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Destination Account</div>
+                            <flux:icon.banknotes class="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                        </div>
+                        <div class="space-y-1">
+                            <div class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                                @if($selectedAccount)
+                                    {{ $selectedAccount->account_name }}
+                                @endif
+                            </div>
+                            <div class="text-sm text-zinc-500 dark:text-zinc-400 font-mono">
+                                @if($selectedAccount)
+                                    {{ $selectedAccount->account_number }}
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Transaction ID Card -->
+                    <div class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Transaction ID</div>
+                            <flux:icon.document-text class="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                        </div>
+                        <div class="font-mono text-base font-semibold text-zinc-900 dark:text-zinc-100 break-all">{{ $transactionId }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Status -->
+            <div class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4">
+                <div class="flex items-center justify-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
+                        <div class="text-base font-medium text-zinc-900 dark:text-zinc-100">Waiting for Payment</div>
+                    </div>
+                </div>
+                <div class="text-center mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    Check your phone and enter your M-Pesa PIN to complete the payment
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <flux:button 
+                    wire:click="cancelMockPayment" 
+                    variant="ghost">
+                    Cancel Payment
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div> 
