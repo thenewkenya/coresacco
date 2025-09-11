@@ -43,7 +43,10 @@ COPY --from=frontend /app/public/build ./public/build
 # Ensure writable dirs
 RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} storage/logs bootstrap/cache \
  && chown -R www-data:www-data storage bootstrap/cache \
- && chmod -R 775 storage bootstrap/cache
+ && chmod -R 775 storage bootstrap/cache \
+ && touch storage/logs/laravel.log \
+ && chown www-data:www-data storage/logs/laravel.log \
+ && chmod 664 storage/logs/laravel.log
 
 # Optimize Laravel (config/routes/views)
 RUN php artisan config:cache \
@@ -55,6 +58,9 @@ RUN echo '#!/bin/bash\n\
 set -e\n\
 echo "Running database migrations..."\n\
 php artisan migrate --force\n\
+echo "Creating sessions table..."\n\
+php artisan session:table || true\n\
+php artisan migrate --force || true\n\
 echo "Clearing caches..."\n\
 php artisan config:clear || true\n\
 php artisan cache:clear || true\n\
