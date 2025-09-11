@@ -59,8 +59,10 @@ RUN php artisan config:cache \
 # Create startup script to run migrations and start services
 RUN echo '#!/bin/bash\n\
 set -e\n\
+echo "Checking database connection..."\n\
+php artisan tinker --execute="echo \'DB Connection: \' . config(\'database.default\'); echo \'DB Host: \' . config(\'database.connections.pgsql.host\');"\n\
 echo "Running database migrations..."\n\
-php artisan migrate --force\n\
+php artisan migrate --force --database=pgsql\n\
 echo "Clearing caches..."\n\
 php artisan config:clear || true\n\
 php artisan cache:clear || true\n\
