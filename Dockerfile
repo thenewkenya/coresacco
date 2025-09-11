@@ -40,6 +40,9 @@ COPY . .
 COPY --from=vendor /app/vendor ./vendor
 COPY --from=frontend /app/public/build ./public/build
 
+# Ensure build directory exists and has correct permissions
+RUN mkdir -p public/build && chown -R www-data:www-data public/build
+
 # Ensure writable dirs
 RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} storage/logs bootstrap/cache \
  && chown -R www-data:www-data storage bootstrap/cache \
