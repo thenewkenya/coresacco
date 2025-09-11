@@ -13,6 +13,9 @@ php artisan tinker --execute="echo 'DB Connection: ' . config('database.default'
 echo "Running database migrations..."
 php artisan migrate --force --database=pgsql
 
+echo "Setting up admin user..."
+php artisan sacco:setup-roles --admin-email=admin@esacco.com --admin-password=AdminPassword123! || echo "Admin user may already exist"
+
 echo "Clearing caches..."
 php artisan config:clear || true
 php artisan cache:clear || true
