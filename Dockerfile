@@ -65,6 +65,8 @@ echo "Clearing caches..."\n\
 php artisan config:clear || true\n\
 php artisan cache:clear || true\n\
 php artisan view:clear || true\n\
+echo "Forcing HTTPS..."\n\
+php artisan config:cache\n\
 echo "Starting services..."\n\
 exec /usr/bin/supervisord -n' > /start.sh \
  && chmod +x /start.sh
