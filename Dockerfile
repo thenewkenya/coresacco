@@ -56,22 +56,9 @@ RUN php artisan config:cache \
  && php artisan route:cache \
  && php artisan view:cache || true
 
-# Create startup script to run migrations and start services
-RUN echo '#!/bin/bash\n\
-set -e\n\
-echo "Checking database connection..."\n\
-php artisan tinker --execute="echo \'DB Connection: \' . config(\'database.default\'); echo \'DB Host: \' . config(\'database.connections.pgsql.host\');"\n\
-echo "Running database migrations..."\n\
-php artisan migrate --force --database=pgsql\n\
-echo "Clearing caches..."\n\
-php artisan config:clear || true\n\
-php artisan cache:clear || true\n\
-php artisan view:clear || true\n\
-echo "Forcing HTTPS..."\n\
-php artisan config:cache\n\
-echo "Starting services..."\n\
-exec /usr/bin/supervisord -n' > /start.sh \
- && chmod +x /start.sh
+# Copy startup script
+COPY deploy/start.sh /start.sh
+RUN chmod +x /start.sh
 
 EXPOSE 80
 CMD ["/start.sh"]
