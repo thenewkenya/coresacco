@@ -1,44 +1,34 @@
 <x-layouts.app :title="$accountInfo['display_name'] . ' - ' . $account->account_number">
-    <div class="min-h-screen bg-zinc-50 dark:bg-zinc-900">
-        <!-- Header -->
-        <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
-            <div class="px-4 sm:px-6 lg:px-8 py-6">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <flux:button href="{{ route('accounts.index') }}" variant="ghost" icon="arrow-left" size="sm">
-                            {{ __('Back') }}
-                        </flux:button>
-                        <div>
-                            <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                                {{ __('Account Details') }}
-                            </h1>
-                            <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                                {{ $account->account_number }} - {{ $accountInfo['display_name'] }}
-                            </p>
-                        </div>
-                    </div>
-                    
-                    @if($account->status === 'active')
-                    <div class="flex items-center space-x-3">
-                        <flux:button href="{{ route('transactions.deposit.create') }}" icon="plus" variant="primary">
-                            {{ __('New Transaction') }}
-                        </flux:button>
-                        <flux:dropdown>
-                            <flux:button icon="ellipsis-horizontal" variant="ghost" />
-                            <flux:menu>
-                                <flux:menu.item icon="document-text">{{ __('Download Statement') }}</flux:menu.item>
-                                <flux:menu.item icon="printer">{{ __('Print Details') }}</flux:menu.item>
-                                <flux:menu.separator />
-                                <flux:menu.item icon="cog-6-tooth">{{ __('Account Settings') }}</flux:menu.item>
-                            </flux:menu>
-                        </flux:dropdown>
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
+    <div>
         <div class="px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <flux:button href="{{ route('accounts.index') }}" variant="ghost" icon="arrow-left" size="sm">
+                        {{ __('Back') }}
+                    </flux:button>
+                    <div>
+                        <flux:heading size="xl" class="!text-zinc-900 dark:!text-zinc-100">{{ __('Account Details') }}</flux:heading>
+                        <flux:subheading class="!text-zinc-600 dark:!text-zinc-400">{{ $account->account_number }} • {{ $accountInfo['display_name'] }}</flux:subheading>
+                    </div>
+                </div>
+
+                @if($account->status === 'active')
+                <div class="flex items-center space-x-3">
+                    <flux:button href="{{ route('transactions.deposit.create') }}" icon="plus" variant="primary">
+                        {{ __('New Transaction') }}
+                    </flux:button>
+                    <flux:dropdown>
+                        <flux:button icon="ellipsis-horizontal" variant="ghost" />
+                        <flux:menu>
+                            <flux:menu.item icon="document-text">{{ __('Download Statement') }}</flux:menu.item>
+                            <flux:menu.item icon="printer">{{ __('Print Details') }}</flux:menu.item>
+                            <flux:menu.separator />
+                            <flux:menu.item icon="cog-6-tooth">{{ __('Account Settings') }}</flux:menu.item>
+                        </flux:menu>
+                    </flux:dropdown>
+                </div>
+                @endif
+            </div>
             <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 <!-- Main Content -->
                 <div class="xl:col-span-2 space-y-6">

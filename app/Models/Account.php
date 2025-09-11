@@ -45,6 +45,9 @@ class Account extends Model
     const TYPE_WELFARE = 'welfare';
     const TYPE_INVESTMENT = 'investment';
     const TYPE_LOAN_GUARANTEE = 'loan_guarantee';
+    const TYPE_JUNIOR = 'junior';
+    const TYPE_GOAL_BASED = 'goal_based';
+    const TYPE_BUSINESS = 'business';
 
     // Account statuses
     const STATUS_ACTIVE = 'active';
@@ -103,18 +106,14 @@ class Account extends Model
      */
     public static function getAccountTypes(): array
     {
+        // Primary openable account types shown in the create flow
         return [
-            self::TYPE_SAVINGS,
-            self::TYPE_SHARES,
-            self::TYPE_DEPOSITS,
-            self::TYPE_EMERGENCY_FUND,
-            self::TYPE_HOLIDAY_SAVINGS,
-            self::TYPE_RETIREMENT,
-            self::TYPE_EDUCATION,
-            self::TYPE_DEVELOPMENT,
-            self::TYPE_WELFARE,
-            self::TYPE_INVESTMENT,
-            self::TYPE_LOAN_GUARANTEE,
+            self::TYPE_SHARES,         // Share Capital
+            self::TYPE_SAVINGS,        // Savings / Deposit
+            self::TYPE_DEPOSITS,       // Fixed Deposit (Term)
+            self::TYPE_JUNIOR,         // Junior / Children's
+            self::TYPE_GOAL_BASED,     // Holiday / Goal-based
+            self::TYPE_BUSINESS,       // Business Account
         ];
     }
 
@@ -122,17 +121,12 @@ class Account extends Model
      * Get account types constant array for easy access
      */
     public const ACCOUNT_TYPES = [
-        'savings',
-        'shares', 
+        'shares',
+        'savings', 
         'deposits',
-        'emergency_fund',
-        'holiday_savings',
-        'retirement',
-        'education',
-        'development',
-        'welfare',
-        'loan_guarantee',
-        'investment'
+        'junior',
+        'goal_based',
+        'business',
     ];
 
     /**
@@ -141,17 +135,12 @@ class Account extends Model
     public static function getAccountTypeNames(): array
     {
         return [
-            self::TYPE_SAVINGS => 'Regular Savings',
             self::TYPE_SHARES => 'Share Capital',
-            self::TYPE_DEPOSITS => 'Term Deposits',
-            self::TYPE_EMERGENCY_FUND => 'Emergency Fund',
-            self::TYPE_HOLIDAY_SAVINGS => 'Holiday Savings',
-            self::TYPE_RETIREMENT => 'Retirement Savings',
-            self::TYPE_EDUCATION => 'Education Fund',
-            self::TYPE_DEVELOPMENT => 'Development Fund',
-            self::TYPE_WELFARE => 'Welfare Fund',
-            self::TYPE_INVESTMENT => 'Investment Account',
-            self::TYPE_LOAN_GUARANTEE => 'Loan Guarantee Fund',
+            self::TYPE_SAVINGS => 'Savings / Deposit',
+            self::TYPE_DEPOSITS => 'Term Deposit',
+            self::TYPE_JUNIOR => 'Junior Account',
+            self::TYPE_GOAL_BASED => 'Smart Saver',
+            self::TYPE_BUSINESS => 'Business Account',
         ];
     }
 

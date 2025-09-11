@@ -300,30 +300,24 @@ new #[Layout('components.layouts.app')] class extends Component {
 
 }; ?>
 
-<div class="min-h-screen bg-zinc-50 dark:bg-zinc-900">
-    <!-- Header -->
-    <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
-        <div class="px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <a href="{{ route('transactions.index') }}" class="p-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-                        <flux:icon.arrow-left class="w-5 h-5" />
-                    </a>
-                    <div>
-                        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Process Deposit</h1>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400">Add funds to member accounts securely</p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
-                    <flux:icon.shield-check class="w-4 h-4" />
-                    <span>Secure Transaction</span>
+<div>
+    <div class="px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-4">
+                <a href="{{ route('transactions.index') }}" class="p-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+                    <flux:icon.arrow-left class="w-5 h-5" />
+                </a>
+                <div>
+                    <flux:heading size="xl" class="!text-zinc-900 dark:!text-zinc-100">Process Deposit</flux:heading>
+                    <flux:subheading class="!text-zinc-600 dark:!text-zinc-400">Add funds to member accounts securely</flux:subheading>
                 </div>
             </div>
+            <div class="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
+                <flux:icon.shield-check class="w-4 h-4" />
+                <span>Secure Transaction</span>
+            </div>
         </div>
-    </div>
-
-    <!-- Content -->
-    <div class="px-4 sm:px-6 lg:px-8 py-8">
+        
         <div class="max-w-4xl mx-auto">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Deposit Form -->
@@ -395,26 +389,22 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     </h3>
 
                                     <div class="mb-4">
-                                        <label for="account_select" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                                            Select Account *
-                                        </label>
-                                        <select 
-                                            wire:model.live="account_id" 
-                                            id="account_select" 
-                                            required 
-                                            class="w-full px-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
-                                                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                                                   dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
-                                            <option value="">-- Select an account --</option>
-                                            @foreach($accounts as $account)
-                                                <option value="{{ $account->id }}" {{ $account_id == $account->id ? 'selected' : '' }}>
-                                                    {{ $account->account_number }} - {{ ucfirst($account->account_type) }} (KES {{ number_format($account->balance, 2) }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('account_id')
-                                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                                        @enderror
+                                        <flux:field>
+                                            <flux:label for="account_select">Select Account *</flux:label>
+                                            <flux:select 
+                                                wire:model.live="account_id" 
+                                                id="account_select" 
+                                                placeholder="Select an account"
+                                            >
+                                                <option value="">-- Select an account --</option>
+                                                @foreach($accounts as $account)
+                                                    <option value="{{ $account->id }}" {{ $account_id == $account->id ? 'selected' : '' }}>
+                                                        {{ $account->account_number }} - {{ ucfirst($account->account_type) }} (KES {{ number_format($account->balance, 2) }})
+                                                    </option>
+                                                @endforeach
+                                            </flux:select>
+                                            <flux:error name="account_id" />
+                                        </flux:field>
                                     </div>
 
                                     @if($selectedAccount)
@@ -523,33 +513,27 @@ document.addEventListener('livewire:initialized', () => {
                                 <div class="space-y-6">
                                     <!-- Amount -->
                                     <div>
-                                        <label for="amount" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                                            Deposit Amount (KES) *
-                                        </label>
-                                        <div class="relative">
-                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <span class="text-zinc-500 dark:text-zinc-400">KES</span>
+                                        <flux:field>
+                                            <flux:label for="amount">Deposit Amount (KES) *</flux:label>
+                                            <div class="relative">
+                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <span class="text-zinc-500 dark:text-zinc-400">KES</span>
+                                                </div>
+                                                <flux:input 
+                                                    wire:model.live.debounce.300ms="amount"
+                                                    type="number" 
+                                                    id="amount" 
+                                                    required
+                                                    min="1" 
+                                                    max="1000000" 
+                                                    step="0.01" 
+                                                    placeholder="0.00"
+                                                    class="pl-12"
+                                                />
                                             </div>
-                                            <input 
-                                                wire:model.blur="amount"
-                                                type="number" 
-                                                id="amount" 
-                                                required
-                                                min="1" 
-                                                max="1000000" 
-                                                step="0.01" 
-                                                placeholder="0.00"
-                                                class="w-full pl-12 pr-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
-                                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                                                       dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
-                                        </div>
-                                        <div class="mt-2 flex items-center justify-between text-sm">
-                                            <span class="text-zinc-500 dark:text-zinc-400">Minimum: KES 1.00</span>
-                                            <span class="text-zinc-500 dark:text-zinc-400">Maximum: KES 1,000,000.00</span>
-                                        </div>
-                                        @error('amount')
-                                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                                        @enderror
+                                            <flux:description>Minimum: KES 1.00 • Maximum: KES 1,000,000.00</flux:description>
+                                            <flux:error name="amount" />
+                                        </flux:field>
                                         
                                         @if($amount >= 50000)
                                             <div class="mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
@@ -565,23 +549,19 @@ document.addEventListener('livewire:initialized', () => {
 
                                     <!-- Payment Method -->
                                     <div>
-                                        <label for="payment_method" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                                            Payment Method *
-                                        </label>
-                                        <select 
-                                            wire:model.live="payment_method" 
-                                            id="payment_method" 
-                                            required
-                                            class="w-full px-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
-                                                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                                                   dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
-                                            @foreach($paymentMethods as $key => $label)
-                                                <option value="{{ $key }}">{{ $label }}</option>
-                                            @endforeach
-                                        </select>
-                                        @error('payment_method')
-                                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                                        @enderror
+                                        <flux:field>
+                                            <flux:label for="payment_method">Payment Method *</flux:label>
+                                            <flux:select 
+                                                wire:model.live="payment_method" 
+                                                id="payment_method" 
+                                                placeholder="Select payment method"
+                                            >
+                                                @foreach($paymentMethods as $key => $label)
+                                                    <option value="{{ $key }}">{{ $label }}</option>
+                                                @endforeach
+                                            </flux:select>
+                                            <flux:error name="payment_method" />
+                                        </flux:field>
                                     </div>
 
                                     <!-- M-Pesa Payment Details (shown when M-Pesa is selected) -->
@@ -591,7 +571,7 @@ document.addEventListener('livewire:initialized', () => {
                                                 <flux:field>
                                                     <flux:label>M-Pesa Phone Number</flux:label>
                                                     <flux:input 
-                                                        wire:model.blur="phoneNumber"
+                                                        wire:model.live.debounce.300ms="phoneNumber"
                                                         type="tel" 
                                                         placeholder="07XXXXXXXX" />
                                                     <flux:error name="phoneNumber" />
@@ -661,7 +641,7 @@ document.addEventListener('livewire:initialized', () => {
                                                 <flux:field>
                                                     <flux:label>Bank Name</flux:label>
                                                     <flux:input 
-                                                        wire:model.blur="bank_name"
+                                                        wire:model.live.debounce.300ms="bank_name"
                                                         type="text" 
                                                         placeholder="e.g., Equity Bank" />
                                                     <flux:error name="bank_name" />
@@ -671,7 +651,7 @@ document.addEventListener('livewire:initialized', () => {
                                                 <flux:field>
                                                     <flux:label>Account Number</flux:label>
                                                     <flux:input 
-                                                        wire:model.blur="bank_account"
+                                                        wire:model.live.debounce.300ms="bank_account"
                                                         type="text" 
                                                         placeholder="e.g., 1234567890" />
                                                     <flux:error name="bank_account" />
@@ -682,47 +662,40 @@ document.addEventListener('livewire:initialized', () => {
 
                                     <!-- Reference Number -->
                                     <div>
-                                        <label for="reference_number" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                                            Reference Number (Optional)
-                                        </label>
-                                        <div class="flex gap-2">
-                                            <input 
-                                                wire:model.blur="reference_number"
-                                                type="text" 
-                                                id="reference_number" 
-                                                placeholder="Optional external reference"
-                                                class="flex-1 px-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
-                                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                                                       dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
-                                            <button 
-                                                type="button"
-                                                wire:click="generateReference"
-                                                class="px-4 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 
-                                                       hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-lg transition-colors">
-                                                Generate
-                                            </button>
-                                        </div>
-                                        @error('reference_number')
-                                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                                        @enderror
+                                        <flux:field>
+                                            <flux:label for="reference_number">Reference Number (Optional)</flux:label>
+                                            <div class="flex gap-2">
+                                                <flux:input 
+                                                    wire:model.blur="reference_number"
+                                                    type="text" 
+                                                    id="reference_number" 
+                                                    placeholder="Optional external reference"
+                                                    class="flex-1"
+                                                />
+                                                <flux:button 
+                                                    type="button"
+                                                    variant="outline"
+                                                    wire:click="generateReference"
+                                                >
+                                                    Generate
+                                                </flux:button>
+                                            </div>
+                                            <flux:error name="reference_number" />
+                                        </flux:field>
                                     </div>
 
                                     <!-- Description -->
                                     <div>
-                                        <label for="description" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                                            Description (Optional)
-                                        </label>
-                                        <textarea 
-                                            wire:model.blur="description"
-                                            id="description" 
-                                            rows="3" 
-                                            placeholder="Enter a description for this deposit..."
-                                            class="w-full px-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
-                                                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                                                   dark:bg-zinc-700 dark:text-zinc-100 transition-colors">{{ old('description') }}</textarea>
-                                        @error('description')
-                                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                                        @enderror
+                                        <flux:field>
+                                            <flux:label for="description">Description (Optional)</flux:label>
+                                            <flux:textarea 
+                                                wire:model.blur="description"
+                                                id="description" 
+                                                rows="3" 
+                                                placeholder="Enter a description for this deposit..."
+                                            >{{ old('description') }}</flux:textarea>
+                                            <flux:error name="description" />
+                                        </flux:field>
                                     </div>
                                 </div>
                             </div>
@@ -730,36 +703,34 @@ document.addEventListener('livewire:initialized', () => {
 
                         <!-- Form Actions -->
                         <div class="flex items-center justify-between">
-                            <a href="{{ route('transactions.index') }}" 
-                                class="px-4 py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium">
+                            <flux:button variant="ghost" :href="route('transactions.index')">
                                 Cancel
-                            </a>
+                            </flux:button>
                             
                             @if($payment_method === 'mpesa')
-                                <button 
+                                <flux:button 
                                     wire:click="processDeposit" 
                                     type="button"
-                                    {{ !$account_id || !$amount || !$phoneNumber || $paymentStatus === 'pending' ? 'disabled' : '' }}
-                                    class="bg-green-600 hover:bg-green-700 disabled:bg-zinc-400 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center">
+                                    :disabled="!$account_id || !$amount || !$phoneNumber || $paymentStatus === 'pending'"
+                                    variant="primary"
+                                    icon="phone"
+                                >
                                     @if($paymentStatus === 'pending')
-                                        <div class="animate-spin mr-2">
-                                            <flux:icon.arrow-path class="w-5 h-5" />
-                                        </div>
                                         Processing...
                                     @else
-                                        <span class="text-lg mr-2">{{ $mobileMoneyProviders[$mobileMoneyProvider]['icon'] }}</span>
-                                        Pay with {{ $mobileMoneyProviders[$mobileMoneyProvider]['name'] }}
+                                        Pay with M-Pesa
                                     @endif
-                                </button>
+                                </flux:button>
                             @else
-                                <button 
+                                <flux:button 
                                     wire:click="processDeposit" 
                                     type="button"
-                                    {{ !$account_id || !$amount ? 'disabled' : '' }}
-                                    class="bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-400 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center">
-                                    <flux:icon.arrow-down class="w-5 h-5 mr-2" />
+                                    :disabled="!$account_id || !$amount"
+                                    variant="primary"
+                                    icon="arrow-down"
+                                >
                                     Process Deposit
-                                </button>
+                                </flux:button>
                             @endif
                         </div>
                     </form>
@@ -770,7 +741,10 @@ document.addEventListener('livewire:initialized', () => {
                     <!-- Transaction Summary -->
                     @if($selectedAccount && $amount)
                         <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
-                            <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Transaction Summary</h3>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Transaction Summary</h3>
+                                <flux:badge variant="primary">Draft</flux:badge>
+                            </div>
                             <div class="space-y-3">
                                 <div class="flex justify-between">
                                     <span class="text-sm text-zinc-600 dark:text-zinc-400">Account Number:</span>
@@ -814,8 +788,11 @@ document.addEventListener('livewire:initialized', () => {
                                         <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $bank_account }}</span>
                                     </div>
                                 @endif
-                                <div class="flex justify-between border-t border-zinc-200 dark:border-zinc-700 pt-3">
-                                    <span class="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Balance After Deposit:</span>
+                                <div class="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-700 pt-3">
+                                    <div class="flex items-center space-x-2">
+                                        <flux:badge variant="success">Calculated</flux:badge>
+                                        <span class="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Balance After Deposit</span>
+                                    </div>
                                     <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">KES {{ number_format($selectedAccount->balance + (float) $amount, 2) }}</span>
                                 </div>
                             </div>
@@ -824,7 +801,10 @@ document.addEventListener('livewire:initialized', () => {
 
                     <!-- Deposit Limits -->
                     <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
-                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Deposit Limits</h3>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Deposit Limits</h3>
+                            <flux:badge variant="secondary">Info</flux:badge>
+                        </div>
                         <div class="space-y-3">
                             <div class="flex items-center text-sm">
                                 <flux:icon.check-circle class="w-4 h-4 text-emerald-500 mr-2" />
@@ -847,7 +827,10 @@ document.addEventListener('livewire:initialized', () => {
 
                     <!-- Help -->
                     <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
-                        <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">Need Help?</h3>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100">Need Help?</h3>
+                            <flux:badge variant="primary">Support</flux:badge>
+                        </div>
                         <p class="text-sm text-blue-800 dark:text-blue-200 mb-3">
                             If you have any questions about making deposits, our support team is here to help.
                         </p>

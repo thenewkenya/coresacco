@@ -202,36 +202,32 @@ new #[Layout('components.layouts.app')] class extends Component {
     }
 }; ?>
 
-<div class="min-h-screen bg-zinc-50 dark:bg-zinc-900">
+<div class="space-y-6">
     <!-- Header -->
-    <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
-        <div class="px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                        {{ __('Create Budget') }}
-                    </h1>
-                    <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                        {{ __('Plan your budget for') }} {{ date('F Y', mktime(0, 0, 0, $month ?? now()->month, 1, $year ?? now()->year)) }}
-                    </p>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <flux:button variant="outline" href="{{ route('budget.index') }}" wire:navigate>
-                        {{ __('Back to Budgets') }}
-                    </flux:button>
-                </div>
-            </div>
+    <div class="flex items-center justify-between">
+        <div>
+            <flux:heading size="xl" class="!text-zinc-900 dark:!text-zinc-100">Create Budget</flux:heading>
+            <flux:subheading class="!text-zinc-600 dark:!text-zinc-400">
+                Plan your budget for {{ date('F Y', mktime(0, 0, 0, $month ?? now()->month, 1, $year ?? now()->year)) }}
+            </flux:subheading>
         </div>
+        <flux:button variant="ghost" href="{{ route('budget.index') }}" icon="arrow-left">
+            Back to Budgets
+        </flux:button>
     </div>
 
-    <!-- Content -->
-    <div class="px-4 sm:px-6 lg:px-8 py-8">
-        <form wire:submit="createBudget" class="space-y-8">
-            <!-- Budget Period -->
-            <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-                    Budget Period
-                </h3>
+    <form wire:submit="createBudget" class="space-y-6">
+        <!-- Budget Period -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <flux:icon.calendar class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                    <flux:heading size="base" class="dark:text-zinc-100">Budget Period</flux:heading>
+                    <flux:subheading class="dark:text-zinc-400">Select the month and year for your budget</flux:subheading>
+                </div>
+            </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <flux:field>
@@ -265,11 +261,17 @@ new #[Layout('components.layouts.app')] class extends Component {
                 @endif
             </div>
 
-            <!-- Income Section -->
-            <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-                    Monthly Income
-                </h3>
+        <!-- Income Section -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <flux:icon.banknotes class="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                    <flux:heading size="base" class="dark:text-zinc-100">Monthly Income</flux:heading>
+                    <flux:subheading class="dark:text-zinc-400">Enter your expected monthly income</flux:subheading>
+                </div>
+            </div>
                 
                 <flux:field>
                     <flux:label>{{ __('Expected Income (KES)') }}</flux:label>
@@ -322,16 +324,22 @@ new #[Layout('components.layouts.app')] class extends Component {
                 @endif
             </div>
 
-            <!-- Budget Categories -->
-            <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                        Budget Categories
-                    </h3>
-                    <flux:button type="button" variant="outline" wire:click="addCategory">
-                        Add Category
-                    </flux:button>
+        <!-- Budget Categories -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                        <flux:icon.chart-pie class="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                        <flux:heading size="base" class="dark:text-zinc-100">Budget Categories</flux:heading>
+                        <flux:subheading class="dark:text-zinc-400">Set up your spending categories</flux:subheading>
+                    </div>
                 </div>
+                <flux:button type="button" variant="outline" wire:click="addCategory" icon="plus">
+                    Add Category
+                </flux:button>
+            </div>
 
                 <div class="space-y-4">
                     @foreach($categories as $index => $category)
@@ -397,11 +405,17 @@ new #[Layout('components.layouts.app')] class extends Component {
                 @endif
             </div>
 
-            <!-- Notes -->
-            <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-                    Notes (Optional)
-                </h3>
+        <!-- Notes -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="p-2 bg-gray-100 dark:bg-gray-900/30 rounded-lg">
+                    <flux:icon.document-text class="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                </div>
+                <div>
+                    <flux:heading size="base" class="dark:text-zinc-100">Notes (Optional)</flux:heading>
+                    <flux:subheading class="dark:text-zinc-400">Add any additional notes about this budget</flux:subheading>
+                </div>
+            </div>
                 
                 <flux:field>
                     <flux:textarea 
@@ -411,15 +425,14 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </flux:field>
             </div>
 
-            <!-- Submit Button -->
-            <div class="flex justify-end space-x-4">
-                <flux:button variant="outline" href="{{ route('budget.index') }}" wire:navigate>
-                    Cancel
-                </flux:button>
-                <flux:button type="submit">
-                    Create Budget
-                </flux:button>
-            </div>
-        </form>
-    </div>
+        <!-- Submit Button -->
+        <div class="flex items-center justify-end space-x-4">
+            <flux:button variant="ghost" href="{{ route('budget.index') }}" wire:navigate>
+                Cancel
+            </flux:button>
+            <flux:button type="submit" variant="primary" icon="check">
+                Create Budget
+            </flux:button>
+        </div>
+    </form>
 </div> 

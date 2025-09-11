@@ -7,12 +7,12 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::view('dashboard', 'dashboard')
+Volt::route('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
     // Loan Application Routes (for members) - must be outside auth group
-    Route::get('/loans/apply', [App\Http\Controllers\LoanApplicationController::class, 'create'])->name('loans.apply')->middleware('auth');
+    Volt::route('/loans/apply', 'loans.apply')->name('loans.apply')->middleware('auth');
     Route::post('/loans/apply', [App\Http\Controllers\LoanApplicationController::class, 'store'])->name('loans.apply.store')->middleware('auth');
     
     // Member eligibility check route
@@ -72,7 +72,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Transaction Processing System
     Route::prefix('transactions')->name('transactions.')->group(function () {
-        Route::get('/', [App\Http\Controllers\TransactionController::class, 'index'])->name('index');
+        Volt::route('/', 'transactions.index')->name('index');
         Route::post('/', [App\Http\Controllers\TransactionController::class, 'store'])->name('store');
         Route::get('/my', [App\Http\Controllers\TransactionController::class, 'my'])->name('my');
         Route::get('/{transaction}', [App\Http\Controllers\TransactionController::class, 'show'])->name('show');
@@ -88,12 +88,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/withdrawal', [App\Http\Controllers\TransactionController::class, 'storeWithdrawal'])->name('withdrawal.store');
         
         // Transfer routes
-        Route::get('/create/transfer', [App\Http\Controllers\TransactionController::class, 'createTransfer'])->name('transfer.create');
+        Volt::route('/create/transfer', 'transactions.create-transfer')->name('transfer.create');
         Route::post('/create/transfer', [App\Http\Controllers\TransactionController::class, 'storeTransfer'])->name('transfer.store');
         
         // Receipt routes
         Route::get('/receipt/{transaction}', [App\Http\Controllers\TransactionController::class, 'receipt'])->name('receipt');
         Route::get('/receipt/{transaction}/download', [App\Http\Controllers\TransactionController::class, 'downloadReceipt'])->name('receipt.download');
+        Route::get('/receipt/{transaction}/qr', [App\Http\Controllers\ReceiptQrController::class, 'show'])->name('receipt.qr');
         
         // Approval routes
         Route::post('/approve/{transaction}', [App\Http\Controllers\TransactionController::class, 'approve'])->name('approve')->middleware('can:approve,transaction');
@@ -121,17 +122,17 @@ Route::middleware(['auth'])->group(function () {
 
         Route::prefix('loans')->name('loans.')->group(function () {
         // Member loan access (must come before {loan} route)
-        Route::get('/my', [App\Http\Controllers\LoansController::class, 'my'])->name('my')->middleware('auth');
+        Volt::route('/my', 'loans.my')->name('my')->middleware('auth');
         
         // Staff/Admin loan management
         Route::middleware(['auth'])->group(function () {
-            Route::get('/', [App\Http\Controllers\LoansController::class, 'index'])->name('index')
+            Volt::route('/', 'loans.index')->name('index')
                 ->middleware('role:admin,manager,staff');
             Route::get('/create', [App\Http\Controllers\LoansController::class, 'create'])->name('create')
                 ->middleware('role:admin,manager,staff');
             Route::post('/', [App\Http\Controllers\LoansController::class, 'store'])->name('store')
                 ->middleware('role:admin,manager,staff');
-            Route::get('/{loan}', [App\Http\Controllers\LoansController::class, 'show'])->name('show');
+            Volt::route('/{loan}', 'loans.show')->name('show');
             Route::post('/{loan}/approve', [App\Http\Controllers\LoansController::class, 'approve'])->name('approve')
                 ->middleware('role:admin,manager');
             Route::post('/{loan}/reject', [App\Http\Controllers\LoansController::class, 'reject'])->name('reject')
@@ -153,8 +154,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('payments')->name('payments.')->group(function () {
         Route::get('/', [App\Http\Controllers\PaymentsController::class, 'index'])->name('index');
-        Route::get('/my', [App\Http\Controllers\PaymentsController::class, 'my'])->name('my');
-        Route::get('/create', [App\Http\Controllers\PaymentsController::class, 'create'])->name('create');
+        Volt::route('/my', 'payments.my')->name('my');
+        Volt::route('/create', 'payments.create')->name('create');
         Route::post('/', [App\Http\Controllers\PaymentsController::class, 'store'])->name('store');
         Route::get('/{transaction}', [App\Http\Controllers\PaymentsController::class, 'show'])->name('show');
         Route::post('/{transaction}/approve', [App\Http\Controllers\PaymentsController::class, 'approve'])->name('approve')->middleware('can:approve,transaction');
@@ -181,7 +182,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('goals')->name('goals.')->group(function () {
-        Route::get('/', [App\Http\Controllers\GoalsController::class, 'index'])->name('index');
+        Volt::route('/', 'goals.index')->name('index');
         Volt::route('/create', 'goals.create-goal')->name('create');
         Route::get('/{goal}', [App\Http\Controllers\GoalsController::class, 'show'])->name('show');
         Route::get('/{goal}/edit', [App\Http\Controllers\GoalsController::class, 'edit'])->name('edit');
@@ -191,7 +192,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('budget')->name('budget.')->group(function () {
-        Route::get('/', [App\Http\Controllers\BudgetController::class, 'index'])->name('index');
+        Volt::route('/', 'budget.index')->name('index');
         Volt::route('/create', 'budget.create-budget')->name('create');
         Route::get('/smart-suggestions', [App\Http\Controllers\BudgetController::class, 'getSmartSuggestions'])->name('smart-suggestions');
         Route::get('/{budget}', [App\Http\Controllers\BudgetController::class, 'show'])->name('show');
@@ -204,12 +205,12 @@ Route::middleware(['auth'])->group(function () {
 
     // Management & Analytics
     Route::prefix('analytics')->name('analytics.')->group(function () {
-        Route::get('/', [App\Http\Controllers\AnalyticsController::class, 'index'])->name('index');
+        Volt::route('/', 'analytics.index')->name('index');
         Route::get('/export', [App\Http\Controllers\AnalyticsController::class, 'export'])->name('export');
     });
 
     Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/', [App\Http\Controllers\ReportsController::class, 'index'])->name('index');
+        Volt::route('/', 'reports.index')->name('index');
         Route::get('/financial', [App\Http\Controllers\ReportsController::class, 'financial'])->name('financial');
         Route::get('/members', [App\Http\Controllers\ReportsController::class, 'members'])->name('members');
         Route::get('/loans', [App\Http\Controllers\ReportsController::class, 'loans'])->name('loans');
@@ -217,7 +218,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('branches')->name('branches.')->group(function () {
-        Route::get('/', [App\Http\Controllers\BranchController::class, 'index'])->name('index');
+        Volt::route('/', 'branches.index')->name('index');
         Route::get('/map', [App\Http\Controllers\BranchController::class, 'mapView'])->name('map');
         Route::get('/create', [App\Http\Controllers\BranchController::class, 'create'])->name('create');
         Route::post('/', [App\Http\Controllers\BranchController::class, 'store'])->name('store');
@@ -232,7 +233,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('roles')->name('roles.')->group(function () {
-        Route::get('/', [App\Http\Controllers\RoleController::class, 'index'])->name('index');
+        Volt::route('/', 'roles.index')->name('index');
         Route::get('/create', [App\Http\Controllers\RoleController::class, 'create'])->name('create');
         Route::post('/', [App\Http\Controllers\RoleController::class, 'store'])->name('store');
         Route::get('/{role}', [App\Http\Controllers\RoleController::class, 'show'])->name('show');
@@ -251,7 +252,7 @@ Route::middleware(['auth'])->group(function () {
 
 
     Route::prefix('system')->name('system.')->group(function () {
-        Route::get('/settings', [App\Http\Controllers\SystemController::class, 'settings'])->name('settings');
+        Volt::route('/settings', 'system.settings')->name('settings');
         Route::post('/settings', [App\Http\Controllers\SystemController::class, 'updateSettings'])->name('settings.update');
         Route::post('/settings/reset', [App\Http\Controllers\SystemController::class, 'resetSettings'])->name('settings.reset');
     });
@@ -263,8 +264,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
         Route::delete('/{id}', [App\Http\Controllers\NotificationController::class, 'destroy'])->name('destroy');
         Route::get('/clear-read', [App\Http\Controllers\NotificationController::class, 'clearRead'])->name('clearRead');
-        Route::get('/settings', [App\Http\Controllers\NotificationController::class, 'settings'])->name('settings');
-        Route::post('/settings', [App\Http\Controllers\NotificationController::class, 'updateSettings'])->name('settings.update');
+        Volt::route('/settings', 'notifications.settings')->name('settings');
     });
 
     Route::prefix('schedule')->name('schedule.')->group(function () {
@@ -273,7 +273,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Account Management Routes
     Route::prefix('accounts')->name('accounts.')->group(function () {
-        Route::get('/', [App\Http\Controllers\AccountController::class, 'index'])->name('index');
+        Volt::route('/', 'accounts.index')->name('index');
         Route::get('/my', [App\Http\Controllers\AccountController::class, 'my'])->name('my');
         Route::get('/create', [App\Http\Controllers\AccountController::class, 'create'])->name('create');
         Route::post('/', [App\Http\Controllers\AccountController::class, 'store'])->name('store');

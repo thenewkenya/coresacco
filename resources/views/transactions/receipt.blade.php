@@ -1,41 +1,31 @@
 <x-layouts.app :title="__('Transaction Receipt')">
-    <div class="min-h-screen bg-zinc-50 dark:bg-zinc-900">
-        <!-- Header -->
-        <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
-            <div class="px-4 sm:px-6 lg:px-8 py-6">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <a href="{{ route('transactions.index') }}" class="p-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-                            <flux:icon.arrow-left class="w-5 h-5" />
-                        </a>
-                        <div>
-                            <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Transaction Receipt</h1>
-                            <p class="text-sm text-zinc-600 dark:text-zinc-400">Transaction Reference: {{ $transaction->reference_number }}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                                                 <flux:button 
-                             onclick="window.print()" 
-                             variant="primary"
-                             icon="printer"
-                             class="print:hidden"
-                         >
-                             Print Receipt
-                         </flux:button>
-                         <flux:button 
-                             :href="route('transactions.receipt.download', $transaction)"
-                             variant="outline"
-                             icon="arrow-down"
-                         >
-                             Download
-                         </flux:button>
+    <div>
+        <div class="px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <a href="{{ route('transactions.index') }}" class="p-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+                        <flux:icon.arrow-left class="w-5 h-5" />
+                    </a>
+                    <div>
+                        <flux:heading size="xl" class="!text-zinc-900 dark:!text-zinc-100">Transaction Receipt</flux:heading>
+                        <flux:subheading class="!text-zinc-600 dark:!text-zinc-400">Transaction Reference: {{ $transaction->reference_number }}</flux:subheading>
                     </div>
                 </div>
+                <div class="flex items-center space-x-3">
+                    <flux:button onclick="window.print()" variant="primary" icon="printer" class="print:hidden">
+                        Print Receipt
+                    </flux:button>
+                    <flux:button :href="route('transactions.receipt.download', $transaction)" variant="outline" icon="arrow-down">
+                        Download
+                    </flux:button>
+                </div>
             </div>
-        </div>
 
-        <div class="px-4 sm:px-6 lg:px-8 py-8">
             <div class="max-w-4xl mx-auto">
+                @php
+                    $receiptUrl = route('transactions.receipt', $transaction);
+                    $mailto = 'mailto:?subject=' . rawurlencode('Transaction Receipt ' . $transaction->reference_number) . '&body=' . rawurlencode($receiptUrl);
+                @endphp
                 <!-- Success Message -->
                 @if(session('success'))
                     <div class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
@@ -216,9 +206,9 @@
                             </div>
                         @endif
 
-                        <!-- Security Information -->
+                        <!-- Security & Verification -->
                         <div class="border-t border-zinc-200 dark:border-zinc-700 pt-6">
-                            <div class="flex items-center justify-center space-x-6 text-sm text-zinc-500 dark:text-zinc-400">
+                            <div class="flex items-center justify-center space-x-6 text-sm text-zinc-500 dark:text-zinc-400 flex-wrap gap-4">
                                 <div class="flex items-center">
                                     <flux:icon.shield-check class="w-4 h-4 mr-2" />
                                     <span>Secure Transaction</span>
@@ -230,6 +220,14 @@
                                 <div class="flex items-center">
                                     <flux:icon.check-badge class="w-4 h-4 mr-2" />
                                     <span>Verified</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <img 
+                                        src="{{ route('transactions.receipt.qr', $transaction) }}" 
+                                        alt="Receipt QR" 
+                                        class="w-16 h-16 rounded bg-white p-1 border border-zinc-200 dark:border-zinc-700"
+                                    />
+                                    <span class="ml-3">Scan to view receipt</span>
                                 </div>
                             </div>
                         </div>
@@ -243,27 +241,25 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="mt-8 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                    <a href="{{ route('transactions.index') }}" 
-                        class="w-full sm:w-auto bg-zinc-600 hover:bg-zinc-700 text-white px-6 py-3 rounded-lg font-medium transition-colors text-center">
+                <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <flux:button variant="ghost" :href="route('transactions.index')" class="w-full sm:w-auto">
                         Back to Transactions
-                    </a>
-                    
+                    </flux:button>
+                    <flux:button variant="outline" href="{{ $mailto }}" class="w-full sm:w-auto" icon="envelope">
+                        Share via Email
+                    </flux:button>
                     @if($transaction->type === 'deposit')
-                        <a href="{{ route('transactions.deposit.create') }}" 
-                            class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg font-medium transition-colors text-center">
+                        <flux:button variant="primary" :href="route('transactions.deposit.create')" class="w-full sm:w-auto" icon="arrow-down">
                             Make Another Deposit
-                        </a>
+                        </flux:button>
                     @elseif($transaction->type === 'withdrawal')
-                        <a href="{{ route('transactions.withdrawal.create') }}" 
-                            class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors text-center">
+                        <flux:button variant="primary" :href="route('transactions.withdrawal.create')" class="w-full sm:w-auto" icon="arrow-up">
                             Make Another Withdrawal
-                        </a>
+                        </flux:button>
                     @elseif($transaction->type === 'transfer')
-                        <a href="{{ route('transactions.transfer.create') }}" 
-                            class="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors text-center">
+                        <flux:button variant="primary" :href="route('transactions.transfer.create')" class="w-full sm:w-auto" icon="arrows-right-left">
                             Make Another Transfer
-                        </a>
+                        </flux:button>
                     @endif
                 </div>
             </div>

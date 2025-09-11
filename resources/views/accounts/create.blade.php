@@ -1,25 +1,42 @@
 <x-layouts.app :title="__('Open New Account')">
-    <div class="min-h-screen bg-zinc-50 dark:bg-zinc-900">
-        <!-- Header -->
-        <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
-            <div class="px-4 sm:px-6 lg:px-8 py-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                            {{ __('Open New Account') }}
-                        </h1>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                            {{ __('Choose from our range of SACCO account types to meet your financial goals') }}
-                        </p>
-                    </div>
-                    <flux:button href="{{ route('accounts.index') }}" variant="ghost" icon="arrow-left">
-                        {{ __('Back to Accounts') }}
-                    </flux:button>
-                </div>
-            </div>
-        </div>
-
+    <div>
         <div class="px-4 sm:px-6 lg:px-8 py-6">
+            @if(session('success'))
+                <div class="mb-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                    <div class="flex items-center text-emerald-800 dark:text-emerald-200">
+                        <flux:icon.check-circle class="w-5 h-5 mr-2" />
+                        <span>{{ session('success') }}</span>
+                    </div>
+                </div>
+            @endif
+            @if ($errors->any())
+                <div class="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <div class="flex items-start">
+                        <flux:icon.exclamation-triangle class="w-5 h-5 text-red-600 mr-2 mt-0.5" />
+                        <div class="text-sm text-red-700 dark:text-red-300">
+                            <ul class="list-disc list-inside">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            @endif
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <flux:heading size="xl" class="!text-zinc-900 dark:!text-zinc-100">
+                        {{ __('Open New Account') }}
+                    </flux:heading>
+                    <flux:subheading class="!text-zinc-600 dark:!text-zinc-400">
+                        {{ __('Choose from our range of SACCO account types to meet your financial goals') }}
+                    </flux:subheading>
+                </div>
+                <flux:button :href="route('accounts.index')" variant="ghost" icon="arrow-left">
+                    {{ __('Back to Accounts') }}
+                </flux:button>
+            </div>
+
             <form method="POST" action="{{ route('accounts.store') }}" id="accountForm">
                 @csrf
                 
@@ -27,49 +44,29 @@
                     <!-- Account Type Selection -->
                     <div class="lg:col-span-2">
                         <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
-                            <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-6">
-                                {{ __('Select Account Type') }}
-                            </h2>
+                            <div class="flex items-center justify-between mb-6">
+                                <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                                    {{ __('Select Account Type') }}
+                                </h2>
+                                <flux:badge variant="secondary">{{ __('Info') }}</flux:badge>
+                            </div>
                             
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
                                 @foreach($accountTypes as $type)
                                 @php
-                                    $accountColors = [
-                                        'savings' => 'emerald',
-                                        'shares' => 'blue', 
-                                        'deposits' => 'purple',
-                                        'emergency_fund' => 'red',
-                                        'holiday_savings' => 'yellow',
-                                        'retirement' => 'indigo',
-                                        'education' => 'cyan',
-                                        'development' => 'orange',
-                                        'welfare' => 'pink',
-                                        'loan_guarantee' => 'slate',
-                                        'investment' => 'amber'
-                                    ];
-                                    $accountIcons = [
-                                        'savings' => 'banknotes',
-                                        'shares' => 'building-library', 
-                                        'deposits' => 'safe',
-                                        'emergency_fund' => 'shield-check',
-                                        'holiday_savings' => 'sun',
-                                        'retirement' => 'home',
-                                        'education' => 'academic-cap',
-                                        'development' => 'building-office-2',
-                                        'welfare' => 'heart',
-                                        'loan_guarantee' => 'shield-exclamation',
-                                        'investment' => 'chart-bar'
-                                    ];
-                                    $color = $accountColors[$type['value']] ?? 'zinc';
-                                    $icon = $accountIcons[$type['value']] ?? 'banknotes';
+                                    $color = $type['color'] ?? 'zinc';
+                                    $icon = $type['icon'] ?? 'banknotes';
+                                    $exists = (auth()->user()->hasRole('member') && in_array($type['value'], $existingTypes ?? []));
+                                    $canOpenMultiple = in_array($type['value'], $multiAllowed ?? []);
+                                    $disabled = $exists && !$canOpenMultiple;
                                 @endphp
-                                <label class="relative cursor-pointer group account-card" data-color="{{ $color }}">
+                                <label class="relative cursor-pointer group account-card h-full {{ $disabled ? 'opacity-50 cursor-not-allowed' : '' }}" data-color="{{ $color }}">
                                     <input type="radio" name="account_type" value="{{ $type['value'] }}" 
-                                           class="sr-only account-radio" required data-color="{{ $color }}" data-label="{{ $type['label'] }}">
+                                           class="sr-only account-radio" {{ $disabled ? 'disabled' : '' }} required data-color="{{ $color }}" data-label="{{ $type['label'] }}">
                                     
                                     <!-- Card Container -->
                                     <div class="card-container relative overflow-hidden rounded-xl border-2 border-zinc-200 dark:border-zinc-700 
-                                                bg-white dark:bg-zinc-800 transition-all duration-300 ease-in-out hover:shadow-md"
+                                                bg-white dark:bg-zinc-800 transition-all duration-300 ease-in-out hover:shadow-md min-h-[260px] h-full flex flex-col"
                                          style="--account-color: {{ $color }}">
                                         
                                         <!-- Selected State Overlay -->
@@ -82,7 +79,7 @@
                                         </div>
                                         
                                         <!-- Content -->
-                                        <div class="relative p-6">
+                                        <div class="relative p-6 flex-1 flex flex-col">
                                             <div class="flex items-start space-x-4">
                                                 <!-- Icon -->
                                                 <div class="account-icon flex-shrink-0 p-3 rounded-xl transition-all duration-300">
@@ -94,12 +91,18 @@
                                                     <h3 class="account-title text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-2 transition-colors duration-300">
                                                         {{ $type['label'] }}
                                                     </h3>
-                                                    <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+                                                    <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3 line-clamp-3">
                                                         {{ $type['description'] }}
                                                     </p>
                                                     
                                                     <!-- Features -->
-                                                    <div class="space-y-2">
+                                                    <div class="space-y-2 mt-auto">
+                                                        @if($disabled)
+                                                        <div class="flex items-center text-xs">
+                                                            <flux:icon.exclamation-circle class="w-4 h-4 mr-2 text-amber-500" />
+                                                            <span class="text-amber-600 dark:text-amber-400">Account already exists</span>
+                                                        </div>
+                                                        @endif
                                                         @if(isset($type['interest_rate']))
                                                         <div class="flex items-center text-sm">
                                                             <flux:icon.percent-badge class="w-4 h-4 mr-2 account-feature-icon" />
@@ -135,15 +138,21 @@
                                 </label>
                                 @endforeach
                             </div>
+                            @error('account_type')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <!-- Member Selection -->
                         @if(auth()->user()->hasRole('member'))
                         <!-- Member Account Holder (Auto-populated for regular members) -->
                         <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 mt-6">
-                            <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-6">
-                                {{ __('Account Holder') }}
-                            </h2>
+                            <div class="flex items-center justify-between mb-6">
+                                <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                                    {{ __('Account Holder') }}
+                                </h2>
+                                <flux:badge variant="primary">{{ __('Auto') }}</flux:badge>
+                            </div>
                             
                             <div class="flex items-center space-x-4 p-4 bg-zinc-50 dark:bg-zinc-700/50 rounded-lg">
                                 <div class="flex-shrink-0">
@@ -175,9 +184,12 @@
                         @else
                         <!-- Staff Member Selection -->
                         <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 mt-6">
-                            <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-6">
-                                {{ __('Account Holder') }}
-                            </h2>
+                            <div class="flex items-center justify-between mb-6">
+                                <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                                    {{ __('Account Holder') }}
+                                </h2>
+                                <flux:badge variant="secondary">{{ __('Select') }}</flux:badge>
+                            </div>
                             
                             <flux:field>
                                 <flux:label>{{ __('Select Member') }}</flux:label>
@@ -215,9 +227,12 @@
                     <!-- Account Summary -->
                     <div class="lg:col-span-1">
                         <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 sticky top-6">
-                            <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-                                {{ __('Account Summary') }}
-                            </h3>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                                    {{ __('Account Summary') }}
+                                </h3>
+                                <flux:badge variant="primary">{{ __('Draft') }}</flux:badge>
+                            </div>
                             
                             <div class="space-y-4" id="summaryContent">
                                 <!-- Dynamic Summary Content -->
@@ -232,7 +247,7 @@
                             </div>
 
                             <div class="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-700">
-                                <flux:button type="submit" variant="primary" class="w-full" id="submitButton" disabled>
+                                <flux:button type="submit" variant="primary" class="w-full" id="submitButton" disabled icon="plus">
                                     {{ __('Open Account') }}
                                 </flux:button>
                             </div>
@@ -525,6 +540,8 @@
             const memberSelect = document.getElementById('memberSelect');
             const summaryContent = document.getElementById('summaryContent');
             const submitButton = document.getElementById('submitButton');
+            const existingTypes = @json($existingTypes ?? []);
+            const multiAllowed = @json($multiAllowed ?? []);
             
             // Check if current user is a member (for auto-selection logic)
             const isMember = @json(auth()->user()->hasRole('member'));
@@ -585,6 +602,58 @@
                 const memberName = selectedMember ? selectedMember.name : 'Please select a member';
                 const memberEmail = selectedMember ? selectedMember.email : '';
                 
+                // Account-specific extra details
+                let extras = [];
+                switch (selectedAccountType.value) {
+                    case 'shares':
+                        extras = [
+                            'Non-withdrawable while you remain a member',
+                            'Eligible for dividends based on SACCO performance'
+                        ];
+                        break;
+                    case 'deposits':
+                        extras = [
+                            'Locked until maturity (early withdrawal restrictions apply)',
+                            'Higher interest than regular savings'
+                        ];
+                        break;
+                    case 'junior':
+                        extras = [
+                            "Opened for a minor; managed by parent/guardian",
+                            'Great for education-focused savings'
+                        ];
+                        break;
+                    case 'goal_based':
+                        extras = [
+                            'Ideal for saving towards specific goals',
+                            'Supports disciplined saving (set targets, standing orders)'
+                        ];
+                        break;
+                    case 'business':
+                        extras = [
+                            'Keep business finances separate from personal',
+                            'Suitable for tracking income and expenses'
+                        ];
+                        break;
+                    case 'savings':
+                    default:
+                        extras = [
+                            'Acts as security for loans',
+                            'Earns interest/dividends depending on performance'
+                        ];
+                        break;
+                }
+                const extrasHtml = extras.length
+                    ? `
+                        <div>
+                            <dt class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Additional Details</dt>
+                            <ul class="list-disc list-inside text-sm text-zinc-700 dark:text-zinc-300 space-y-1">
+                                ${extras.map(e => `<li>${e}</li>`).join('')}
+                            </ul>
+                        </div>
+                      `
+                    : '';
+                
                 summaryContent.innerHTML = `
                     <div class="space-y-4">
                         <!-- Account Type -->
@@ -614,6 +683,8 @@
                             <dd class="text-sm font-medium text-zinc-900 dark:text-zinc-100">${currentDate}</dd>
                         </div>
 
+                        ${extrasHtml}
+
                         <!-- Status -->
                         <div>
                             <dt class="text-sm text-zinc-600 dark:text-zinc-400 mb-1">{{ __('Initial Status') }}</dt>
@@ -630,7 +701,10 @@
             function updateSubmitButton() {
                 // For members, only need account type selected since member is auto-selected
                 // For staff, need both account type and member selected
-                const canSubmit = selectedAccountType && (isMember || selectedMember);
+                let canSubmit = selectedAccountType && (isMember || selectedMember);
+                if (canSubmit && isMember && existingTypes.includes(selectedAccountType.value) && !multiAllowed.includes(selectedAccountType.value)) {
+                    canSubmit = false;
+                }
                 
                 submitButton.disabled = !canSubmit;
                 if (canSubmit) {
@@ -646,4 +720,14 @@
             updateSubmitButton();
         });
     </script>
+    
+    <!-- Tailwind safelist for dynamic color classes used in Account Summary highlights -->
+    <div class="hidden">
+        <span class="bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100 text-emerald-700 dark:text-emerald-300 bg-emerald-500"></span>
+        <span class="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-100 text-blue-700 dark:text-blue-300 bg-blue-500"></span>
+        <span class="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 text-purple-900 dark:text-purple-100 text-purple-700 dark:text-purple-300 bg-purple-500"></span>
+        <span class="bg-cyan-50 dark:bg-cyan-900/20 border-cyan-200 dark:border-cyan-800 text-cyan-900 dark:text-cyan-100 text-cyan-700 dark:text-cyan-300 bg-cyan-500"></span>
+        <span class="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-900 dark:text-yellow-100 text-yellow-700 dark:text-yellow-300 bg-yellow-500"></span>
+        <span class="bg-slate-50 dark:bg-slate-900/20 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 text-slate-700 dark:text-slate-300 bg-slate-500"></span>
+    </div>
 </x-layouts.app> 

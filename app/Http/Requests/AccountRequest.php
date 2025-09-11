@@ -20,6 +20,9 @@ class AccountRequest extends FormRequest
             'currency' => 'sometimes|string|size:3',
         ];
 
+        // Types that allow multiple accounts per member
+        $multiAllowed = ['deposits', 'junior', 'goal_based', 'business'];
+
         if (auth()->user()->hasRole('member')) {
             // For members, if member_id is provided, it must be their own ID
             if ($this->has('member_id')) {
@@ -27,7 +30,7 @@ class AccountRequest extends FormRequest
             }
             
             // Prevent duplicate account types for the member
-            if ($this->account_type) {
+            if ($this->account_type && !in_array($this->account_type, $multiAllowed, true)) {
                 $rules['account_type'][] = 'unique:accounts,account_type,NULL,id,member_id,' . auth()->user()->id;
             }
         } else {
@@ -35,7 +38,7 @@ class AccountRequest extends FormRequest
             $rules['member_id'] = 'required|exists:users,id';
             
             // Prevent duplicate account types for the same member
-            if ($this->member_id && $this->account_type) {
+            if ($this->member_id && $this->account_type && !in_array($this->account_type, $multiAllowed, true)) {
                 $rules['account_type'][] = 'unique:accounts,account_type,NULL,id,member_id,' . $this->member_id;
             }
         }

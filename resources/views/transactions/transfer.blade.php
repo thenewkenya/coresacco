@@ -1,27 +1,21 @@
 <x-layouts.app :title="__('Transfer Money')">
-    <div class="min-h-screen bg-zinc-50 dark:bg-zinc-900">
-        <!-- Header -->
-        <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
-            <div class="px-4 sm:px-6 lg:px-8 py-6">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <a href="{{ route('transactions.index') }}" class="p-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-                            <flux:icon.arrow-left class="w-5 h-5" />
-                        </a>
-                        <div>
-                            <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Transfer Money</h1>
-                            <p class="text-sm text-zinc-600 dark:text-zinc-400">Send money between accounts securely</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
-                        <flux:icon.shield-check class="w-4 h-4" />
-                        <span>Secure Transaction</span>
+    <div>
+        <div class="px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <a href="{{ route('transactions.index') }}" class="p-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+                        <flux:icon.arrow-left class="w-5 h-5" />
+                    </a>
+                    <div>
+                        <flux:heading size="xl" class="!text-zinc-900 dark:!text-zinc-100">Transfer Money</flux:heading>
+                        <flux:subheading class="!text-zinc-600 dark:!text-zinc-400">Send money between accounts securely</flux:subheading>
                     </div>
                 </div>
+                <div class="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
+                    <flux:icon.shield-check class="w-4 h-4" />
+                    <span>Secure Transaction</span>
+                </div>
             </div>
-        </div>
-
-        <div class="px-4 sm:px-6 lg:px-8 py-8">
             <div class="max-w-4xl mx-auto">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <!-- Transfer Form -->
@@ -41,7 +35,7 @@
                                         <flux:label>From Account *</flux:label>
                                         <select name="from_account_id" id="from_account_id" required 
                                             class="w-full px-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
-                                                   focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+                                                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
                                                    dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
                                             <option value="">-- Select source account --</option>
                                             @foreach($fromAccounts as $account)
@@ -75,7 +69,7 @@
                                         <flux:label>To Account *</flux:label>
                                         <select name="to_account_id" id="to_account_id" required 
                                             class="w-full px-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg 
-                                                   focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+                                                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
                                                    dark:bg-zinc-700 dark:text-zinc-100 transition-colors">
                                             <option value="">-- Select destination account --</option>
                                             @foreach($toAccounts as $account)
@@ -121,7 +115,7 @@
                                                 class="pl-12"
                                             />
                                         </div>
-                                        <flux:description>Minimum: KES 1.00 | Maximum: KES 500,000.00</flux:description>
+                                        <flux:description>Minimum: KES 1.00 • Maximum: KES 500,000.00</flux:description>
                                         @error('amount')
                                             <flux:error>{{ $message }}</flux:error>
                                         @enderror
@@ -170,7 +164,10 @@
                     <div class="space-y-6">
                         <!-- Transaction Summary -->
                         <div id="transferSummary" class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 hidden">
-                            <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Transaction Summary</h3>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Transaction Summary</h3>
+                                <flux:badge variant="primary">Draft</flux:badge>
+                            </div>
                             <div class="space-y-3">
                                 <div class="flex justify-between">
                                     <span class="text-sm text-zinc-600 dark:text-zinc-400">From Account:</span>
@@ -184,8 +181,11 @@
                                     <span class="text-sm text-zinc-600 dark:text-zinc-400">Transfer Amount:</span>
                                     <span id="summaryTransferAmount" class="text-sm font-medium text-purple-600 dark:text-purple-400"></span>
                                 </div>
-                                <div class="flex justify-between border-t border-zinc-200 dark:border-zinc-700 pt-3">
-                                    <span class="text-sm text-zinc-600 dark:text-zinc-400 font-medium">From Balance After:</span>
+                                <div class="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-700 pt-3">
+                                    <div class="flex items-center space-x-2">
+                                        <flux:badge variant="secondary">Calculated</flux:badge>
+                                        <span class="text-sm text-zinc-600 dark:text-zinc-400 font-medium">From Balance After</span>
+                                    </div>
                                     <span id="summaryFromNewBalance" class="text-sm font-bold text-zinc-900 dark:text-zinc-100"></span>
                                 </div>
                                 <div class="flex justify-between">
@@ -197,7 +197,10 @@
 
                         <!-- Transaction Info -->
                         <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6">
-                            <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Transfer Limits</h3>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Transfer Limits</h3>
+                                <flux:badge variant="secondary">Info</flux:badge>
+                            </div>
                             <div class="space-y-3">
                                 <div class="flex items-center text-sm">
                                     <flux:icon.check-circle class="w-4 h-4 text-emerald-500 mr-2" />
@@ -223,12 +226,15 @@
                         </div>
 
                         <!-- Help -->
-                        <div class="bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800 p-6">
-                            <h3 class="text-lg font-semibold text-purple-900 dark:text-purple-100 mb-2">Need Help?</h3>
-                            <p class="text-sm text-purple-800 dark:text-purple-200 mb-3">
+                        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100">Need Help?</h3>
+                                <flux:badge variant="primary">Support</flux:badge>
+                            </div>
+                            <p class="text-sm text-blue-800 dark:text-blue-200 mb-3">
                                 If you have any questions about transferring money, our support team is here to help.
                             </p>
-                            <a href="#" class="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 font-medium">
+                            <a href="#" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 font-medium">
                                 Contact Support →
                             </a>
                         </div>

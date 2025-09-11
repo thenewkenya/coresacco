@@ -236,30 +236,7 @@ class MemberController extends Controller
      */
     public function profile()
     {
-        $member = auth()->user();
-        
-        if ($member->role !== 'member') {
-            abort(403, 'Access denied.');
-        }
-
-        $member->load([
-            'branch', 
-            'accounts.transactions', 
-            'loans.loanType', 
-            'transactions' => function($query) {
-                $query->latest()->limit(10);
-            }
-        ]);
-
-        // Calculate member statistics
-        $stats = [
-            'total_deposits' => $member->transactions()->where('type', 'deposit')->sum('amount'),
-            'total_withdrawals' => $member->transactions()->where('type', 'withdrawal')->sum('amount'),
-            'active_loans' => $member->loans()->where('status', 'active')->count(),
-            'total_accounts' => $member->accounts()->count(),
-        ];
-
-        return view('members.profile', compact('member', 'stats'));
+        return redirect()->route('settings.profile');
     }
 
     /**

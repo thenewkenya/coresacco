@@ -133,9 +133,6 @@
                 <flux:navlist.item icon="currency-dollar" :href="route('payments.my')" :current="request()->routeIs('payments.*')" wire:navigate>
                     {{ __('My Payments') }}
                 </flux:navlist.item>
-                <flux:navlist.item icon="user" :href="route('members.profile')" :current="request()->routeIs('members.profile')" wire:navigate>
-                    {{ __('My Profile') }}
-                </flux:navlist.item>
                 <flux:navlist.item icon="flag" :href="route('goals.index')" :current="request()->routeIs('goals.*')" wire:navigate>
                     {{ __('My Goals') }}
                 </flux:navlist.item>

@@ -23,8 +23,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     public $paymentMethods = [
         'cash' => 'Cash',
         'bank_transfer' => 'Bank Transfer',
-        'mobile_money' => 'Mobile Money',
-        'cheque' => 'Cheque',
+        'mpesa' => 'M-Pesa',
     ];
 
     public function mount()
@@ -192,30 +191,23 @@ new #[Layout('components.layouts.app')] class extends Component {
     }
 }; ?>
 
-<div class="min-h-screen bg-zinc-50 dark:bg-zinc-900">
-    <!-- Header -->
-    <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
-        <div class="px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <a href="{{ route('transactions.index') }}" class="p-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-                        <flux:icon.arrow-left class="w-5 h-5" />
-                    </a>
-                    <div>
-                        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Process Withdrawal</h1>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400">Withdraw funds from member accounts securely</p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
-                    <flux:icon.shield-check class="w-4 h-4" />
-                    <span>Secure Transaction</span>
+<div>
+    <div class="px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-4">
+                <a href="{{ route('transactions.index') }}" class="p-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+                    <flux:icon.arrow-left class="w-5 h-5" />
+                </a>
+                <div>
+                    <flux:heading size="xl" class="!text-zinc-900 dark:!text-zinc-100">Process Withdrawal</flux:heading>
+                    <flux:subheading class="!text-zinc-600 dark:!text-zinc-400">Withdraw funds from member accounts securely</flux:subheading>
                 </div>
             </div>
+            <div class="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
+                <flux:icon.shield-check class="w-4 h-4" />
+                <span>Secure Transaction</span>
+            </div>
         </div>
-    </div>
-
-    <!-- Content -->
-    <div class="px-4 sm:px-6 lg:px-8 py-8">
         <div class="max-w-4xl mx-auto">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Withdrawal Form -->
@@ -372,7 +364,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                         <flux:label for="amount">{{ __('Withdrawal Amount') }}</flux:label>
                                         <flux:input 
                                             id="amount"
-                                            wire:model.live="amount" 
+                                            wire:model.live.debounce.300ms="amount" 
                                             type="number" 
                                             step="0.01"
                                             min="1"
@@ -460,21 +452,24 @@ new #[Layout('components.layouts.app')] class extends Component {
                         @endif
 
                         <!-- Submit Button -->
-                        <div class="flex justify-end space-x-4">
-                            <flux:button 
-                                type="button" 
-                                variant="outline"
-                                wire:click="$refresh"
-                            >
-                                {{ __('Reset Form') }}
-                            </flux:button>
-                            <flux:button 
-                                type="submit" 
-                                variant="primary"
-                                :disabled="!$selectedAccount || !$amount || !$purpose"
-                            >
-                                {{ __('Process Withdrawal') }}
-                            </flux:button>
+                        <div class="flex items-center justify-between">
+                            <flux:button variant="ghost" :href="route('transactions.index')">{{ __('Cancel') }}</flux:button>
+                            <div class="flex gap-3">
+                                <flux:button 
+                                    type="button" 
+                                    variant="outline"
+                                    wire:click="$refresh"
+                                >
+                                    {{ __('Reset Form') }}
+                                </flux:button>
+                                <flux:button 
+                                    type="submit" 
+                                    variant="primary"
+                                    :disabled="!$selectedAccount || !$amount || !$purpose"
+                                >
+                                    {{ __('Process Withdrawal') }}
+                                </flux:button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -482,9 +477,12 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <!-- Transaction Summary -->
                 <div class="lg:col-span-1">
                     <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 sticky top-8">
-                        <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-4">
-                            {{ __('Transaction Summary') }}
-                        </h3>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+                                {{ __('Transaction Summary') }}
+                            </h3>
+                            <flux:badge variant="primary">Draft</flux:badge>
+                        </div>
 
                         @if($selectedAccount)
                             <!-- Account Info -->
@@ -515,11 +513,12 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     <span class="text-zinc-600 dark:text-zinc-400">{{ __('Processing Fee') }}</span>
                                     <span class="font-medium text-zinc-900 dark:text-zinc-100">KES {{ number_format($this->getWithdrawalFees(), 2) }}</span>
                                 </div>
-                                <div class="border-t border-zinc-200 dark:border-zinc-700 pt-3">
-                                    <div class="flex justify-between">
-                                        <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ __('Total Deduction') }}</span>
-                                        <span class="font-bold text-red-600 dark:text-red-400">KES {{ number_format($this->getTotalAmount(), 2) }}</span>
+                                <div class="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-700 pt-3">
+                                    <div class="flex items-center space-x-2">
+                                        <flux:badge variant="secondary">Calculated</flux:badge>
+                                        <span class="font-medium text-zinc-900 dark:text-zinc-100 text-sm">{{ __('Total Deduction') }}</span>
                                     </div>
+                                    <span class="font-bold text-red-600 dark:text-red-400">KES {{ number_format($this->getTotalAmount(), 2) }}</span>
                                 </div>
                                 
                                 @if($selectedAccount)
