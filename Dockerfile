@@ -55,6 +55,10 @@ RUN echo '#!/bin/bash\n\
 set -e\n\
 echo "Running database migrations..."\n\
 php artisan migrate --force\n\
+echo "Clearing caches..."\n\
+php artisan config:clear\n\
+php artisan cache:clear\n\
+php artisan view:clear\n\
 echo "Starting services..."\n\
 exec /usr/bin/supervisord -n' > /start.sh \
  && chmod +x /start.sh
