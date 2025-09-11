@@ -23,8 +23,8 @@ FROM php:8.2-fpm AS runtime
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     git unzip pkg-config libzip-dev libicu-dev libpng-dev libonig-dev libxml2-dev libsqlite3-dev \
-    nginx supervisor \
- && docker-php-ext-install pdo_mysql pdo_sqlite zip bcmath intl \
+    nginx supervisor libpq-dev \
+ && docker-php-ext-install pdo_mysql pdo_sqlite pdo_pgsql zip bcmath intl \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
