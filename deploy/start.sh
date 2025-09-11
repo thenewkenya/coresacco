@@ -13,9 +13,6 @@ php artisan tinker --execute="echo 'DB Connection: ' . config('database.default'
 echo "Running database migrations..."
 php artisan migrate --force --database=pgsql
 
-echo "Publishing Flux assets..."
-php artisan flux:install --force || echo "Flux assets may already be published"
-
 echo "Setting up admin user..."
 php artisan sacco:setup-roles --admin-email=admin@esacco.com --admin-password=AdminPassword123! || echo "Admin user may already exist"
 

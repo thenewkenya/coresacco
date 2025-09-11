@@ -2,9 +2,6 @@ import './bootstrap';
 import { Chart, registerables } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 
-// Import Flux Livewire components
-import { Flux } from '../../vendor/livewire/flux/dist/flux.js';
-
 // Register Chart.js components
 Chart.register(...registerables);
 
