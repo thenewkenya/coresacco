@@ -16,9 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\CheckPermission::class,
         ]);
         
-        // Force HTTPS in production
-        $middleware->web(append: [
-            \App\Http\Middleware\ForceHttps::class,
+        // Trust proxies for HTTPS detection
+        $middleware->web(prepend: [
+            \App\Http\Middleware\TrustProxies::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
