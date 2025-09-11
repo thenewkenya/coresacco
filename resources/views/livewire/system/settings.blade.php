@@ -2,6 +2,7 @@
 
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use App\Models\Setting;
 
 new #[Layout('components.layouts.app')] class extends Component {
     public $activeTab = 'general';
@@ -9,6 +10,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     public $generalSettings = [];
     public $financialSettings = [];
     public $featureSettings = [];
+    public $mobileMoneySettings = [];
 
     public function mount()
     {
@@ -17,7 +19,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function loadSettingsData()
     {
-        // Mock data for demonstration - in real app, this would come from the controller
+        // Load settings. For now general/financial/features remain local-only.
         $this->generalSettings = [
             'organization_name' => 'eSacco Cooperative Society',
             'organization_code' => 'ESC001',
@@ -47,6 +49,15 @@ new #[Layout('components.layouts.app')] class extends Component {
             'require_two_factor_auth' => false,
             'enable_email_notifications' => true
         ];
+
+        // Load Mobile Money settings (credentials now from .env; UI only shows toggles and limits)
+        $this->mobileMoneySettings = [
+            'mpesa_enabled' => (bool) Setting::get('mpesa_enabled', false),
+            'mobile_money_min_amount' => (int) Setting::get('mobile_money_min_amount', 10),
+            'mobile_money_max_amount' => (int) Setting::get('mobile_money_max_amount', 500000),
+            'mobile_money_transaction_fee' => (int) Setting::get('mobile_money_transaction_fee', 0),
+            'mobile_money_transaction_fee_percentage' => (int) Setting::get('mobile_money_transaction_fee_percentage', 0),
+        ];
     }
 
     public function setActiveTab($tab)
@@ -56,7 +67,15 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function saveSettings()
     {
-        // In a real app, this would save the settings to the database
+        // Persist Mobile Money settings
+        if ($this->activeTab === 'mobile_money') {
+            $group = 'mobile_money';
+            Setting::set('mpesa_enabled', $this->mobileMoneySettings['mpesa_enabled'] ? 'true' : 'false', 'boolean', $group);
+            Setting::set('mobile_money_min_amount', (string) $this->mobileMoneySettings['mobile_money_min_amount'], 'number', $group);
+            Setting::set('mobile_money_max_amount', (string) $this->mobileMoneySettings['mobile_money_max_amount'], 'number', $group);
+            Setting::set('mobile_money_transaction_fee', (string) $this->mobileMoneySettings['mobile_money_transaction_fee'], 'number', $group);
+            Setting::set('mobile_money_transaction_fee_percentage', (string) $this->mobileMoneySettings['mobile_money_transaction_fee_percentage'], 'number', $group);
+        }
         session()->flash('success', 'Settings saved successfully!');
     }
 }
@@ -95,6 +114,11 @@ new #[Layout('components.layouts.app')] class extends Component {
                     class="flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap {{ $activeTab === 'features' ? 'bg-blue-600 text-white' : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700' }}">
                 <flux:icon.puzzle-piece class="w-4 h-4" />
                 <span>Features</span>
+            </button>
+            <button wire:click="setActiveTab('mobile_money')" 
+                    class="flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap {{ $activeTab === 'mobile_money' ? 'bg-blue-600 text-white' : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700' }}">
+                <flux:icon.phone class="w-4 h-4" />
+                <span>Mobile Money</span>
             </button>
         </nav>
     </div>
@@ -388,6 +412,69 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <div class="ml-4">
                         <flux:checkbox wire:model="featureSettings.enable_email_notifications" />
                     </div>
+                </div>
+            </div>
+        </div>
+    @elseif($activeTab === 'mobile_money')
+        <!-- Mobile Money Settings -->
+        <div class="space-y-6">
+            <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                <div class="flex items-center space-x-3 mb-6">
+                    <div class="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                        <flux:icon.phone class="w-5 h-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                        <flux:heading size="base" class="dark:text-zinc-100">M-Pesa Configuration</flux:heading>
+                        <flux:subheading class="dark:text-zinc-400">Credentials are configured via .env. Toggle enablement and limits here.</flux:subheading>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-700 rounded-lg">
+                        <div class="flex-1">
+                            <flux:label class="!mb-0">Enable M-Pesa</flux:label>
+                            <flux:description class="mt-1">Allow deposits via M-Pesa STK Push</flux:description>
+                        </div>
+                        <div class="ml-4">
+                            <flux:checkbox wire:model="mobileMoneySettings.mpesa_enabled" />
+                        </div>
+                    </div>
+
+                    
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 border border-zinc-200 dark:border-zinc-700">
+                <div class="flex items-center space-x-3 mb-6">
+                    <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <flux:icon.scale class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                        <flux:heading size="base" class="dark:text-zinc-100">Limits & Fees</flux:heading>
+                        <flux:subheading class="dark:text-zinc-400">Control min/max and optional fees</flux:subheading>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <flux:field>
+                        <flux:label>Minimum Amount</flux:label>
+                        <flux:input type="number" min="0" wire:model.defer="mobileMoneySettings.mobile_money_min_amount" prefix="KES" />
+                    </flux:field>
+                    
+                    <flux:field>
+                        <flux:label>Maximum Amount</flux:label>
+                        <flux:input type="number" min="0" wire:model.defer="mobileMoneySettings.mobile_money_max_amount" prefix="KES" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>Flat Fee (optional)</flux:label>
+                        <flux:input type="number" min="0" wire:model.defer="mobileMoneySettings.mobile_money_transaction_fee" prefix="KES" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>Fee Percentage (optional)</flux:label>
+                        <flux:input type="number" min="0" max="100" step="0.01" wire:model.defer="mobileMoneySettings.mobile_money_transaction_fee_percentage" suffix="%" />
+                    </flux:field>
                 </div>
             </div>
         </div>

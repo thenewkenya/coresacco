@@ -172,14 +172,29 @@ new #[Layout('components.layouts.app')] class extends Component {
                 return;
             }
 
-            // Mock payment initiation - replace with actual service later
-            $this->transactionId = 'TXN' . time() . rand(1000, 9999);
+            // Initiate real mobile money payment
+            $mobileMoneyService = app(\App\Services\MobileMoneyService::class);
+
+            $result = match ($this->mobileMoneyProvider) {
+                'mpesa' => $mobileMoneyService->initiateMpesaPayment($account, (float) $this->amount, $this->phoneNumber),
+                'airtel' => ['success' => false, 'message' => 'Airtel Money not enabled'],
+                'tkash' => ['success' => false, 'message' => 'T-Kash not enabled'],
+                default => ['success' => false, 'message' => 'Invalid mobile money provider']
+            };
+
+            if (!($result['success'] ?? false)) {
+                $this->addError('general', $result['message'] ?? 'Failed to initiate payment.');
+                return;
+            }
+
+            // Use real transaction id for polling
+            $this->transactionId = (string) ($result['transaction_id'] ?? '');
             $this->paymentStatus = 'pending';
             $this->showPaymentModal = true;
-            
-            session()->flash('success', 'M-Pesa payment initiated. Please check your phone for the payment prompt.');
-            
-            // Start polling for payment status (mock)
+
+            session()->flash('success', $result['message'] ?? 'M-Pesa payment initiated. Please check your phone for the payment prompt.');
+
+            // Start polling for payment status
             $this->dispatch('start-payment-polling', [
                 'transactionId' => $this->transactionId,
                 'provider' => $this->mobileMoneyProvider

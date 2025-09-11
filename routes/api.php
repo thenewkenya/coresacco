@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\LoanController;
 use App\Http\Controllers\LoanApplicationController;
 use App\Models\Transaction;
+use App\Services\MobileMoneyService;
 
 /*
 |--------------------------------------------------------------------------
@@ -120,6 +121,18 @@ Route::middleware('auth:sanctum')->group(function () {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
         
+        // If still pending and has an M-Pesa CheckoutRequestID, query status as fallback
+        if ($transaction->status === 'pending' && ($transaction->metadata['checkout_request_id'] ?? null)) {
+            try {
+                /** @var MobileMoneyService $mm */
+                $mm = app(MobileMoneyService::class);
+                $mm->queryMpesaStatus($transaction);
+                $transaction->refresh();
+            } catch (\Throwable $e) {
+                // ignore query errors in polling response
+            }
+        }
+
         return response()->json([
             'id' => $transaction->id,
             'status' => $transaction->status,

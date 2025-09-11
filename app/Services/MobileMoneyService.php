@@ -17,11 +17,11 @@ class MobileMoneyService
     public function __construct()
     {
         $this->mpesaConfig = [
-            'consumer_key' => setting('mpesa_consumer_key'),
-            'consumer_secret' => setting('mpesa_consumer_secret'),
-            'base_url' => setting('mpesa_base_url', 'https://sandbox.safaricom.co.ke'),
-            'shortcode' => setting('mpesa_shortcode'),
-            'passkey' => setting('mpesa_passkey'),
+            'consumer_key' => env('MPESA_CONSUMER_KEY'),
+            'consumer_secret' => env('MPESA_CONSUMER_SECRET'),
+            'base_url' => env('MPESA_BASE_URL', 'https://sandbox.safaricom.co.ke'),
+            'shortcode' => env('MPESA_SHORTCODE'),
+            'passkey' => env('MPESA_PASSKEY'),
         ];
 
         $this->airtelConfig = [
@@ -58,7 +58,7 @@ class MobileMoneyService
                     'PartyA' => $this->formatPhoneNumber($phoneNumber),
                     'PartyB' => $this->mpesaConfig['shortcode'],
                     'PhoneNumber' => $this->formatPhoneNumber($phoneNumber),
-                    'CallBackURL' => route('webhooks.mpesa.callback'),
+                    'CallBackURL' => env('MPESA_CALLBACK_URL', route('webhooks.mpesa.callback')),
                     'AccountReference' => $account->account_number,
                     'TransactionDesc' => 'SACCO Deposit - ' . $account->account_number,
                 ]);
@@ -293,6 +293,80 @@ class MobileMoneyService
     }
 
     /**
+     * Query M-Pesa STK Push status and update the transaction accordingly
+     */
+    public function queryMpesaStatus(Transaction $transaction): array
+    {
+        try {
+            $checkoutRequestId = $transaction->metadata['checkout_request_id'] ?? null;
+            if (!$checkoutRequestId) {
+                return ['success' => false, 'message' => 'Missing CheckoutRequestID'];
+            }
+
+            $accessToken = $this->getMpesaAccessToken();
+            $timestamp = Carbon::now()->format('YmdHis');
+            $password = base64_encode($this->mpesaConfig['shortcode'] . $this->mpesaConfig['passkey'] . $timestamp);
+
+            $response = Http::withToken($accessToken)
+                ->post($this->mpesaConfig['base_url'] . '/mpesa/stkpushquery/v1/query', [
+                    'BusinessShortCode' => $this->mpesaConfig['shortcode'],
+                    'Password' => $password,
+                    'Timestamp' => $timestamp,
+                    'CheckoutRequestID' => $checkoutRequestId,
+                ]);
+
+            if (!$response->successful()) {
+                throw new \Exception('Query API Error: ' . $response->body());
+            }
+
+            $data = $response->json();
+            $resultCode = (int) ($data['ResultCode'] ?? 1);
+            $resultDesc = $data['ResultDesc'] ?? null;
+
+            if ($resultCode === 0) {
+                // Considered successful; if transaction still pending, finalize it
+                if ($transaction->status === Transaction::STATUS_PENDING) {
+                    $account = $transaction->account;
+                    $account->balance += $transaction->amount;
+                    $account->save();
+
+                    $transaction->update([
+                        'status' => Transaction::STATUS_COMPLETED,
+                        'balance_after' => $account->balance,
+                        'metadata' => array_merge($transaction->metadata ?? [], [
+                            'stk_query_result' => $data,
+                            'confirmed_at' => now()->toISOString(),
+                        ]),
+                    ]);
+                }
+                return ['success' => true, 'status' => 'completed'];
+            }
+
+            // Non-zero: failed/cancelled/timeout
+            if ($transaction->status === Transaction::STATUS_PENDING) {
+                $transaction->update([
+                    'status' => Transaction::STATUS_FAILED,
+                    'metadata' => array_merge($transaction->metadata ?? [], [
+                        'stk_query_result' => $data,
+                        'result_code' => $resultCode,
+                        'result_desc' => $resultDesc,
+                        'failed_at' => now()->toISOString(),
+                    ]),
+                ]);
+            }
+
+            return ['success' => true, 'status' => 'failed', 'message' => $resultDesc];
+
+        } catch (\Exception $e) {
+            Log::error('M-Pesa STK query failed', [
+                'transaction_id' => $transaction->id,
+                'error' => $e->getMessage(),
+            ]);
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Get Airtel access token
      */
     private function getAirtelAccessToken(): string
@@ -348,33 +422,65 @@ class MobileMoneyService
      */
     private function processMpesaConfirmation(array $webhookData): bool
     {
-        // Implementation for M-Pesa webhook processing
-        $resultCode = $webhookData['Body']['stkCallback']['ResultCode'] ?? null;
-        $checkoutRequestId = $webhookData['Body']['stkCallback']['CheckoutRequestID'] ?? null;
+        $stk = $webhookData['Body']['stkCallback'] ?? [];
+        $resultCode = $stk['ResultCode'] ?? null;
+        $resultDesc = $stk['ResultDesc'] ?? null;
+        $checkoutRequestId = $stk['CheckoutRequestID'] ?? null;
 
-        if ($resultCode === 0) {
-            // Payment successful
-            $transaction = Transaction::where('metadata->checkout_request_id', $checkoutRequestId)->first();
-            
-            if ($transaction) {
-                // Update account balance
-                $account = $transaction->account;
-                $account->balance += $transaction->amount;
-                $account->save();
-
-                // Update transaction
-                $transaction->update([
-                    'status' => Transaction::STATUS_COMPLETED,
-                    'balance_after' => $account->balance,
-                    'metadata' => array_merge($transaction->metadata ?? [], [
-                        'mpesa_receipt_number' => $webhookData['Body']['stkCallback']['CallbackMetadata']['Item'][1]['Value'] ?? null,
-                        'confirmed_at' => now()->toISOString(),
-                    ]),
-                ]);
-
-                return true;
-            }
+        if (!$checkoutRequestId) {
+            return false;
         }
+
+        $transaction = Transaction::where('metadata->checkout_request_id', $checkoutRequestId)->first();
+        if (!$transaction) {
+            return false;
+        }
+
+        // Helper to extract a value from CallbackMetadata by Name
+        $extractFromItems = function (array $items, string $name) {
+            foreach ($items as $item) {
+                if (($item['Name'] ?? null) === $name) {
+                    return $item['Value'] ?? null;
+                }
+            }
+            return null;
+        };
+
+        if ((int) $resultCode === 0) {
+            $items = $stk['CallbackMetadata']['Item'] ?? [];
+            $receipt = $extractFromItems($items, 'MpesaReceiptNumber')
+                ?? $extractFromItems($items, 'ReceiptNumber')
+                ?? null;
+            $amountPaid = $extractFromItems($items, 'Amount') ?? $transaction->amount;
+
+            // Credit account
+            $account = $transaction->account;
+            $account->balance += $transaction->amount;
+            $account->save();
+
+            $transaction->update([
+                'status' => Transaction::STATUS_COMPLETED,
+                'balance_after' => $account->balance,
+                'metadata' => array_merge($transaction->metadata ?? [], [
+                    'mpesa_receipt_number' => $receipt,
+                    'paid_amount' => $amountPaid,
+                    'result_desc' => $resultDesc,
+                    'confirmed_at' => now()->toISOString(),
+                ]),
+            ]);
+
+            return true;
+        }
+
+        // Handle failures/cancellations: mark transaction failed
+        $transaction->update([
+            'status' => Transaction::STATUS_FAILED,
+            'metadata' => array_merge($transaction->metadata ?? [], [
+                'result_code' => $resultCode,
+                'result_desc' => $resultDesc,
+                'failed_at' => now()->toISOString(),
+            ]),
+        ]);
 
         return false;
     }
