@@ -50,7 +50,16 @@ RUN php artisan config:cache \
  && php artisan route:cache \
  && php artisan view:cache || true
 
+# Create startup script to run migrations and start services
+RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "Running database migrations..."\n\
+php artisan migrate --force\n\
+echo "Starting services..."\n\
+exec /usr/bin/supervisord -n' > /start.sh \
+ && chmod +x /start.sh
+
 EXPOSE 80
-CMD ["/usr/bin/supervisord", "-n"]
+CMD ["/start.sh"]
 
 
