@@ -58,9 +58,6 @@ RUN echo '#!/bin/bash\n\
 set -e\n\
 echo "Running database migrations..."\n\
 php artisan migrate --force\n\
-echo "Creating sessions table..."\n\
-php artisan session:table || true\n\
-php artisan migrate --force || true\n\
 echo "Clearing caches..."\n\
 php artisan config:clear || true\n\
 php artisan cache:clear || true\n\
