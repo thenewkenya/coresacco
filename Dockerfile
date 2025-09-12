@@ -40,6 +40,12 @@ COPY . .
 COPY --from=vendor /app/vendor ./vendor
 COPY --from=frontend /app/public/build ./public/build
 
+# Copy Flux JavaScript assets
+RUN mkdir -p public/flux \
+ && cp vendor/livewire/flux/dist/flux.min.js public/flux/flux.js \
+ && cp vendor/livewire/flux/dist/flux-lite.min.js public/flux/flux-lite.js \
+ && chown -R www-data:www-data public/flux
+
 # Ensure build directory exists and has correct permissions
 RUN mkdir -p public/build && chown -R www-data:www-data public/build
 

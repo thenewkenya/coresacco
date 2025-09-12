@@ -13,6 +13,12 @@ php artisan tinker --execute="echo 'DB Connection: ' . config('database.default'
 echo "Running database migrations..."
 php artisan migrate --force --database=pgsql
 
+echo "Setting up Flux assets..."
+mkdir -p public/flux
+cp vendor/livewire/flux/dist/flux.min.js public/flux/flux.js || echo "Flux JS not found"
+cp vendor/livewire/flux/dist/flux-lite.min.js public/flux/flux-lite.js || echo "Flux Lite JS not found"
+chown -R www-data:www-data public/flux || echo "Could not set Flux permissions"
+
 echo "Setting up admin user..."
 php artisan sacco:setup-roles --admin-email=admin@esacco.com --admin-password=AdminPassword123! || echo "Admin user may already exist"
 
