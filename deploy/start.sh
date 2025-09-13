@@ -26,10 +26,18 @@ echo "Fixing admin user roles..."
 php /var/www/html/deploy/fix-admin.php || echo "Admin fix script failed"
 
 echo "Setting up caching..."
-# Set cache driver to redis if available, otherwise database
-php artisan config:set cache.default redis || php artisan config:set cache.default database
-php artisan config:set session.driver redis || php artisan config:set session.driver database
-php artisan config:set queue.default redis || php artisan config:set queue.default database
+# Configure caching via environment variables
+if [ -n "$REDIS_URL" ]; then
+    echo "Using Redis for caching..."
+    export CACHE_DRIVER=redis
+    export SESSION_DRIVER=redis
+    export QUEUE_CONNECTION=redis
+else
+    echo "Using database for caching..."
+    export CACHE_DRIVER=database
+    export SESSION_DRIVER=database
+    export QUEUE_CONNECTION=database
+fi
 
 echo "Optimizing Laravel..."
 php artisan config:cache
