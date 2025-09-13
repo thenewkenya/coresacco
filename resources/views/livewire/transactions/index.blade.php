@@ -323,7 +323,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                             <flux:menu.item wire:click="viewTransaction({{ $transaction->id }})" icon="eye">
                                                 View Details
                                             </flux:menu.item>
-                                            @if($transaction->status === 'pending')
+                                            @if($transaction->status === 'pending' && auth()->user()->can('approve', $transaction))
                                                 <flux:menu.item icon="check">
                                                     Approve
                                                 </flux:menu.item>
@@ -521,7 +521,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
             <div class="flex justify-end gap-3">
                 <flux:button variant="ghost" wire:click="closeModals">Close</flux:button>
-                @if($selectedTransaction->status === 'pending')
+                @if($selectedTransaction->status === 'pending' && auth()->user()->can('approve', $selectedTransaction))
                     <flux:button variant="primary">Approve</flux:button>
                     <flux:button variant="danger">Reject</flux:button>
                 @endif

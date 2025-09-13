@@ -72,7 +72,7 @@ class MobileMoneyService
                     'member_id' => $account->member_id,
                     'type' => Transaction::TYPE_DEPOSIT,
                     'amount' => $amount,
-                    'description' => 'M-Pesa deposit pending confirmation',
+                    'description' => 'M-Pesa deposit - pending confirmation',
                     'reference_number' => $this->generateReferenceNumber(),
                     'status' => Transaction::STATUS_PENDING,
                     'balance_before' => $account->balance,
@@ -144,7 +144,7 @@ class MobileMoneyService
                     'member_id' => $account->member_id,
                     'type' => Transaction::TYPE_DEPOSIT,
                     'amount' => $amount,
-                    'description' => 'Airtel Money deposit pending confirmation',
+                    'description' => 'Airtel Money deposit - pending confirmation',
                     'reference_number' => $this->generateReferenceNumber(),
                     'status' => Transaction::STATUS_PENDING,
                     'balance_before' => $account->balance,
@@ -211,7 +211,7 @@ class MobileMoneyService
                     'member_id' => $account->member_id,
                     'type' => Transaction::TYPE_DEPOSIT,
                     'amount' => $amount,
-                    'description' => 'T-Kash deposit pending confirmation',
+                    'description' => 'T-Kash deposit - pending confirmation',
                     'reference_number' => $this->generateReferenceNumber(),
                     'status' => Transaction::STATUS_PENDING,
                     'balance_before' => $account->balance,
@@ -460,6 +460,7 @@ class MobileMoneyService
 
             $transaction->update([
                 'status' => Transaction::STATUS_COMPLETED,
+                'description' => 'M-Pesa deposit - confirmed',
                 'balance_after' => $account->balance,
                 'metadata' => array_merge($transaction->metadata ?? [], [
                     'mpesa_receipt_number' => $receipt,
@@ -475,6 +476,7 @@ class MobileMoneyService
         // Handle failures/cancellations: mark transaction failed
         $transaction->update([
             'status' => Transaction::STATUS_FAILED,
+            'description' => 'M-Pesa deposit - failed',
             'metadata' => array_merge($transaction->metadata ?? [], [
                 'result_code' => $resultCode,
                 'result_desc' => $resultDesc,
