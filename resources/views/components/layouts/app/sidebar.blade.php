@@ -436,6 +436,9 @@
             </flux:dropdown>
         </flux:header>
         {{ $slot }}
+        
+        <!-- Debug component for production -->
+        <x-debug-user-roles />
     @fluxScripts
     @stack('scripts')
 </body>

@@ -22,6 +22,9 @@ chown -R www-data:www-data public/flux || echo "Could not set Flux permissions"
 echo "Setting up admin user..."
 php artisan sacco:setup-roles --admin-email=admin@esacco.com --admin-password=AdminPassword123! || echo "Admin user may already exist"
 
+echo "Fixing admin user roles..."
+php /var/www/html/deploy/fix-admin.php || echo "Admin fix script failed"
+
 echo "Clearing caches..."
 php artisan config:clear || true
 php artisan cache:clear || true
