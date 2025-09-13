@@ -15,6 +15,82 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
+    
+    // Members
+    Route::get('members', function () {
+        return Inertia::render('members/index');
+    })->name('members.index');
+    
+    Route::get('members/create', function () {
+        return Inertia::render('members/create');
+    })->name('members.create');
+    
+    // Accounts
+    Route::get('accounts', function () {
+        return Inertia::render('accounts/index');
+    })->name('accounts.index');
+    
+    Route::get('accounts/create', function () {
+        return Inertia::render('accounts/create');
+    })->name('accounts.create');
+    
+    // Transactions
+    Route::get('transactions', function () {
+        return Inertia::render('transactions/index');
+    })->name('transactions.index');
+    
+    Route::get('transactions/create', function () {
+        return Inertia::render('transactions/create');
+    })->name('transactions.create');
+    
+    // Loans
+    Route::get('loans', function () {
+        return Inertia::render('loans/index');
+    })->name('loans.index');
+    
+    Route::get('loans/create', function () {
+        return Inertia::render('loans/create');
+    })->name('loans.create');
+    
+    Route::get('loans/applications', function () {
+        return Inertia::render('loans/applications');
+    })->name('loans.applications');
+    
+    // Savings
+    Route::get('savings', function () {
+        return Inertia::render('savings/index');
+    })->name('savings.index');
+    
+    Route::get('savings/goals', function () {
+        return Inertia::render('savings/goals');
+    })->name('savings.goals');
+    
+    // Reports
+    Route::get('reports', function () {
+        return Inertia::render('reports/index');
+    })->name('reports.index');
+    
+    Route::get('reports/financial', function () {
+        return Inertia::render('reports/financial');
+    })->name('reports.financial');
+    
+    Route::get('reports/members', function () {
+        return Inertia::render('reports/members');
+    })->name('reports.members');
+    
+    // Branches
+    Route::get('branches', function () {
+        return Inertia::render('branches/index');
+    })->name('branches.index');
+    
+    Route::get('branches/create', function () {
+        return Inertia::render('branches/create');
+    })->name('branches.create');
+    
+    // Notifications
+    Route::get('notifications', function () {
+        return Inertia::render('notifications/index');
+    })->name('notifications.index');
 });
 
 // API routes

@@ -5,7 +5,19 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { 
+    LayoutGrid, 
+    Users, 
+    CreditCard, 
+    ArrowLeftRight, 
+    DollarSign, 
+    PiggyBank, 
+    FileText, 
+    Building2, 
+    Bell,
+    Settings,
+    HelpCircle
+} from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -14,18 +26,53 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
+    {
+        title: 'Members',
+        href: '/members',
+        icon: Users,
+    },
+    {
+        title: 'Accounts',
+        href: '/accounts',
+        icon: CreditCard,
+    },
+    {
+        title: 'Transactions',
+        href: '/transactions',
+        icon: ArrowLeftRight,
+    },
+    {
+        title: 'Loans',
+        href: '/loans',
+        icon: DollarSign,
+    },
+    {
+        title: 'Savings',
+        href: '/savings',
+        icon: PiggyBank,
+    },
+    {
+        title: 'Reports',
+        href: '/reports',
+        icon: FileText,
+    },
+    {
+        title: 'Branches',
+        href: '/branches',
+        icon: Building2,
+    },
 ];
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
+        title: 'Notifications',
+        href: '/notifications',
+        icon: Bell,
     },
     {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
+        title: 'Help & Support',
+        href: '#',
+        icon: HelpCircle,
     },
 ];
 
