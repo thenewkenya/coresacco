@@ -236,7 +236,16 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->paymentStatus = 'completed';
         session()->flash('success', 'Mobile money payment completed successfully! Funds have been added to your account.');
         
-        // Reset form
+        // Get the transaction to redirect to receipt
+        if ($this->transactionId) {
+            $transaction = \App\Models\Transaction::find($this->transactionId);
+            if ($transaction) {
+                // Redirect to receipt page
+                return $this->redirect(route('transactions.receipt', $transaction), navigate: true);
+            }
+        }
+        
+        // Fallback: reset form if no transaction found
         $this->reset(['amount', 'description', 'reference_number', 'paymentStatus', 'transactionId']);
         $this->selectedAccount = Account::find($this->account_id); // Refresh account data
     }

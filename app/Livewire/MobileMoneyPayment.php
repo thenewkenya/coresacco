@@ -152,6 +152,17 @@ class MobileMoneyPayment extends Component
     {
         $this->paymentStatus = 'completed';
         $this->successMessage = 'Payment of KES ' . number_format($this->amount, 2) . ' completed successfully!';
+        
+        // Get the transaction to redirect to receipt
+        if ($this->transactionId) {
+            $transaction = \App\Models\Transaction::find($this->transactionId);
+            if ($transaction) {
+                // Redirect to receipt page
+                return $this->redirect(route('transactions.receipt', $transaction), navigate: true);
+            }
+        }
+        
+        // Fallback: show success modal if no transaction found
         $this->showSuccessModal = true;
         
         // Clear form
