@@ -158,7 +158,7 @@ class MobileMoneyPayment extends Component
             $transaction = \App\Models\Transaction::find($this->transactionId);
             if ($transaction && $transaction->status === 'completed') {
                 // Only redirect to receipt for completed transactions
-                return $this->redirect(route('transactions.receipt', $transaction), navigate: true);
+                $this->js('window.location.href = "' . route('transactions.receipt', $transaction) . '"');
             } elseif ($transaction && $transaction->status === 'pending') {
                 // For pending transactions, show success message but don't redirect to receipt
                 $this->successMessage = 'Payment received! Transaction is pending approval and will be processed shortly.';

@@ -183,7 +183,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             $transaction = $transactionService->processWithdrawal($account, $this->getTotalAmount(), $description, $metadata);
 
             // Redirect to receipt page
-            return $this->redirect(route('transactions.receipt', $transaction), navigate: true);
+            $this->js('window.location.href = "' . route('transactions.receipt', $transaction) . '"');
             
         } catch (\Exception $e) {
             $this->addError('general', 'Failed to process withdrawal: ' . $e->getMessage());

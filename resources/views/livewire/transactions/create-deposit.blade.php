@@ -241,7 +241,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             $transaction = \App\Models\Transaction::find($this->transactionId);
             if ($transaction && $transaction->status === 'completed') {
                 // Only redirect to receipt for completed transactions
-                return $this->redirect(route('transactions.receipt', $transaction), navigate: true);
+                $this->js('window.location.href = "' . route('transactions.receipt', $transaction) . '"');
             } elseif ($transaction && $transaction->status === 'pending') {
                 // For pending transactions, show success message but don't redirect to receipt
                 session()->flash('info', 'Payment received! Transaction is pending approval and will be processed shortly.');
@@ -317,7 +317,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             $transaction = $transactionService->processDeposit($account, (float) $this->amount, $description, $metadata);
 
             // Redirect to receipt page
-            return $this->redirect(route('transactions.receipt', $transaction), navigate: true);
+            $this->js('window.location.href = "' . route('transactions.receipt', $transaction) . '"');
             
         } catch (\Exception $e) {
             $this->addError('general', 'Failed to process deposit: ' . $e->getMessage());

@@ -13,3 +13,46 @@
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance
+
+<!-- Global Loading Indicator -->
+<style>
+    .navigation-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        z-index: 9999;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .navigation-loading.show {
+        opacity: 1;
+    }
+    
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
+
+<script>
+    // Global navigation loading indicator
+    document.addEventListener('alpine:navigating', function() {
+        const indicator = document.querySelector('.navigation-loading');
+        if (indicator) {
+            indicator.classList.add('show');
+        }
+    });
+    
+    document.addEventListener('alpine:navigated', function() {
+        const indicator = document.querySelector('.navigation-loading');
+        if (indicator) {
+            indicator.classList.remove('show');
+        }
+    });
+</script>

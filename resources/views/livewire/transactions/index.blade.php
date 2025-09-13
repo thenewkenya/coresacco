@@ -15,6 +15,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     public $viewMode = 'list'; // 'list' or 'grid'
     public $showViewModal = false;
     public $selectedTransaction = null;
+    public $isLoading = false;
 
     public $statusOptions = [
         'pending' => 'Pending',
@@ -90,6 +91,8 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function viewTransaction($transactionId)
     {
+        $this->isLoading = true;
+        
         $transaction = Transaction::findOrFail($transactionId);
         
         // Check permissions
@@ -98,13 +101,13 @@ new #[Layout('components.layouts.app')] class extends Component {
             abort(403, 'Unauthorized access to transaction details.');
         }
         
-        // Redirect based on transaction status
+        // Use instant navigation instead of redirect
         if ($transaction->status === 'completed') {
             // For completed transactions, show the receipt
-            return $this->redirect(route('transactions.receipt', $transaction), navigate: true);
+            $this->js('window.location.href = "' . route('transactions.receipt', $transaction) . '"');
         } else {
             // For pending/failed transactions, show the transaction details page
-            return $this->redirect(route('transactions.show', $transaction), navigate: true);
+            $this->js('window.location.href = "' . route('transactions.show', $transaction) . '"');
         }
     }
 
@@ -320,8 +323,12 @@ new #[Layout('components.layouts.app')] class extends Component {
                                         <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
                                         
                                         <flux:menu>
-                                            <flux:menu.item wire:click="viewTransaction({{ $transaction->id }})" icon="eye">
-                                                View Details
+                                            <flux:menu.item wire:click="viewTransaction({{ $transaction->id }})" icon="eye" :disabled="$isLoading">
+                                                <span wire:loading.remove wire:target="viewTransaction({{ $transaction->id }})">View Details</span>
+                                                <span wire:loading wire:target="viewTransaction({{ $transaction->id }})" class="flex items-center">
+                                                    <flux:icon.arrow-path class="w-4 h-4 mr-2 animate-spin" />
+                                                    Loading...
+                                                </span>
                                             </flux:menu.item>
                                             @if($transaction->status === 'pending' && auth()->user()->can('approve', $transaction))
                                                 <flux:menu.item icon="check">
@@ -400,9 +407,15 @@ new #[Layout('components.layouts.app')] class extends Component {
                         </div>
 
                         <div class="flex items-center justify-between mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                            <flux:button variant="ghost" size="sm" wire:click="viewTransaction({{ $transaction->id }})">
-                                <flux:icon.eye class="w-4 h-4 mr-2" />
-                                View
+                            <flux:button variant="ghost" size="sm" wire:click="viewTransaction({{ $transaction->id }})" :disabled="$isLoading">
+                                <span wire:loading.remove wire:target="viewTransaction({{ $transaction->id }})">
+                                    <flux:icon.eye class="w-4 h-4 mr-2" />
+                                    View
+                                </span>
+                                <span wire:loading wire:target="viewTransaction({{ $transaction->id }})" class="flex items-center">
+                                    <flux:icon.arrow-path class="w-4 h-4 mr-2 animate-spin" />
+                                    Loading...
+                                </span>
                             </flux:button>
                             @if($transaction->status === 'pending')
                                 <div class="flex space-x-2">
