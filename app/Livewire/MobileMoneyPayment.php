@@ -148,7 +148,7 @@ class MobileMoneyPayment extends Component
         };
     }
 
-    public function handlePaymentConfirmation($data)
+    public function handlePaymentConfirmation($data = [])
     {
         $this->paymentStatus = 'completed';
         $this->successMessage = 'Payment of KES ' . number_format($this->amount, 2) . ' completed successfully!';
@@ -166,7 +166,7 @@ class MobileMoneyPayment extends Component
         ]);
     }
 
-    public function handlePaymentFailure($data)
+    public function handlePaymentFailure($data = [])
     {
         $this->paymentStatus = 'failed';
         $this->errorMessage = $data['message'] ?? 'Payment failed. Please try again.';

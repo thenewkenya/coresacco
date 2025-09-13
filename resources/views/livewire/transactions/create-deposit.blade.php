@@ -231,7 +231,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         // The modal should only close via explicit actions
     }
 
-    public function handlePaymentConfirmation($data)
+    public function handlePaymentConfirmation($data = [])
     {
         $this->paymentStatus = 'completed';
         session()->flash('success', 'Mobile money payment completed successfully! Funds have been added to your account.');
@@ -241,7 +241,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->selectedAccount = Account::find($this->account_id); // Refresh account data
     }
 
-    public function handlePaymentFailure($data)
+    public function handlePaymentFailure($data = [])
     {
         $this->paymentStatus = 'failed';
         $this->addError('general', $data['message'] ?? 'Mobile money payment failed. Please try again.');
