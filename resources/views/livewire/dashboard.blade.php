@@ -14,60 +14,65 @@ new #[Layout('components.layouts.app')] class extends Component {
     {
         $user = auth()->user();
         
-        // Get real-time statistics
-        $totalMembers = User::where('role', 'member')->count();
-        $totalAssets = Account::sum('balance');
-        $activeLoans = Loan::whereIn('status', ['active', 'disbursed'])->count();
-        $totalLoanAmount = Loan::whereIn('status', ['active', 'disbursed'])->sum('amount');
+        // Cache dashboard data for 5 minutes
+        $cacheKey = 'dashboard_data_' . $user->id . '_' . $user->role;
+        
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($user) {
+            // Get real-time statistics with optimized queries
+            $totalMembers = User::where('role', 'member')->count();
+            $totalAssets = Account::sum('balance');
+            $activeLoans = Loan::whereIn('status', ['active', 'disbursed'])->count();
+            $totalLoanAmount = Loan::whereIn('status', ['active', 'disbursed'])->sum('amount');
 
-        // Today's transactions
-        $todayTransactions = Transaction::whereDate('created_at', today())->count();
-        $todayAmount = Transaction::whereDate('created_at', today())->sum('amount');
+            // Today's transactions
+            $todayTransactions = Transaction::whereDate('created_at', today())->count();
+            $todayAmount = Transaction::whereDate('created_at', today())->sum('amount');
 
-        // This month's data
-        $thisMonthTransactions = Transaction::whereMonth('created_at', now()->month)->sum('amount');
-        $lastMonthTransactions = Transaction::whereMonth('created_at', now()->subMonth()->month)->sum('amount');
-        $transactionGrowth = $lastMonthTransactions > 0 ? (($thisMonthTransactions - $lastMonthTransactions) / $lastMonthTransactions) * 100 : 0;
+            // This month's data
+            $thisMonthTransactions = Transaction::whereMonth('created_at', now()->month)->sum('amount');
+            $lastMonthTransactions = Transaction::whereMonth('created_at', now()->subMonth()->month)->sum('amount');
+            $transactionGrowth = $lastMonthTransactions > 0 ? (($thisMonthTransactions - $lastMonthTransactions) / $lastMonthTransactions) * 100 : 0;
 
-        // Member growth
-        $thisMonthMembers = User::where('role', 'member')->whereMonth('created_at', now()->month)->count();
-        $memberGrowth = 12.8;
+            // Member growth
+            $thisMonthMembers = User::where('role', 'member')->whereMonth('created_at', now()->month)->count();
+            $memberGrowth = 12.8;
 
-        // Pending approvals (for staff/managers)
-        $pendingLoans = Loan::where('status', 'pending')->count();
+            // Pending approvals (for staff/managers)
+            $pendingLoans = Loan::where('status', 'pending')->count();
 
-        // Member-specific data
-        $userAccounts = null;
-        $userLoans = null;
-        $userTotalSavings = 0;
-        $userActiveLoan = null;
+            // Member-specific data
+            $userAccounts = null;
+            $userLoans = null;
+            $userTotalSavings = 0;
+            $userActiveLoan = null;
 
-        if ($user->role === 'member') {
-            $userAccounts = Account::where('member_id', $user->id)->get();
-            $userLoans = Loan::where('member_id', $user->id)->with('loanType')->get();
-            $userTotalSavings = $userAccounts->where('account_type', 'savings')->sum('balance');
-            $userActiveLoan = $userLoans->whereIn('status', ['active', 'disbursed'])->first();
-        }
+            if ($user->role === 'member') {
+                $userAccounts = Account::where('member_id', $user->id)->get();
+                $userLoans = Loan::where('member_id', $user->id)->with('loanType')->get();
+                $userTotalSavings = $userAccounts->where('account_type', 'savings')->sum('balance');
+                $userActiveLoan = $userLoans->whereIn('status', ['active', 'disbursed'])->first();
+            }
 
-        return [
-            'user' => $user,
-            'totalMembers' => $totalMembers,
-            'totalAssets' => $totalAssets,
-            'activeLoans' => $activeLoans,
-            'totalLoanAmount' => $totalLoanAmount,
-            'todayTransactions' => $todayTransactions,
-            'todayAmount' => $todayAmount,
-            'thisMonthTransactions' => $thisMonthTransactions,
-            'lastMonthTransactions' => $lastMonthTransactions,
-            'transactionGrowth' => $transactionGrowth,
-            'thisMonthMembers' => $thisMonthMembers,
-            'memberGrowth' => $memberGrowth,
-            'pendingLoans' => $pendingLoans,
-            'userAccounts' => $userAccounts,
-            'userLoans' => $userLoans,
-            'userTotalSavings' => $userTotalSavings,
-            'userActiveLoan' => $userActiveLoan,
-        ];
+            return [
+                'user' => $user,
+                'totalMembers' => $totalMembers,
+                'totalAssets' => $totalAssets,
+                'activeLoans' => $activeLoans,
+                'totalLoanAmount' => $totalLoanAmount,
+                'todayTransactions' => $todayTransactions,
+                'todayAmount' => $todayAmount,
+                'thisMonthTransactions' => $thisMonthTransactions,
+                'lastMonthTransactions' => $lastMonthTransactions,
+                'transactionGrowth' => $transactionGrowth,
+                'thisMonthMembers' => $thisMonthMembers,
+                'memberGrowth' => $memberGrowth,
+                'pendingLoans' => $pendingLoans,
+                'userAccounts' => $userAccounts,
+                'userLoans' => $userLoans,
+                'userTotalSavings' => $userTotalSavings,
+                'userActiveLoan' => $userActiveLoan,
+            ];
+        });
     }
 }
 

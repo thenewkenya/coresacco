@@ -25,13 +25,27 @@ php artisan sacco:setup-roles --admin-email=admin@esacco.com --admin-password=Ad
 echo "Fixing admin user roles..."
 php /var/www/html/deploy/fix-admin.php || echo "Admin fix script failed"
 
-echo "Clearing caches..."
+echo "Setting up caching..."
+# Set cache driver to redis if available, otherwise database
+php artisan config:set cache.default redis || php artisan config:set cache.default database
+php artisan config:set session.driver redis || php artisan config:set session.driver database
+php artisan config:set queue.default redis || php artisan config:set queue.default database
+
+echo "Optimizing Laravel..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+
+echo "Clearing old caches..."
 php artisan config:clear || true
 php artisan cache:clear || true
 php artisan view:clear || true
 
-echo "Forcing HTTPS..."
+echo "Rebuilding optimized caches..."
 php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 
 echo "Starting services..."
 exec /usr/bin/supervisord -n

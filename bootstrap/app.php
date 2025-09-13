@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
+            'optimize.queries' => \App\Http\Middleware\OptimizeQueries::class,
+            'cache.response' => \App\Http\Middleware\CacheResponse::class,
         ]);
         
         // Trust proxies for HTTPS detection
