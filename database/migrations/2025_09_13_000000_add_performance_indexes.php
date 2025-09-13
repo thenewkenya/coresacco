@@ -29,9 +29,9 @@ return new class extends Migration
 
         Schema::table('accounts', function (Blueprint $table) {
             $table->index('member_id');
-            $table->index('type');
+            $table->index('account_type');
             $table->index('status');
-            $table->index(['member_id', 'type']);
+            $table->index(['member_id', 'account_type']);
         });
 
         Schema::table('loans', function (Blueprint $table) {
@@ -69,9 +69,9 @@ return new class extends Migration
 
         Schema::table('accounts', function (Blueprint $table) {
             $table->dropIndex(['member_id']);
-            $table->dropIndex(['type']);
+            $table->dropIndex(['account_type']);
             $table->dropIndex(['status']);
-            $table->dropIndex(['member_id', 'type']);
+            $table->dropIndex(['member_id', 'account_type']);
         });
 
         Schema::table('loans', function (Blueprint $table) {
