@@ -11,7 +11,19 @@
                         <div>
                             <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Transaction Details</h1>
                             <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                                Review transaction information and take action
+                                @if(auth()->user()->hasRole('member'))
+                                    @if($transaction->status === 'completed')
+                                        Your transaction has been completed successfully
+                                    @elseif($transaction->status === 'pending')
+                                        Your transaction is pending approval
+                                    @elseif($transaction->status === 'failed')
+                                        Your transaction could not be completed
+                                    @else
+                                        Review your transaction information
+                                    @endif
+                                @else
+                                    Review transaction information and take action
+                                @endif
                             </p>
                         </div>
                     </div>
@@ -296,11 +308,23 @@
                             </h3>
                         </div>
                         <div class="p-6 space-y-3">
-                            <a href="{{ route('transactions.receipt', $transaction) }}" 
-                                class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center">
-                                <flux:icon.document-text class="w-4 h-4 mr-2" />
-                                View Receipt
-                            </a>
+                            @if($transaction->status === 'completed')
+                                <a href="{{ route('transactions.receipt', $transaction) }}" 
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                    <flux:icon.document-text class="w-4 h-4 mr-2" />
+                                    View Receipt
+                                </a>
+                            @elseif($transaction->status === 'pending')
+                                <div class="w-full bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 px-4 py-2 rounded-lg text-center">
+                                    <flux:icon.clock class="w-4 h-4 inline mr-2" />
+                                    Receipt available after approval
+                                </div>
+                            @elseif($transaction->status === 'failed')
+                                <div class="w-full bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 px-4 py-2 rounded-lg text-center">
+                                    <flux:icon.x-circle class="w-4 h-4 inline mr-2" />
+                                    No receipt for failed transactions
+                                </div>
+                            @endif
                             
                             <a href="{{ route('transactions.index') }}" 
                                 class="w-full bg-zinc-600 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center">

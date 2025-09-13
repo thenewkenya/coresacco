@@ -90,8 +90,22 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function viewTransaction($transactionId)
     {
-        $this->selectedTransaction = Transaction::with(['member', 'account'])->findOrFail($transactionId);
-        $this->showViewModal = true;
+        $transaction = Transaction::findOrFail($transactionId);
+        
+        // Check permissions
+        $user = auth()->user();
+        if ($user->hasRole('member') && $transaction->member_id !== $user->id) {
+            abort(403, 'Unauthorized access to transaction details.');
+        }
+        
+        // Redirect based on transaction status
+        if ($transaction->status === 'completed') {
+            // For completed transactions, show the receipt
+            return $this->redirect(route('transactions.receipt', $transaction), navigate: true);
+        } else {
+            // For pending/failed transactions, show the transaction details page
+            return $this->redirect(route('transactions.show', $transaction), navigate: true);
+        }
     }
 
     public function closeModals()
