@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Middleware\HandleAppearance;
+use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -11,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
@@ -21,6 +26,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // Trust proxies for HTTPS detection
         $middleware->web(prepend: [
             \App\Http\Middleware\TrustProxies::class,
+        ]);
+        
+        // Add Inertia middleware
+        $middleware->web(append: [
+            HandleAppearance::class,
+            HandleInertiaRequests::class,
+            AddLinkHeadersForPreloadedAssets::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
