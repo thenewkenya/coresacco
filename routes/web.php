@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
+use App\Models\Transaction;
+use App\Services\MobileMoneyService;
 
 Route::get('/', function () {
     return view('welcome');
@@ -295,9 +297,40 @@ Route::middleware(['auth', 'verified'])->prefix('savings')->name('savings.')->gr
 
 require __DIR__.'/auth.php';
 
-// Mobile Money Webhook Routes (no authentication required)
-Route::prefix('webhooks')->name('webhooks.')->group(function () {
-    Route::post('/mpesa/callback', [App\Http\Controllers\MobileMoneyWebhookController::class, 'mpesaCallback'])->name('mpesa.callback');
-    Route::post('/airtel/callback', [App\Http\Controllers\MobileMoneyWebhookController::class, 'airtelCallback'])->name('airtel.callback');
-    Route::post('/tkash/callback', [App\Http\Controllers\MobileMoneyWebhookController::class, 'tkashCallback'])->name('tkash.callback');
-});
+    // Payment status endpoint for frontend polling (web route for better compatibility)
+    Route::get('transactions/{transaction}/status', function (Transaction $transaction) {
+        // Check if user owns this transaction or has permission to view it
+        $user = auth()->user();
+        if ($user->hasRole('member') && $transaction->member_id !== $user->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        
+        // If still pending and has an M-Pesa CheckoutRequestID, query status as fallback
+        if ($transaction->status === 'pending' && ($transaction->metadata['checkout_request_id'] ?? null)) {
+            try {
+                /** @var MobileMoneyService $mm */
+                $mm = app(MobileMoneyService::class);
+                $mm->queryMpesaStatus($transaction);
+                $transaction->refresh();
+            } catch (\Throwable $e) {
+                // ignore query errors in polling response
+            }
+        }
+
+        return response()->json([
+            'id' => $transaction->id,
+            'status' => $transaction->status,
+            'amount' => $transaction->amount,
+            'description' => $transaction->description,
+            'metadata' => $transaction->metadata,
+            'created_at' => $transaction->created_at,
+            'updated_at' => $transaction->updated_at,
+        ]);
+    })->middleware('auth');
+
+    // Mobile Money Webhook Routes (no authentication required)
+    Route::prefix('webhooks')->name('webhooks.')->group(function () {
+        Route::post('/mpesa/callback', [App\Http\Controllers\MobileMoneyWebhookController::class, 'mpesaCallback'])->name('mpesa.callback');
+        Route::post('/airtel/callback', [App\Http\Controllers\MobileMoneyWebhookController::class, 'airtelCallback'])->name('airtel.callback');
+        Route::post('/tkash/callback', [App\Http\Controllers\MobileMoneyWebhookController::class, 'tkashCallback'])->name('tkash.callback');
+    });

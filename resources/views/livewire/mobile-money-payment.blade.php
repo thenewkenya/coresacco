@@ -223,20 +223,35 @@ document.addEventListener('livewire:initialized', () => {
         
         // Start polling for payment status every 5 seconds
         pollingInterval = setInterval(() => {
-            fetch(`/api/transactions/${data[0].transactionId}/status`)
-                .then(response => response.json())
-                .then(result => {
-                    if (result.status === 'completed') {
-                        clearInterval(pollingInterval);
-                        Livewire.dispatch('paymentConfirmed', result);
-                    } else if (result.status === 'failed' || result.status === 'cancelled') {
-                        clearInterval(pollingInterval);
-                        Livewire.dispatch('paymentFailed', result);
-                    }
-                })
-                .catch(error => {
-                    console.error('Payment status polling error:', error);
-                });
+            fetch(`/transactions/${data[0].transactionId}/status`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (result.status === 'completed') {
+                    clearInterval(pollingInterval);
+                    Livewire.dispatch('paymentConfirmed', result);
+                } else if (result.status === 'failed' || result.status === 'cancelled') {
+                    clearInterval(pollingInterval);
+                    Livewire.dispatch('paymentFailed', result);
+                }
+            })
+            .catch(error => {
+                console.error('Payment status polling error:', error);
+                // Don't stop polling on network errors, just log them
+            });
         }, 5000);
         
         // Stop polling after 5 minutes
