@@ -212,8 +212,14 @@ class TransactionController extends Controller
                 ? 'Deposit submitted successfully. Large amounts require approval.' 
                 : 'Deposit processed successfully!';
 
-            return redirect()->route('transactions.receipt', $transaction)
-                ->with('success', $message);
+            // Only redirect to receipt for completed transactions
+            if ($transaction->status === Transaction::STATUS_COMPLETED) {
+                return redirect()->route('transactions.receipt', $transaction)
+                    ->with('success', $message);
+            } else {
+                return redirect()->route('transactions.index')
+                    ->with('success', $message);
+            }
 
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
@@ -282,8 +288,14 @@ class TransactionController extends Controller
                 ? 'Withdrawal submitted successfully. Large amounts require approval.' 
                 : 'Withdrawal processed successfully!';
 
-            return redirect()->route('transactions.receipt', $transaction)
-                ->with('success', $message);
+            // Only redirect to receipt for completed transactions
+            if ($transaction->status === Transaction::STATUS_COMPLETED) {
+                return redirect()->route('transactions.receipt', $transaction)
+                    ->with('success', $message);
+            } else {
+                return redirect()->route('transactions.index')
+                    ->with('success', $message);
+            }
 
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
@@ -385,9 +397,16 @@ class TransactionController extends Controller
                 ? 'Transfer submitted successfully. Large amounts require approval.' 
                 : 'Transfer completed successfully!';
 
-            return redirect()->route('transactions.receipt', $result['debit_transaction'])
-                ->with('success', $message)
-                ->with('transfer_reference', $result['reference_number']);
+            // Only redirect to receipt for completed transactions
+            if ($result['debit_transaction']->status === Transaction::STATUS_COMPLETED) {
+                return redirect()->route('transactions.receipt', $result['debit_transaction'])
+                    ->with('success', $message)
+                    ->with('transfer_reference', $result['reference_number']);
+            } else {
+                return redirect()->route('transactions.index')
+                    ->with('success', $message)
+                    ->with('transfer_reference', $result['reference_number']);
+            }
 
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
@@ -406,6 +425,11 @@ class TransactionController extends Controller
         $user = Auth::user();
         if ($user->role === 'member' && $transaction->member_id !== $user->id) {
             abort(403, 'Unauthorized access to transaction receipt.');
+        }
+
+        // Only allow receipts for completed transactions
+        if ($transaction->status !== Transaction::STATUS_COMPLETED) {
+            abort(404, 'Receipt not available. Transaction must be completed to generate a receipt.');
         }
 
         $transaction->load(['account', 'member']);
@@ -655,6 +679,11 @@ class TransactionController extends Controller
         $user = Auth::user();
         if ($user->role === 'member' && $transaction->member_id !== $user->id) {
             abort(403, 'Unauthorized access to transaction receipt.');
+        }
+
+        // Only allow receipts for completed transactions
+        if ($transaction->status !== Transaction::STATUS_COMPLETED) {
+            abort(404, 'Receipt not available. Transaction must be completed to generate a receipt.');
         }
 
         $transaction->load(['account', 'member']);

@@ -239,9 +239,12 @@ new #[Layout('components.layouts.app')] class extends Component {
         // Get the transaction to redirect to receipt
         if ($this->transactionId) {
             $transaction = \App\Models\Transaction::find($this->transactionId);
-            if ($transaction) {
-                // Redirect to receipt page
+            if ($transaction && $transaction->status === 'completed') {
+                // Only redirect to receipt for completed transactions
                 return $this->redirect(route('transactions.receipt', $transaction), navigate: true);
+            } elseif ($transaction && $transaction->status === 'pending') {
+                // For pending transactions, show success message but don't redirect to receipt
+                session()->flash('info', 'Payment received! Transaction is pending approval and will be processed shortly.');
             }
         }
         
