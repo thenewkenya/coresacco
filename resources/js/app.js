@@ -1,12 +1,24 @@
 import './bootstrap';
-import { Chart, registerables } from 'chart.js';
-import 'chartjs-adapter-date-fns';
 
-// Register Chart.js components
-Chart.register(...registerables);
+// Dynamic Chart.js loading - only load when needed
+let Chart = null;
+let chartLoaded = false;
+
+async function loadChartJS() {
+    if (chartLoaded) return Chart;
+    
+    const { Chart: ChartJS, registerables } = await import('chart.js');
+    const { default: adapter } = await import('chartjs-adapter-date-fns');
+    
+    ChartJS.register(...registerables);
+    Chart = ChartJS;
+    chartLoaded = true;
+    
+    return Chart;
+}
 
 // Make Chart available globally
-window.Chart = Chart;
+window.Chart = () => loadChartJS();
 
 // Store chart instances for cleanup
 window.dashboardCharts = {};
@@ -19,8 +31,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // Listen for Livewire navigation events
 document.addEventListener('livewire:navigated', function() {
     // Small delay to ensure DOM is updated
-    setTimeout(() => {
-        initializeDashboardCharts();
+    setTimeout(async () => {
+        await initializeDashboardCharts();
     }, 100);
 });
 
@@ -39,9 +51,12 @@ function cleanupDashboardCharts() {
     window.dashboardCharts = {};
 }
 
-function initializeDashboardCharts() {
+async function initializeDashboardCharts() {
     // Clean up existing charts first
     cleanupDashboardCharts();
+    
+    // Load Chart.js dynamically
+    const Chart = await loadChartJS();
     
     // Member Growth Chart
     const memberGrowthCtx = document.getElementById('memberGrowthChart');

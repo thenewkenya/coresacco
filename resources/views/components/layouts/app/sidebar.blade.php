@@ -14,14 +14,14 @@
         <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
         <!-- Logo - Desktop in sidebar, Mobile in header -->
-        <a href="{{ route('dashboard') }}" class="me-5 flex items-center space-x-2 rtl:space-x-reverse" wire:navigate>
+        <a href="{{ route('dashboard') }}" class="me-5 flex items-center space-x-2 rtl:space-x-reverse">
             <x-app-logo />
         </a>
 
         <!-- Main Navigation -->
         <flux:navlist variant="outline">
             <!-- Dashboard -->
-            <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+            <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </flux:navlist.item>
 

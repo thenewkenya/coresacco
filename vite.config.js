@@ -21,7 +21,11 @@ export default defineConfig({
                 assetFileNames: 'assets/[name]-[hash][extname]',
                 chunkFileNames: 'assets/[name]-[hash].js',
                 entryFileNames: 'assets/[name]-[hash].js',
+                manualChunks: {
+                    'chart': ['chart.js', 'chartjs-adapter-date-fns'],
+                },
             },
         },
+        chunkSizeWarningLimit: 1000,
     },
 });

@@ -14,6 +14,10 @@
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance
 
+<!-- Load Flux CSS dynamically for better performance -->
+<link rel="preload" href="{{ asset('vendor/livewire/flux/dist/flux.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{{ asset('vendor/livewire/flux/dist/flux.css') }}"></noscript>
+
 <!-- Global Loading Indicator -->
 <style>
     .navigation-loading {
