@@ -57,6 +57,11 @@ RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} storage/logs 
  && chown www-data:www-data storage/logs/laravel.log \
  && chmod 664 storage/logs/laravel.log
 
+# Copy Flux assets to public directory
+RUN mkdir -p public/vendor/livewire/flux/dist \
+ && cp vendor/livewire/flux/dist/flux.css public/vendor/livewire/flux/dist/ \
+ && cp vendor/livewire/flux/dist/flux*.js public/vendor/livewire/flux/dist/ 2>/dev/null || true
+
 # Optimize Laravel (config/routes/views)
 RUN php artisan config:cache \
  && php artisan route:cache \

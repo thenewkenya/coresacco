@@ -50,6 +50,11 @@ php artisan config:clear || true
 php artisan cache:clear || true
 php artisan view:clear || true
 
+echo "Copying Flux assets..."
+mkdir -p public/vendor/livewire/flux/dist
+cp vendor/livewire/flux/dist/flux.css public/vendor/livewire/flux/dist/ 2>/dev/null || true
+cp vendor/livewire/flux/dist/flux*.js public/vendor/livewire/flux/dist/ 2>/dev/null || true
+
 echo "Rebuilding optimized caches..."
 php artisan config:cache
 php artisan route:cache
