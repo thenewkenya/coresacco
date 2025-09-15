@@ -43,7 +43,7 @@ class MobileMoneyPayment extends Component
         return [
             'selectedAccountId' => 'required|exists:accounts,id',
             'amount' => 'required|numeric|min:10|max:500000',
-            'phoneNumber' => 'required|regex:/^(\+254|254|0)[0-9]{9}$/',
+            'phoneNumber' => 'required|string|min:10|max:15',
             'provider' => 'required|in:mpesa,airtel,tkash',
         ];
     }
@@ -148,10 +148,24 @@ class MobileMoneyPayment extends Component
         };
     }
 
-    public function handlePaymentConfirmation($data)
+    public function handlePaymentConfirmation($data = [])
     {
         $this->paymentStatus = 'completed';
         $this->successMessage = 'Payment of KES ' . number_format($this->amount, 2) . ' completed successfully!';
+        
+        // Get the transaction to redirect to receipt
+        if ($this->transactionId) {
+            $transaction = \App\Models\Transaction::find($this->transactionId);
+            if ($transaction && $transaction->status === 'completed') {
+                // Only redirect to receipt for completed transactions
+                $this->js('window.location.href = "' . route('transactions.receipt', $transaction) . '"');
+            } elseif ($transaction && $transaction->status === 'pending') {
+                // For pending transactions, show success message but don't redirect to receipt
+                $this->successMessage = 'Payment received! Transaction is pending approval and will be processed shortly.';
+            }
+        }
+        
+        // Fallback: show success modal if no transaction found or pending
         $this->showSuccessModal = true;
         
         // Clear form
@@ -166,7 +180,7 @@ class MobileMoneyPayment extends Component
         ]);
     }
 
-    public function handlePaymentFailure($data)
+    public function handlePaymentFailure($data = [])
     {
         $this->paymentStatus = 'failed';
         $this->errorMessage = $data['message'] ?? 'Payment failed. Please try again.';

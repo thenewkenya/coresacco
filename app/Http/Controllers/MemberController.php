@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-
 use App\Models\User;
 use App\Models\Branch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\MemberRequest;
+use Inertia\Inertia;
 
 class MemberController extends Controller
 {
@@ -59,7 +59,12 @@ class MemberController extends Controller
             'new_this_month' => User::where('role', 'member')->whereMonth('created_at', now()->month)->count(),
         ];
 
-        return view('members.index', compact('members', 'branches', 'stats'));
+        return Inertia::render('members/index', [
+            'members' => $members,
+            'branches' => $branches,
+            'stats' => $stats,
+            'filters' => $request->only(['search', 'status', 'branch'])
+        ]);
     }
 
     /**
@@ -70,7 +75,9 @@ class MemberController extends Controller
         $this->authorize('create', User::class);
         
         $branches = Branch::all();
-        return view('members.create', compact('branches'));
+        return Inertia::render('members/create', [
+            'branches' => $branches
+        ]);
     }
 
     /**
@@ -161,7 +168,10 @@ class MemberController extends Controller
             'total_accounts' => $member->accounts()->count(),
         ];
 
-        return view('members.show', compact('member', 'stats'));
+        return Inertia::render('members/show', [
+            'member' => $member,
+            'stats' => $stats
+        ]);
     }
 
     /**
@@ -172,7 +182,10 @@ class MemberController extends Controller
         $this->authorize('update', $member);
         
         $branches = Branch::all();
-        return view('members.edit', compact('member', 'branches'));
+        return Inertia::render('members/edit', [
+            'member' => $member,
+            'branches' => $branches
+        ]);
     }
 
     /**
@@ -236,30 +249,7 @@ class MemberController extends Controller
      */
     public function profile()
     {
-        $member = auth()->user();
-        
-        if ($member->role !== 'member') {
-            abort(403, 'Access denied.');
-        }
-
-        $member->load([
-            'branch', 
-            'accounts.transactions', 
-            'loans.loanType', 
-            'transactions' => function($query) {
-                $query->latest()->limit(10);
-            }
-        ]);
-
-        // Calculate member statistics
-        $stats = [
-            'total_deposits' => $member->transactions()->where('type', 'deposit')->sum('amount'),
-            'total_withdrawals' => $member->transactions()->where('type', 'withdrawal')->sum('amount'),
-            'active_loans' => $member->loans()->where('status', 'active')->count(),
-            'total_accounts' => $member->accounts()->count(),
-        ];
-
-        return view('members.profile', compact('member', 'stats'));
+        return redirect()->route('settings.profile');
     }
 
     /**
@@ -282,6 +272,9 @@ class MemberController extends Controller
                              ->latest()
                              ->paginate(20);
         
-        return view('members.transactions', compact('member', 'transactions'));
+        return Inertia::render('members/transactions', [
+            'member' => $member,
+            'transactions' => $transactions
+        ]);
     }
 } 

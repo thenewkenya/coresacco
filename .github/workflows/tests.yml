@@ -43,7 +43,7 @@ jobs:
 
       - name: Create Environment File
         run: |
-          echo "APP_NAME=eSacco" > .env
+          echo "APP_NAME=CoreSacco" > .env
           echo "APP_ENV=testing" >> .env
           echo "APP_KEY=" >> .env
           echo "APP_DEBUG=true" >> .env

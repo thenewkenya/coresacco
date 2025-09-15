@@ -33,13 +33,24 @@ class LoanSeeder extends Seeder
                 
                 // Calculate term from available options
                 $termOptions = $loanType->term_options;
+                
+                // Ensure term_options is an array
+                if (is_string($termOptions)) {
+                    $termOptions = json_decode($termOptions, true);
+                }
+                
+                // Fallback if term_options is still not an array
+                if (!is_array($termOptions) || empty($termOptions)) {
+                    $termOptions = [12, 24, 36]; // Default terms
+                }
+                
                 $term = $termOptions[array_rand($termOptions)];
                 
-                // Determine loan status
+                // Determine loan status with more realistic distribution
                 $statusWeights = [
-                    Loan::STATUS_ACTIVE => 50,
-                    Loan::STATUS_COMPLETED => 25,
-                    Loan::STATUS_PENDING => 15,
+                    Loan::STATUS_ACTIVE => 40,
+                    Loan::STATUS_COMPLETED => 30,
+                    Loan::STATUS_PENDING => 20,
                     Loan::STATUS_DISBURSED => 8,
                     Loan::STATUS_DEFAULTED => 2,
                 ];
@@ -59,7 +70,27 @@ class LoanSeeder extends Seeder
                 }
 
                 $requirements = $loanType->requirements;
+                
+                // Ensure requirements is an array
+                if (is_string($requirements)) {
+                    $requirements = json_decode($requirements, true);
+                }
+                
+                // Fallback if requirements is still not an array
+                if (!is_array($requirements)) {
+                    $requirements = [];
+                }
+                
                 $collateralRequired = $requirements['collateral_required'] ?? false;
+
+                // Generate realistic approval dates for approved loans
+                $approvedAt = null;
+                $approvedBy = null;
+                
+                if (in_array($status, [Loan::STATUS_ACTIVE, Loan::STATUS_COMPLETED, Loan::STATUS_DEFAULTED, Loan::STATUS_DISBURSED])) {
+                    $approvedAt = now()->subMonths(rand(1, 36))->addDays(rand(1, 14));
+                    $approvedBy = 1; // Admin user ID
+                }
 
                 Loan::create([
                     'member_id' => $user->id,
@@ -68,6 +99,9 @@ class LoanSeeder extends Seeder
                     'interest_rate' => $loanType->interest_rate,
                     'term_period' => $term,
                     'status' => $status,
+                    'approved_at' => $approvedAt,
+                    'approved_by' => $approvedBy,
+                    'approval_notes' => $this->getRandomLoanNotes($status),
                     'disbursement_date' => $disbursementDate,
                     'due_date' => $dueDate,
                     'collateral_details' => $collateralRequired ? [
@@ -75,6 +109,10 @@ class LoanSeeder extends Seeder
                         'value' => $amount * 1.5,
                         'description' => 'Land title deed as collateral'
                     ] : null,
+                    'metadata' => [
+                        'purpose' => $this->getRandomLoanPurpose($loanType->name),
+                        'application_notes' => $this->getRandomLoanNotes($status),
+                    ],
                 ]);
             }
         }
@@ -97,5 +135,114 @@ class LoanSeeder extends Seeder
         }
         
         return array_key_first($weights);
+    }
+
+    /**
+     * Get a random loan purpose based on loan type
+     */
+    private function getRandomLoanPurpose(string $loanType): string
+    {
+        $purposes = [
+            'Personal Loan' => [
+                'Medical expenses',
+                'Home improvement',
+                'Wedding expenses',
+                'Debt consolidation',
+                'Family emergency',
+                'Vacation',
+                'Education fees',
+                'Vehicle purchase'
+            ],
+            'Business Loan' => [
+                'Working capital',
+                'Equipment purchase',
+                'Inventory expansion',
+                'Business expansion',
+                'Marketing campaign',
+                'Staff recruitment',
+                'Technology upgrade',
+                'Premises renovation'
+            ],
+            'Emergency Loan' => [
+                'Medical emergency',
+                'Family crisis',
+                'Urgent home repair',
+                'School fees payment',
+                'Funeral expenses',
+                'Legal fees',
+                'Emergency travel',
+                'Utility bills'
+            ],
+            'Education Loan' => [
+                'University fees',
+                'School fees',
+                'Books and supplies',
+                'Accommodation',
+                'Transportation',
+                'Exam fees',
+                'Research materials',
+                'Study abroad'
+            ],
+            'Asset Financing' => [
+                'Vehicle purchase',
+                'Equipment acquisition',
+                'Property development',
+                'Machinery purchase',
+                'Technology investment',
+                'Furniture and fixtures',
+                'Construction materials',
+                'Agricultural equipment'
+            ]
+        ];
+
+        $typePurposes = $purposes[$loanType] ?? ['General purpose'];
+        return $typePurposes[array_rand($typePurposes)];
+    }
+
+    /**
+     * Get random loan notes based on status
+     */
+    private function getRandomLoanNotes(string $status): string
+    {
+        $notes = [
+            Loan::STATUS_PENDING => [
+                'Application under review',
+                'Awaiting documentation',
+                'Credit check in progress',
+                'Under committee review',
+                'Pending guarantor approval'
+            ],
+            Loan::STATUS_ACTIVE => [
+                'Regular payments on schedule',
+                'Good payment history',
+                'No issues reported',
+                'Member in good standing',
+                'Payments up to date'
+            ],
+            Loan::STATUS_COMPLETED => [
+                'Successfully repaid in full',
+                'Loan completed on time',
+                'Excellent payment record',
+                'Fully settled',
+                'No outstanding balance'
+            ],
+            Loan::STATUS_DEFAULTED => [
+                'Payment default occurred',
+                'Collections in progress',
+                'Member unresponsive',
+                'Legal action pending',
+                'Outstanding arrears'
+            ],
+            Loan::STATUS_DISBURSED => [
+                'Recently disbursed',
+                'New loan account',
+                'First payment pending',
+                'Monitoring required',
+                'Fresh disbursement'
+            ]
+        ];
+
+        $statusNotes = $notes[$status] ?? ['No notes'];
+        return $statusNotes[array_rand($statusNotes)];
     }
 }

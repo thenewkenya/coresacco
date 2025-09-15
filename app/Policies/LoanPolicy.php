@@ -22,7 +22,7 @@ class LoanPolicy
     public function view(User $user, Loan $loan): bool
     {
         // Users can view their own loans, staff can view any
-        return $user->id === $loan->user_id || $user->hasAnyRole(['admin', 'staff', 'manager']);
+        return $user->id === $loan->member_id || $user->hasAnyRole(['admin', 'staff', 'manager']);
     }
 
     /**
@@ -45,7 +45,7 @@ class LoanPolicy
         }
         
         // Members can only update their own pending applications
-        return $user->id === $loan->user_id && $loan->status === 'pending';
+        return $user->id === $loan->member_id && $loan->status === 'pending';
     }
 
     /**
@@ -95,7 +95,15 @@ class LoanPolicy
     public function repay(User $user, Loan $loan): bool
     {
         // Users can repay their own active loans, staff can process any active loan repayment
-        $canAccess = $user->id === $loan->user_id || $user->hasAnyRole(['admin', 'staff', 'manager']);
+        $canAccess = $user->id === $loan->member_id || $user->hasAnyRole(['admin', 'staff', 'manager']);
         return $canAccess && $loan->status === 'active';
+    }
+
+    /**
+     * Determine whether the user can disburse the loan.
+     */
+    public function disburse(User $user, Loan $loan): bool
+    {
+        return $user->hasAnyRole(['admin', 'manager']) && $loan->status === 'approved';
     }
 }

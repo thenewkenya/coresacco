@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\LoanType;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\LoanType;
 
 class LoanTypeSeeder extends Seeder
 {
@@ -16,107 +16,63 @@ class LoanTypeSeeder extends Seeder
         $loanTypes = [
             [
                 'name' => 'Personal Loan',
-                'description' => 'General purpose personal loan for members',
-                'interest_rate' => 12.50,
-                'maximum_amount' => 500000,
+                'interest_rate' => 12.00,
                 'minimum_amount' => 5000,
-                'term_options' => [6, 12, 18, 24, 36], // Available terms in months
-                'processing_fee' => 2.00, // percentage
-                'requirements' => [
-                    'guarantors' => 2,
-                    'collateral_required' => false,
-                    'minimum_membership_months' => 6,
-                    'documents' => ['National ID', 'Payslip', 'Bank Statement']
-                ],
-                'status' => 'active',
+                'maximum_amount' => 100000,
+                'term_options' => [6,12,18,24,36],
+                'requirements' => ['savings_balance', 'membership_duration'],
+                'description' => 'Flexible personal loan for various needs',
+                'processing_fee' => 100.00,
+                'status' => 'active'
+            ],
+            [
+                'name' => 'Business Loan',
+                'interest_rate' => 15.00,
+                'minimum_amount' => 10000,
+                'maximum_amount' => 500000,
+                'term_options' => [12,18,24,36,48],
+                'requirements' => ['business_registration', 'financial_statements'],
+                'description' => 'Business expansion and working capital loan',
+                'processing_fee' => 200.00,
+                'status' => 'active'
             ],
             [
                 'name' => 'Emergency Loan',
+                'interest_rate' => 18.00,
+                'minimum_amount' => 2000,
+                'maximum_amount' => 50000,
+                'term_options' => [3,6,9,12],
+                'requirements' => ['emergency_documentation'],
                 'description' => 'Quick emergency loan for urgent needs',
-                'interest_rate' => 15.00,
-                'maximum_amount' => 100000,
-                'minimum_amount' => 1000,
-                'term_options' => [3, 6, 9, 12], // Available terms in months
-                'processing_fee' => 1.50,
-                'requirements' => [
-                    'guarantors' => 0,
-                    'collateral_required' => false,
-                    'minimum_membership_months' => 3,
-                    'documents' => ['National ID']
-                ],
-                'status' => 'active',
+                'processing_fee' => 50.00,
+                'status' => 'active'
             ],
             [
-                'name' => 'Development Loan',
-                'description' => 'Long-term loan for development projects',
+                'name' => 'Education Loan',
                 'interest_rate' => 10.00,
-                'maximum_amount' => 2000000,
-                'minimum_amount' => 50000,
-                'term_options' => [12, 24, 36, 48, 60], // Available terms in months
-                'processing_fee' => 3.00,
-                'requirements' => [
-                    'guarantors' => 3,
-                    'collateral_required' => true,
-                    'minimum_membership_months' => 12,
-                    'documents' => ['National ID', 'Payslip', 'Bank Statement', 'Collateral Documents', 'Project Proposal']
-                ],
-                'status' => 'active',
-            ],
-            [
-                'name' => 'School Fees Loan',
-                'description' => 'Educational loan for school fees payment',
-                'interest_rate' => 8.00,
-                'maximum_amount' => 300000,
                 'minimum_amount' => 10000,
-                'term_options' => [6, 12, 18, 24], // Available terms in months
-                'processing_fee' => 1.00,
-                'requirements' => [
-                    'guarantors' => 1,
-                    'collateral_required' => false,
-                    'minimum_membership_months' => 6,
-                    'documents' => ['National ID', 'School Fee Structure', 'Admission Letter']
-                ],
-                'status' => 'active',
+                'maximum_amount' => 200000,
+                'term_options' => [12,18,24,36,48,60],
+                'requirements' => ['school_admission_letter', 'fee_structure'],
+                'description' => 'Education financing for school fees and related expenses',
+                'processing_fee' => 150.00,
+                'status' => 'active'
             ],
             [
                 'name' => 'Asset Financing',
-                'description' => 'Loan for purchasing assets like vehicles, equipment',
-                'interest_rate' => 13.00,
-                'maximum_amount' => 1500000,
-                'minimum_amount' => 100000,
-                'term_options' => [12, 24, 36, 48], // Available terms in months
-                'processing_fee' => 2.50,
-                'requirements' => [
-                    'guarantors' => 2,
-                    'collateral_required' => true,
-                    'minimum_membership_months' => 12,
-                    'documents' => ['National ID', 'Payslip', 'Bank Statement', 'Asset Proforma Invoice']
-                ],
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Salary Advance',
-                'description' => 'Short-term advance against salary',
-                'interest_rate' => 5.00,
-                'maximum_amount' => 50000,
-                'minimum_amount' => 5000,
-                'term_options' => [1, 2, 3, 6], // Available terms in months
-                'processing_fee' => 0.50,
-                'requirements' => [
-                    'guarantors' => 0,
-                    'collateral_required' => false,
-                    'minimum_membership_months' => 3,
-                    'documents' => ['National ID', 'Latest Payslip']
-                ],
-                'status' => 'active',
+                'interest_rate' => 14.00,
+                'minimum_amount' => 20000,
+                'maximum_amount' => 1000000,
+                'term_options' => [24,36,48,60],
+                'requirements' => ['asset_quotation', 'insurance'],
+                'description' => 'Asset purchase financing for vehicles, equipment, etc.',
+                'processing_fee' => 300.00,
+                'status' => 'active'
             ]
         ];
 
         foreach ($loanTypes as $loanType) {
-            LoanType::updateOrCreate(
-                ['name' => $loanType['name']],
-                $loanType
-            );
+            LoanType::create($loanType);
         }
     }
 }

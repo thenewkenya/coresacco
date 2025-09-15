@@ -11,29 +11,15 @@ use Carbon\Carbon;
 class MobileMoneyService
 {
     private $mpesaConfig;
-    private $airtelConfig;
-    private $tkashConfig;
 
     public function __construct()
     {
         $this->mpesaConfig = [
-            'consumer_key' => setting('mpesa_consumer_key'),
-            'consumer_secret' => setting('mpesa_consumer_secret'),
-            'base_url' => setting('mpesa_base_url', 'https://sandbox.safaricom.co.ke'),
-            'shortcode' => setting('mpesa_shortcode'),
-            'passkey' => setting('mpesa_passkey'),
-        ];
-
-        $this->airtelConfig = [
-            'client_id' => setting('airtel_client_id'),
-            'client_secret' => setting('airtel_client_secret'),
-            'base_url' => setting('airtel_base_url', 'https://openapi.airtel.africa'),
-        ];
-
-        $this->tkashConfig = [
-            'merchant_code' => setting('tkash_merchant_code'),
-            'api_key' => setting('tkash_api_key'),
-            'base_url' => setting('tkash_base_url'),
+            'consumer_key' => env('MPESA_CONSUMER_KEY'),
+            'consumer_secret' => env('MPESA_CONSUMER_SECRET'),
+            'base_url' => env('MPESA_BASE_URL', 'https://sandbox.safaricom.co.ke'),
+            'shortcode' => env('MPESA_SHORTCODE'),
+            'passkey' => env('MPESA_PASSKEY'),
         ];
     }
 
@@ -58,7 +44,7 @@ class MobileMoneyService
                     'PartyA' => $this->formatPhoneNumber($phoneNumber),
                     'PartyB' => $this->mpesaConfig['shortcode'],
                     'PhoneNumber' => $this->formatPhoneNumber($phoneNumber),
-                    'CallBackURL' => route('webhooks.mpesa.callback'),
+                    'CallBackURL' => env('MPESA_CALLBACK_URL', route('webhooks.mpesa.callback')),
                     'AccountReference' => $account->account_number,
                     'TransactionDesc' => 'SACCO Deposit - ' . $account->account_number,
                 ]);
@@ -72,14 +58,14 @@ class MobileMoneyService
                     'member_id' => $account->member_id,
                     'type' => Transaction::TYPE_DEPOSIT,
                     'amount' => $amount,
-                    'description' => 'M-Pesa deposit pending confirmation',
+                    'description' => 'M-Pesa deposit - pending confirmation',
                     'reference_number' => $this->generateReferenceNumber(),
                     'status' => Transaction::STATUS_PENDING,
                     'balance_before' => $account->balance,
                     'balance_after' => $account->balance,
+                    'payment_method' => 'mpesa',
+                    'phone_number' => $phoneNumber,
                     'metadata' => [
-                        'payment_method' => 'mpesa',
-                        'phone_number' => $phoneNumber,
                         'checkout_request_id' => $data['CheckoutRequestID'],
                         'merchant_request_id' => $data['MerchantRequestID'],
                     ],
@@ -109,144 +95,6 @@ class MobileMoneyService
         }
     }
 
-    /**
-     * Initiate Airtel Money payment
-     */
-    public function initiateAirtelPayment(Account $account, float $amount, string $phoneNumber): array
-    {
-        try {
-            $accessToken = $this->getAirtelAccessToken();
-            
-            $transactionId = 'AIRTEL_' . time() . '_' . rand(1000, 9999);
-
-            $response = Http::withToken($accessToken)
-                ->post($this->airtelConfig['base_url'] . '/merchant/v1/payments/', [
-                    'reference' => $transactionId,
-                    'subscriber' => [
-                        'country' => 'KE',
-                        'currency' => 'KES',
-                        'msisdn' => $this->formatPhoneNumber($phoneNumber, 'airtel'),
-                    ],
-                    'transaction' => [
-                        'amount' => $amount,
-                        'country' => 'KE',
-                        'currency' => 'KES',
-                        'id' => $transactionId,
-                    ],
-                ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                
-                // Store pending transaction
-                $transaction = Transaction::create([
-                    'account_id' => $account->id,
-                    'member_id' => $account->member_id,
-                    'type' => Transaction::TYPE_DEPOSIT,
-                    'amount' => $amount,
-                    'description' => 'Airtel Money deposit pending confirmation',
-                    'reference_number' => $this->generateReferenceNumber(),
-                    'status' => Transaction::STATUS_PENDING,
-                    'balance_before' => $account->balance,
-                    'balance_after' => $account->balance,
-                    'metadata' => [
-                        'payment_method' => 'airtel',
-                        'phone_number' => $phoneNumber,
-                        'airtel_transaction_id' => $transactionId,
-                        'airtel_reference' => $data['data']['transaction']['id'] ?? null,
-                    ],
-                ]);
-
-                return [
-                    'success' => true,
-                    'message' => 'Payment initiated. Please complete on your phone.',
-                    'transaction_id' => $transaction->id,
-                    'airtel_transaction_id' => $transactionId,
-                ];
-            } else {
-                throw new \Exception('Airtel Money API Error: ' . $response->body());
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Airtel Money payment initiation failed', [
-                'error' => $e->getMessage(),
-                'account_id' => $account->id,
-                'amount' => $amount,
-            ]);
-
-            return [
-                'success' => false,
-                'message' => 'Payment initiation failed: ' . $e->getMessage(),
-            ];
-        }
-    }
-
-    /**
-     * Initiate T-Kash payment
-     */
-    public function initiateTkashPayment(Account $account, float $amount, string $phoneNumber): array
-    {
-        try {
-            $transactionId = 'TKASH_' . time() . '_' . rand(1000, 9999);
-
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->tkashConfig['api_key'],
-                'Content-Type' => 'application/json',
-            ])->post($this->tkashConfig['base_url'] . '/api/v1/payments/request', [
-                'merchant_code' => $this->tkashConfig['merchant_code'],
-                'transaction_id' => $transactionId,
-                'amount' => $amount,
-                'currency' => 'KES',
-                'phone_number' => $this->formatPhoneNumber($phoneNumber, 'tkash'),
-                'description' => 'SACCO Deposit - ' . $account->account_number,
-                'callback_url' => route('webhooks.tkash.callback'),
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                
-                // Store pending transaction
-                $transaction = Transaction::create([
-                    'account_id' => $account->id,
-                    'member_id' => $account->member_id,
-                    'type' => Transaction::TYPE_DEPOSIT,
-                    'amount' => $amount,
-                    'description' => 'T-Kash deposit pending confirmation',
-                    'reference_number' => $this->generateReferenceNumber(),
-                    'status' => Transaction::STATUS_PENDING,
-                    'balance_before' => $account->balance,
-                    'balance_after' => $account->balance,
-                    'metadata' => [
-                        'payment_method' => 'tkash',
-                        'phone_number' => $phoneNumber,
-                        'tkash_transaction_id' => $transactionId,
-                        'tkash_reference' => $data['reference'] ?? null,
-                    ],
-                ]);
-
-                return [
-                    'success' => true,
-                    'message' => 'Payment initiated. Please complete on your phone.',
-                    'transaction_id' => $transaction->id,
-                    'tkash_transaction_id' => $transactionId,
-                ];
-            } else {
-                throw new \Exception('T-Kash API Error: ' . $response->body());
-            }
-
-        } catch (\Exception $e) {
-            Log::error('T-Kash payment initiation failed', [
-                'error' => $e->getMessage(),
-                'account_id' => $account->id,
-                'amount' => $amount,
-            ]);
-
-            return [
-                'success' => false,
-                'message' => 'Payment initiation failed: ' . $e->getMessage(),
-            ];
-        }
-    }
 
     /**
      * Process payment confirmation webhook
@@ -254,16 +102,11 @@ class MobileMoneyService
     public function processPaymentConfirmation(string $provider, array $webhookData): bool
     {
         try {
-            switch ($provider) {
-                case 'mpesa':
-                    return $this->processMpesaConfirmation($webhookData);
-                case 'airtel':
-                    return $this->processAirtelConfirmation($webhookData);
-                case 'tkash':
-                    return $this->processTkashConfirmation($webhookData);
-                default:
-                    throw new \Exception('Unknown payment provider: ' . $provider);
+            if ($provider === 'mpesa') {
+                return $this->processMpesaConfirmation($webhookData);
             }
+            
+            throw new \Exception('Unknown payment provider: ' . $provider);
         } catch (\Exception $e) {
             Log::error('Payment confirmation processing failed', [
                 'provider' => $provider,
@@ -293,27 +136,98 @@ class MobileMoneyService
     }
 
     /**
-     * Get Airtel access token
+     * Query M-Pesa STK Push status and update the transaction accordingly
      */
-    private function getAirtelAccessToken(): string
+    public function queryMpesaStatus(Transaction $transaction): array
     {
-        $response = Http::post($this->airtelConfig['base_url'] . '/auth/oauth2/token', [
-            'client_id' => $this->airtelConfig['client_id'],
-            'client_secret' => $this->airtelConfig['client_secret'],
-            'grant_type' => 'client_credentials',
-        ]);
+        try {
+            $checkoutRequestId = $transaction->metadata['checkout_request_id'] ?? null;
+            if (!$checkoutRequestId) {
+                return ['success' => false, 'message' => 'Missing CheckoutRequestID'];
+            }
 
-        if ($response->successful()) {
-            return $response->json()['access_token'];
+            $accessToken = $this->getMpesaAccessToken();
+            $timestamp = Carbon::now()->format('YmdHis');
+            $password = base64_encode($this->mpesaConfig['shortcode'] . $this->mpesaConfig['passkey'] . $timestamp);
+
+            $response = Http::withToken($accessToken)
+                ->post($this->mpesaConfig['base_url'] . '/mpesa/stkpushquery/v1/query', [
+                    'BusinessShortCode' => $this->mpesaConfig['shortcode'],
+                    'Password' => $password,
+                    'Timestamp' => $timestamp,
+                    'CheckoutRequestID' => $checkoutRequestId,
+                ]);
+
+            if (!$response->successful()) {
+                throw new \Exception('Query API Error: ' . $response->body());
+            }
+
+            $data = $response->json();
+            $resultCode = (int) ($data['ResultCode'] ?? 1);
+            $resultDesc = $data['ResultDesc'] ?? null;
+
+            if ($resultCode === 0) {
+                // Considered successful; if transaction still pending, finalize it
+                if ($transaction->status === Transaction::STATUS_PENDING) {
+                    $account = $transaction->account;
+                    $account->balance += $transaction->amount;
+                    $account->save();
+
+                    $transaction->update([
+                        'status' => Transaction::STATUS_COMPLETED,
+                        'balance_after' => $account->balance,
+                        'metadata' => array_merge($transaction->metadata ?? [], [
+                            'stk_query_result' => $data,
+                            'confirmed_at' => now()->toISOString(),
+                        ]),
+                    ]);
+                }
+                return ['success' => true, 'status' => 'completed'];
+            }
+
+            // Handle different result codes
+            if ($resultCode === 4999) {
+                // Transaction is still under processing - keep as pending
+                $transaction->update([
+                    'metadata' => array_merge($transaction->metadata ?? [], [
+                        'stk_query_result' => $data,
+                        'result_code' => $resultCode,
+                        'result_desc' => $resultDesc,
+                        'last_checked_at' => now()->toISOString(),
+                    ]),
+                ]);
+                return ['success' => true, 'status' => 'pending', 'message' => $resultDesc];
+            }
+
+            // Other non-zero codes: failed/cancelled/timeout
+            if ($transaction->status === Transaction::STATUS_PENDING) {
+                $transaction->update([
+                    'status' => Transaction::STATUS_FAILED,
+                    'metadata' => array_merge($transaction->metadata ?? [], [
+                        'stk_query_result' => $data,
+                        'result_code' => $resultCode,
+                        'result_desc' => $resultDesc,
+                        'failed_at' => now()->toISOString(),
+                    ]),
+                ]);
+            }
+
+            return ['success' => true, 'status' => 'failed', 'message' => $resultDesc];
+
+        } catch (\Exception $e) {
+            Log::error('M-Pesa STK query failed', [
+                'transaction_id' => $transaction->id,
+                'error' => $e->getMessage(),
+            ]);
+            return ['success' => false, 'message' => $e->getMessage()];
         }
-
-        throw new \Exception('Failed to get Airtel access token');
     }
 
+
     /**
-     * Format phone number for different providers
+     * Format phone number for M-Pesa
      */
-    private function formatPhoneNumber(string $phoneNumber, string $provider = 'mpesa'): string
+    private function formatPhoneNumber(string $phoneNumber): string
     {
         // Remove any non-numeric characters
         $phone = preg_replace('/[^0-9]/', '', $phoneNumber);
@@ -325,14 +239,7 @@ class MobileMoneyService
             $phone = '254' . $phone;
         }
 
-        // Provider-specific formatting
-        switch ($provider) {
-            case 'airtel':
-            case 'tkash':
-                return '+' . $phone;
-            default: // mpesa
-                return $phone;
-        }
+        return $phone;
     }
 
     /**
@@ -348,54 +255,69 @@ class MobileMoneyService
      */
     private function processMpesaConfirmation(array $webhookData): bool
     {
-        // Implementation for M-Pesa webhook processing
-        $resultCode = $webhookData['Body']['stkCallback']['ResultCode'] ?? null;
-        $checkoutRequestId = $webhookData['Body']['stkCallback']['CheckoutRequestID'] ?? null;
+        $stk = $webhookData['Body']['stkCallback'] ?? [];
+        $resultCode = $stk['ResultCode'] ?? null;
+        $resultDesc = $stk['ResultDesc'] ?? null;
+        $checkoutRequestId = $stk['CheckoutRequestID'] ?? null;
 
-        if ($resultCode === 0) {
-            // Payment successful
-            $transaction = Transaction::where('metadata->checkout_request_id', $checkoutRequestId)->first();
-            
-            if ($transaction) {
-                // Update account balance
-                $account = $transaction->account;
-                $account->balance += $transaction->amount;
-                $account->save();
-
-                // Update transaction
-                $transaction->update([
-                    'status' => Transaction::STATUS_COMPLETED,
-                    'balance_after' => $account->balance,
-                    'metadata' => array_merge($transaction->metadata ?? [], [
-                        'mpesa_receipt_number' => $webhookData['Body']['stkCallback']['CallbackMetadata']['Item'][1]['Value'] ?? null,
-                        'confirmed_at' => now()->toISOString(),
-                    ]),
-                ]);
-
-                return true;
-            }
+        if (!$checkoutRequestId) {
+            return false;
         }
+
+        $transaction = Transaction::where('metadata->checkout_request_id', $checkoutRequestId)->first();
+        if (!$transaction) {
+            return false;
+        }
+
+        // Helper to extract a value from CallbackMetadata by Name
+        $extractFromItems = function (array $items, string $name) {
+            foreach ($items as $item) {
+                if (($item['Name'] ?? null) === $name) {
+                    return $item['Value'] ?? null;
+                }
+            }
+            return null;
+        };
+
+        if ((int) $resultCode === 0) {
+            $items = $stk['CallbackMetadata']['Item'] ?? [];
+            $receipt = $extractFromItems($items, 'MpesaReceiptNumber')
+                ?? $extractFromItems($items, 'ReceiptNumber')
+                ?? null;
+            $amountPaid = $extractFromItems($items, 'Amount') ?? $transaction->amount;
+
+            // Credit account
+            $account = $transaction->account;
+            $account->balance += $transaction->amount;
+            $account->save();
+
+            $transaction->update([
+                'status' => Transaction::STATUS_COMPLETED,
+                'description' => 'M-Pesa deposit - confirmed',
+                'balance_after' => $account->balance,
+                'metadata' => array_merge($transaction->metadata ?? [], [
+                    'mpesa_receipt_number' => $receipt,
+                    'paid_amount' => $amountPaid,
+                    'result_desc' => $resultDesc,
+                    'confirmed_at' => now()->toISOString(),
+                ]),
+            ]);
+
+            return true;
+        }
+
+        // Handle failures/cancellations: mark transaction failed
+        $transaction->update([
+            'status' => Transaction::STATUS_FAILED,
+            'description' => 'M-Pesa deposit - failed',
+            'metadata' => array_merge($transaction->metadata ?? [], [
+                'result_code' => $resultCode,
+                'result_desc' => $resultDesc,
+                'failed_at' => now()->toISOString(),
+            ]),
+        ]);
 
         return false;
     }
 
-    /**
-     * Process Airtel confirmation
-     */
-    private function processAirtelConfirmation(array $webhookData): bool
-    {
-        // Implementation for Airtel webhook processing
-        // Similar to M-Pesa but with Airtel-specific fields
-        return true;
-    }
-
-    /**
-     * Process T-Kash confirmation
-     */
-    private function processTkashConfirmation(array $webhookData): bool
-    {
-        // Implementation for T-Kash webhook processing
-        // Similar to M-Pesa but with T-Kash-specific fields
-        return true;
-    }
 } 

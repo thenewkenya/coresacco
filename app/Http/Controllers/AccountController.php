@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\AccountRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class AccountController extends Controller
 {
@@ -15,10 +16,12 @@ class AccountController extends Controller
     {
         $user = Auth::user();
         
-        if ($user->hasRole('member')) {
+        if ($user->role === 'member') {
             // Members see only their accounts
             $accounts = $user->accounts()->with('member')->latest()->get();
-            return view('accounts.my', compact('accounts'));
+            return Inertia::render('accounts/my', [
+                'accounts' => $accounts
+            ]);
         } else {
             // Staff see all accounts with search and filters
             $query = Account::with('member');
@@ -56,16 +59,19 @@ class AccountController extends Controller
                                       ->whereYear('created_at', now()->year)
                                       ->count();
             
-            return view('accounts.index', compact(
-                'accounts', 
-                'search', 
-                'accountType', 
-                'status',
-                'totalAccounts',
-                'totalBalance', 
-                'activeAccounts',
-                'thisMonthAccounts'
-            ));
+            return Inertia::render('accounts/index', [
+                'accounts' => $accounts,
+                'search' => $search,
+                'accountType' => $accountType,
+                'status' => $status,
+                'stats' => [
+                    'totalAccounts' => $totalAccounts,
+                    'totalBalance' => $totalBalance,
+                    'activeAccounts' => $activeAccounts,
+                    'thisMonthAccounts' => $thisMonthAccounts,
+                ],
+                'filters' => request()->only(['search', 'account_type', 'status'])
+            ]);
         }
     }
 
@@ -73,12 +79,12 @@ class AccountController extends Controller
     {
         $user = Auth::user();
         
-        if ($user->hasRole('member')) {
+        if ($user->role === 'member') {
             // Members can open accounts for themselves
             $members = collect([$user]);
         } else {
             // Staff can open accounts for any member
-            $members = User::where('role', 'member')->orderBy('name')->get();
+            $members = User::where('role', 'member')->with('accounts')->orderBy('name')->get();
         }
         
         $accountTypes = collect(Account::ACCOUNT_TYPES)->map(function($type) {
@@ -93,7 +99,21 @@ class AccountController extends Controller
             ];
         });
         
-        return view('accounts.create', compact('members', 'accountTypes'));
+        // Existing types for current member (if applicable)
+        $existingTypes = [];
+        if ($user->role === 'member') {
+            $existingTypes = $user->accounts()->pluck('account_type')->toArray();
+        }
+
+        // Types that can be opened multiple times
+        $multiAllowed = ['deposits', 'junior', 'goal_based', 'business'];
+
+        return Inertia::render('accounts/create', [
+            'members' => $members,
+            'accountTypes' => $accountTypes,
+            'existingTypes' => $existingTypes,
+            'multiAllowed' => $multiAllowed
+        ]);
     }
 
     public function store(AccountRequest $request)
@@ -101,14 +121,14 @@ class AccountController extends Controller
         $user = Auth::user();
         
         // Authorization check for non-members (staff/admin)
-        if (!$user->hasRole('member')) {
+        if ($user->role !== 'member') {
             $this->authorize('create', Account::class);
         }
         
         try {
             DB::beginTransaction();
             
-            $memberId = $user->hasRole('member') ? $user->id : $request->member_id;
+            $memberId = $user->role === 'member' ? $user->id : $request->member_id;
             
             // Generate account number
             $accountNumber = $this->generateAccountNumber($request->account_type);
@@ -141,7 +161,7 @@ class AccountController extends Controller
         
         // Authorization check
         $user = Auth::user();
-        if ($user->hasRole('member') && $account->member_id !== $user->id) {
+        if ($user->role === 'member' && $account->member_id !== $user->id) {
             abort(403, 'You can only view your own accounts.');
         }
         
@@ -154,7 +174,10 @@ class AccountController extends Controller
             'color' => $this->getAccountColor($account->account_type)
         ];
         
-        return view('accounts.show', compact('account', 'accountInfo'));
+        return Inertia::render('accounts/show', [
+            'account' => $account,
+            'accountInfo' => $accountInfo
+        ]);
     }
 
     public function updateStatus(Request $request, Account $account)
@@ -190,7 +213,9 @@ class AccountController extends Controller
     {
         $user = Auth::user();
         $accounts = $user->accounts()->with('member')->latest()->get();
-        return view('accounts.my', compact('accounts'));
+        return Inertia::render('accounts/my', [
+            'accounts' => $accounts
+        ]);
     }
 
     public function destroy(Account $account)
@@ -213,7 +238,7 @@ class AccountController extends Controller
     public function statement(Account $account)
     {
         $user = Auth::user();
-        if ($user->hasRole('member') && $account->member_id !== $user->id) {
+        if ($user->role === 'member' && $account->member_id !== $user->id) {
             abort(403, 'You can only view your own account statements.');
         }
         
@@ -241,24 +266,43 @@ class AccountController extends Controller
     private function generateAccountNumber($accountType)
     {
         $prefix = strtoupper(substr($accountType, 0, 2));
-        $nextNumber = Account::where('account_type', $accountType)->count() + 1;
-        return $prefix . str_pad($nextNumber, 8, '0', STR_PAD_LEFT);
+        
+        // Generate a unique account number by checking for existing numbers
+        do {
+            // Get the highest number for this account type
+            $lastAccount = Account::where('account_type', $accountType)
+                ->where('account_number', 'like', $prefix . '%')
+                ->orderBy('account_number', 'desc')
+                ->first();
+            
+            if ($lastAccount) {
+                // Extract the number part and increment
+                $lastNumber = (int) substr($lastAccount->account_number, 2);
+                $nextNumber = $lastNumber + 1;
+            } else {
+                // First account of this type
+                $nextNumber = 1;
+            }
+            
+            $accountNumber = $prefix . str_pad($nextNumber, 8, '0', STR_PAD_LEFT);
+            
+            // Check if this number already exists (safety check)
+            $exists = Account::where('account_number', $accountNumber)->exists();
+            
+        } while ($exists);
+        
+        return $accountNumber;
     }
 
     private function getAccountDescription($type)
     {
         $descriptions = [
-            'savings' => 'Regular savings account for everyday transactions',
-            'shares' => 'Share capital account representing ownership in the SACCO',
-            'deposits' => 'Fixed term deposit account with higher interest rates',
-            'emergency_fund' => 'Emergency fund for unexpected expenses',
-            'holiday_savings' => 'Dedicated savings for holiday and vacation expenses',
-            'retirement' => 'Long-term retirement savings with compound growth',
-            'education' => 'Education fund for school fees and learning expenses',
-            'development' => 'Community development fund for local projects',
-            'welfare' => 'Member welfare fund for support during difficult times',
-            'loan_guarantee' => 'Fund used as collateral for loan applications',
-            'investment' => 'High-yield investment account for substantial returns'
+            'shares' => 'Every member contributes a minimum share capital. Establishes SACCO ownership; not withdrawable while a member',
+            'savings' => 'Regular savings where members make monthly or voluntary deposits; acts as loan security; earns dividends/interest',
+            'deposits' => 'Term deposit for a fixed period; higher interest; withdrawals restricted until maturity',
+            'junior' => 'Special account for minors; parents/guardians save on their behalf; education-focused benefits',
+            'goal_based' => 'Smart savings for specific goals (holidays, projects, weddings); encourages disciplined saving',
+            'business' => 'For members running businesses; manage business finances separately from personal savings',
         ];
         
         return $descriptions[$type] ?? 'Specialized SACCO account';
@@ -267,10 +311,12 @@ class AccountController extends Controller
     private function getInterestRate($type)
     {
         $rates = [
-            'savings' => 8.5, 'shares' => 12.0, 'deposits' => 15.0,
-            'emergency_fund' => 6.0, 'holiday_savings' => 7.0, 'retirement' => 10.0,
-            'education' => 9.0, 'development' => 8.0, 'welfare' => 6.5,
-            'loan_guarantee' => 5.0, 'investment' => 18.0
+            'shares' => 0.0, // non-withdrawable capital; returns via dividends
+            'savings' => 8.5,
+            'deposits' => 15.0,
+            'junior' => 7.0,
+            'goal_based' => 7.5,
+            'business' => 8.0,
         ];
         
         return $rates[$type] ?? 7.0;
@@ -279,10 +325,12 @@ class AccountController extends Controller
     private function getMinimumBalance($type)
     {
         $minimums = [
-            'savings' => 1000, 'shares' => 5000, 'deposits' => 10000,
-            'emergency_fund' => 500, 'holiday_savings' => 500, 'retirement' => 2000,
-            'education' => 1000, 'development' => 1000, 'welfare' => 500,
-            'loan_guarantee' => 5000, 'investment' => 25000
+            'shares' => 5000,
+            'savings' => 1000,
+            'deposits' => 10000,
+            'junior' => 500,
+            'goal_based' => 500,
+            'business' => 2000,
         ];
         
         return $minimums[$type] ?? 1000;
@@ -291,10 +339,12 @@ class AccountController extends Controller
     private function getAccountIcon($type)
     {
         $icons = [
-            'savings' => 'banknotes', 'shares' => 'building-library', 'deposits' => 'safe',
-            'emergency_fund' => 'shield-check', 'holiday_savings' => 'sun', 'retirement' => 'home',
-            'education' => 'academic-cap', 'development' => 'building-office-2', 'welfare' => 'heart',
-            'loan_guarantee' => 'shield-exclamation', 'investment' => 'chart-bar'
+            'shares' => 'building-library',
+            'savings' => 'banknotes',
+            'deposits' => 'safe',
+            'junior' => 'academic-cap',
+            'goal_based' => 'flag',
+            'business' => 'briefcase',
         ];
         
         return $icons[$type] ?? 'banknotes';
@@ -303,10 +353,12 @@ class AccountController extends Controller
     private function getAccountColor($type)
     {
         $colors = [
-            'savings' => 'emerald', 'shares' => 'blue', 'deposits' => 'purple',
-            'emergency_fund' => 'red', 'holiday_savings' => 'yellow', 'retirement' => 'indigo',
-            'education' => 'cyan', 'development' => 'orange', 'welfare' => 'pink',
-            'loan_guarantee' => 'gray', 'investment' => 'amber'
+            'shares' => 'blue',
+            'savings' => 'emerald',
+            'deposits' => 'purple',
+            'junior' => 'cyan',
+            'goal_based' => 'yellow',
+            'business' => 'slate',
         ];
         
         return $colors[$type] ?? 'gray';

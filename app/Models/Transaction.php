@@ -20,6 +20,7 @@ class Transaction extends Model
         'account_id',
         'member_id',
         'loan_id',
+        'loan_account_id',
         'type',
         'amount',
         'description',
@@ -28,6 +29,9 @@ class Transaction extends Model
         'balance_before',
         'balance_after',
         'metadata',
+        'payment_method',
+        'phone_number',
+        'mobile_money_reference',
     ];
 
     protected $casts = [
@@ -66,6 +70,11 @@ class Transaction extends Model
     public function loan(): BelongsTo
     {
         return $this->belongsTo(Loan::class);
+    }
+
+    public function loanAccount(): BelongsTo
+    {
+        return $this->belongsTo(LoanAccount::class);
     }
 
     // Helper methods

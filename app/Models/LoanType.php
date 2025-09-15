@@ -62,4 +62,16 @@ class LoanType extends Model
     {
         return $amount * ($this->processing_fee / 100);
     }
+
+    // Accessor for max_term_period
+    public function getMaxTermPeriodAttribute(): int
+    {
+        return max($this->term_options ?? [12]);
+    }
+
+    // Accessor for max_amount (alias for maximum_amount)
+    public function getMaxAmountAttribute(): float
+    {
+        return $this->maximum_amount;
+    }
 } 

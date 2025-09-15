@@ -11,6 +11,7 @@
 - [Available services](#available-services)
 - [Custom commands](#custom-commands)
 - [Configuration](#configuration)
+ - [Mobile Money (M-Pesa) Integration](#mobile-money-m-pesa-integration)
 - [Production Deployment](#production-deployment)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
@@ -36,9 +37,12 @@
 
 ### Step 1: Clone and Prepare
 ```bash
-git clone https://github.com/thenewkenya/eSacco.git
-cd eSacco
+git clone https://github.com/thenewkenya/CoreSacco.git
+cd CoreSacco
 cp .env.example .env
+# Set app name (optional but recommended)
+sed -i 's/^APP_NAME=.*/APP_NAME=CoreSacco/' .env || true
+echo "VITE_APP_NAME=CoreSacco" >> .env
 ```
 
 ### Step 2: Bootstrap Dependencies
@@ -289,6 +293,62 @@ MAIL_PORT=2525
 MAIL_USERNAME=your-username
 MAIL_PASSWORD=your-password
 ```
+
+### Mobile Money (M-Pesa) Integration
+
+Follow these steps to enable M-Pesa STK Push deposits:
+
+1) Migrate settings
+
+```bash
+sail artisan migrate
+```
+
+2) Configure credentials in .env (recommended)
+
+Add these keys to your `.env`:
+
+```env
+MPESA_CONSUMER_KEY=your_consumer_key
+MPESA_CONSUMER_SECRET=your_consumer_secret
+MPESA_SHORTCODE=174379
+MPESA_PASSKEY=your_lipa_na_mpesa_online_passkey
+MPESA_BASE_URL=https://sandbox.safaricom.co.ke
+```
+
+3) Enable and set limits in Settings UI
+
+- Go to `System → Settings → Mobile Money` and:
+  - Toggle “Enable M-Pesa”
+  - Set minimum/maximum amounts and optional fees
+
+3) Set callback URLs in Safaricom portal
+
+- Register the STK Callback URL to point to:
+  - `POST {APP_URL}/webhooks/mpesa/callback`
+
+Note: We do not require C2B URLs for STK push. Ensure your app URL is publicly reachable (use a tunnel like `ngrok http 80` during development).
+
+4) Test the flow (sandbox)
+
+- Login as a member with a valid `phone_number` in profile
+- Initiate a deposit via the existing transaction/payment UI (no standalone /mobile-money route)
+- Choose M-Pesa where applicable, enter amount and your sandbox test MSISDN (e.g., 2547XXXXXXX)
+- Approve the STK on your device (or use Daraja test simulator)
+- The system creates a pending `Transaction` and updates to `completed` after callback
+- You can also monitor polling via `GET /api/transactions/{id}/status` (auth required)
+
+5) Troubleshooting
+
+- If callbacks fail, check application logs and Safaricom callback logs
+- Verify settings values and that `APP_URL` is correct and publicly accessible
+- Ensure the `settings` table has the mobile money keys (migration `2025_07_03_..._add_mobile_money_settings_to_settings.php`)
+- Confirm callback route exists: `POST /webhooks/mpesa/callback`
+
+Security notes:
+
+- Callback routes are unauthenticated by design; payloads are validated by matching `CheckoutRequestID` to a pending transaction. Consider adding IP allowlisting or signature verification if required by your deployment policy.
+
 
 ### Database Configuration
 
