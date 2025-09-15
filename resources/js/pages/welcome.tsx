@@ -2,7 +2,7 @@ import { Head } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ThemeToggle } from '@/components/theme-toggle';
+import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 import { 
     ArrowRight, 
     Shield, 
@@ -33,15 +33,15 @@ export default function Welcome() {
                             <Building2 className="h-8 w-8 text-primary" />
                             <span className="text-xl font-bold">eSacco</span>
                         </div>
-                        <div className="flex items-center space-x-4">
-                            <ThemeToggle />
-                            <Button variant="ghost" asChild>
-                                <a href="/login">Sign In</a>
-                            </Button>
-                            <Button asChild>
-                                <a href="/register">Get Started</a>
-                            </Button>
-                        </div>
+                               <div className="flex items-center space-x-4">
+                                   <AppearanceToggleDropdown />
+                                   <Button variant="ghost" asChild>
+                                       <a href="/login">Sign In</a>
+                                   </Button>
+                                   <Button asChild>
+                                       <a href="/register">Get Started</a>
+                                   </Button>
+                               </div>
                     </div>
                 </nav>
 
@@ -254,7 +254,7 @@ export default function Welcome() {
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </a>
                             </Button>
-                            <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary" asChild>
+                            <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary bg-white/10 backdrop-blur" asChild>
                                 <a href="/contact">Get Early Access</a>
                             </Button>
                         </div>
@@ -300,7 +300,7 @@ export default function Welcome() {
                             </div>
                         </div>
                         <div className="border-t mt-8 pt-8 text-center text-muted-foreground">
-                            <p>&copy; 2024 eSacco. All rights reserved.</p>
+                            <p>&copy; 2025 eSacco. All rights reserved.</p>
                         </div>
                     </div>
                 </footer>

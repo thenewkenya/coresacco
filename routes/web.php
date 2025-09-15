@@ -12,6 +12,39 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+// Public pages (no authentication required)
+Route::get('/pricing', function () {
+    return Inertia::render('pricing');
+})->name('pricing');
+
+Route::get('/demo', function () {
+    return Inertia::render('demo');
+})->name('demo');
+
+Route::get('/help', function () {
+    return Inertia::render('help');
+})->name('help');
+
+Route::get('/contact', function () {
+    return Inertia::render('contact');
+})->name('contact');
+
+Route::get('/status', function () {
+    return Inertia::render('status');
+})->name('status');
+
+Route::get('/about', function () {
+    return Inertia::render('about');
+})->name('about');
+
+Route::get('/privacy', function () {
+    return Inertia::render('privacy');
+})->name('privacy');
+
+Route::get('/terms', function () {
+    return Inertia::render('terms');
+})->name('terms');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     
