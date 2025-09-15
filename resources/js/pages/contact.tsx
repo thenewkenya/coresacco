@@ -8,7 +8,7 @@ import { Building2, Mail, Phone, MapPin, Send } from 'lucide-react';
 export default function Contact() {
     return (
         <>
-            <Head title="Contact Us - eSacco" />
+            <Head title="Contact Us - CoreSacco" />
             
             <div className="min-h-screen bg-background">
                 {/* Navigation */}
@@ -16,7 +16,7 @@ export default function Contact() {
                     <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                             <Building2 className="h-8 w-8 text-primary" />
-                            <span className="text-xl font-bold">eSacco</span>
+                            <span className="text-xl font-bold">CoreSacco</span>
                         </div>
                         <div className="flex items-center space-x-4">
                             <Button variant="ghost" asChild>
@@ -34,7 +34,7 @@ export default function Contact() {
                             <span className="text-primary block">Touch</span>
                         </h1>
                         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                            Have questions about eSacco? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+                            Have questions about CoreSacco? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
                         </p>
                     </div>
                 </section>
@@ -117,7 +117,7 @@ export default function Contact() {
                                             <Mail className="h-5 w-5 text-primary" />
                                             <div>
                                                 <p className="font-medium">Email</p>
-                                                <p className="text-sm text-muted-foreground">hello@esacco.com</p>
+                                                <p className="text-sm text-muted-foreground">hello@coresacco.com</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center space-x-3">

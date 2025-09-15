@@ -7,7 +7,7 @@ import { Building2, CheckCircle, AlertCircle, Clock, ArrowRight } from 'lucide-r
 export default function Status() {
     return (
         <>
-            <Head title="System Status - eSacco" />
+            <Head title="System Status - CoreSacco" />
             
             <div className="min-h-screen bg-background">
                 {/* Navigation */}
@@ -15,7 +15,7 @@ export default function Status() {
                     <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                             <Building2 className="h-8 w-8 text-primary" />
-                            <span className="text-xl font-bold">eSacco</span>
+                            <span className="text-xl font-bold">CoreSacco</span>
                         </div>
                         <div className="flex items-center space-x-4">
                             <Button variant="ghost" asChild>
@@ -48,7 +48,7 @@ export default function Status() {
                             </h2>
                             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
                                 We're working on a comprehensive system status page that will provide 
-                                real-time monitoring of all eSacco services and infrastructure.
+                                real-time monitoring of all CoreSacco services and infrastructure.
                             </p>
                             <div className="grid md:grid-cols-3 gap-6 mb-8">
                                 <div className="bg-background/80 backdrop-blur rounded-lg p-4">

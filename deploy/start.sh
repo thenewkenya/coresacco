@@ -19,7 +19,7 @@ mkdir -p public/build
 chown -R www-data:www-data public/build || echo "Could not set build permissions"
 
 echo "Setting up admin user..."
-php artisan sacco:setup-roles --admin-email=admin@esacco.com --admin-password=AdminPassword123! || echo "Admin user may already exist"
+php artisan sacco:setup-roles --admin-email=admin@coresacco.com --admin-password=AdminPassword123! || echo "Admin user may already exist"
 
 echo "Fixing admin user roles..."
 php /var/www/html/deploy/fix-admin.php || echo "Admin fix script failed"

@@ -37,9 +37,12 @@
 
 ### Step 1: Clone and Prepare
 ```bash
-git clone https://github.com/thenewkenya/eSacco.git
-cd eSacco
+git clone https://github.com/thenewkenya/CoreSacco.git
+cd CoreSacco
 cp .env.example .env
+# Set app name (optional but recommended)
+sed -i 's/^APP_NAME=.*/APP_NAME=CoreSacco/' .env || true
+echo "VITE_APP_NAME=CoreSacco" >> .env
 ```
 
 ### Step 2: Bootstrap Dependencies

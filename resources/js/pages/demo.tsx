@@ -6,7 +6,7 @@ import { Building2, Calendar, Clock, ArrowRight } from 'lucide-react';
 export default function Demo() {
     return (
         <>
-            <Head title="Schedule Demo - eSacco" />
+            <Head title="Schedule Demo - CoreSacco" />
             
             <div className="min-h-screen bg-background">
                 {/* Navigation */}
@@ -14,7 +14,7 @@ export default function Demo() {
                     <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                             <Building2 className="h-8 w-8 text-primary" />
-                            <span className="text-xl font-bold">eSacco</span>
+                            <span className="text-xl font-bold">CoreSacco</span>
                         </div>
                         <div className="flex items-center space-x-4">
                             <Button variant="ghost" asChild>
@@ -28,11 +28,11 @@ export default function Demo() {
                 <section className="py-20 px-4">
                     <div className="container mx-auto text-center max-w-4xl">
                         <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-                            See eSacco
+                            See CoreSacco
                             <span className="text-primary block">In Action</span>
                         </h1>
                         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                            Schedule a personalized demo and discover how eSacco can transform your SACCO operations.
+                            Schedule a personalized demo and discover how CoreSacco can transform your SACCO operations.
                         </p>
                     </div>
                 </section>
@@ -110,7 +110,7 @@ export default function Demo() {
                         </h2>
                         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
                             Ready to go beyond a demo? Join our beta program and get hands-on experience 
-                            with eSacco while helping us improve the platform.
+                            with CoreSacco while helping us improve the platform.
                         </p>
                         <div className="grid md:grid-cols-2 gap-8 mb-8">
                             <Card>

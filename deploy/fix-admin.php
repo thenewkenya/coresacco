@@ -62,13 +62,13 @@ try {
 
     // Handle admin user specifically
     echo "\n=== SETTING UP ADMIN USER ===\n";
-    $admin = \App\Models\User::where('email', 'admin@esacco.com')->first();
+    $admin = \App\Models\User::where('email', 'admin@coresacco.com')->first();
     
     if (!$admin) {
         echo "Admin user not found. Creating...\n";
         $admin = \App\Models\User::create([
             'name' => 'System Administrator',
-            'email' => 'admin@esacco.com',
+            'email' => 'admin@coresacco.com',
             'password' => \Illuminate\Support\Facades\Hash::make('AdminPassword123!'),
             'email_verified_at' => now(),
             'membership_status' => 'active',

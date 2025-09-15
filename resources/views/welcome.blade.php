@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>eSacco API</title>
+    <title>CoreSacco API</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -57,11 +57,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>🏦 eSacco API</h1>
+        <h1>🏦 CoreSacco API</h1>
         
         <div class="api-info">
             <h3>API Status: <span style="color: #059669;">✅ Active</span></h3>
-            <p>Welcome to the eSacco Management System API. This is a clean Laravel backend-only setup.</p>
+            <p>Welcome to the CoreSacco Management System API. This is a clean Laravel backend-only setup.</p>
         </div>
 
         <h2>Available Endpoints</h2>

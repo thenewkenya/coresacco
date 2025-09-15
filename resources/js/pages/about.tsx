@@ -6,7 +6,7 @@ import { Building2, Users, Target, ArrowRight } from 'lucide-react';
 export default function About() {
     return (
         <>
-            <Head title="About Us - eSacco" />
+            <Head title="About Us - CoreSacco" />
             
             <div className="min-h-screen bg-background">
                 {/* Navigation */}
@@ -14,7 +14,7 @@ export default function About() {
                     <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                             <Building2 className="h-8 w-8 text-primary" />
-                            <span className="text-xl font-bold">eSacco</span>
+                            <span className="text-xl font-bold">CoreSacco</span>
                         </div>
                         <div className="flex items-center space-x-4">
                             <Button variant="ghost" asChild>
@@ -29,7 +29,7 @@ export default function About() {
                     <div className="container mx-auto text-center max-w-4xl">
                         <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
                             About
-                            <span className="text-primary block">eSacco</span>
+                            <span className="text-primary block">CoreSacco</span>
                         </h1>
                         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
                             We're building the future of SACCO management, one digital innovation at a time.

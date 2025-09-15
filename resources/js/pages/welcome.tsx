@@ -23,7 +23,7 @@ import {
 export default function Welcome() {
     return (
         <>
-            <Head title="eSacco - Digital SACCO Management System" />
+            <Head title="CoreSacco - Digital SACCO Management System" />
             
             <div className="min-h-screen bg-background">
                 {/* Navigation */}
@@ -31,7 +31,7 @@ export default function Welcome() {
                     <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                             <Building2 className="h-8 w-8 text-primary" />
-                            <span className="text-xl font-bold">eSacco</span>
+                            <span className="text-xl font-bold">CoreSacco</span>
                         </div>
                                <div className="flex items-center space-x-4">
                                    <AppearanceToggleDropdown />
@@ -162,7 +162,7 @@ export default function Welcome() {
                         <div className="grid lg:grid-cols-2 gap-12 items-center">
                             <div>
                                 <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                                    Why Choose eSacco?
+                                    Why Choose CoreSacco?
                                 </h2>
                                 <div className="space-y-6">
                                     <div className="flex items-start space-x-4">
@@ -268,7 +268,7 @@ export default function Welcome() {
                             <div>
                                 <div className="flex items-center space-x-2 mb-4">
                                     <Building2 className="h-6 w-6 text-primary" />
-                                    <span className="text-lg font-bold">eSacco</span>
+                                    <span className="text-lg font-bold">CoreSacco</span>
                                 </div>
                                 <p className="text-muted-foreground">
                                     Modern SACCO management platform designed for the digital age.
@@ -300,7 +300,7 @@ export default function Welcome() {
                             </div>
                         </div>
                         <div className="border-t mt-8 pt-8 text-center text-muted-foreground">
-                            <p>&copy; 2025 eSacco. All rights reserved.</p>
+                            <p>&copy; 2025 CoreSacco. All rights reserved.</p>
                         </div>
                     </div>
                 </footer>

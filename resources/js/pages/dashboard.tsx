@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from '@/components/ui/pagination';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { 
     Users, 
     PiggyBank, 
@@ -17,7 +17,6 @@ import {
     ArrowDownRight,
     CreditCard,
     FileText,
-    AlertCircle,
     Clock,
     Wallet
 } from 'lucide-react';
@@ -64,13 +63,7 @@ interface RecentTransaction {
     };
 }
 
-interface Account {
-    id: number;
-    account_number: string;
-    account_type: string;
-    balance: number;
-    status: string;
-}
+// Removed unused Account interface
 
 interface LoanAccount {
     id: number;
@@ -140,11 +133,7 @@ interface Props {
 }
 
 // Utility functions moved outside components to prevent recreation
-const formatDate = (dateString: string) => 
-    new Date(dateString).toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
-    });
+// Removed unused formatDate helper (replaced by formatDateKE and hooks below)
 
 const formatDateKE = (date: string) => {
     return new Date(date).toLocaleDateString('en-KE', {
@@ -200,80 +189,7 @@ const StatsCard = React.memo(({
     </Card>
 ));
 
-const SimpleChart = React.memo(({ 
-    monthlyTransactions, 
-    monthlyAmount, 
-    formatCurrency 
-}: { 
-    monthlyTransactions: number; 
-    monthlyAmount: number; 
-    formatCurrency: (amount: number) => string;
-}) => {
-    // Generate consistent data based on actual stats
-    const chartData = React.useMemo(() => {
-        const baseValue = monthlyTransactions / 7; // Average daily transactions
-        return Array.from({ length: 7 }, (_, i) => {
-            const day = new Date();
-            day.setDate(day.getDate() - (6 - i));
-            const dayName = day.toLocaleDateString('en-KE', { weekday: 'short' });
-            // Add some variation but keep it realistic
-            const variation = (Math.sin(i * 0.8) * 0.3 + 0.7) * 100;
-            const value = Math.max(10, Math.floor(baseValue * variation / 100));
-            
-            return {
-                day: dayName,
-                value,
-                percentage: Math.min(100, Math.max(10, value * 100 / Math.max(baseValue, 1)))
-            };
-        });
-    }, [monthlyTransactions]);
-
-    return (
-        <div className="space-y-4">
-            {/* Simple bar chart using CSS */}
-            <div className="space-y-2">
-                <h4 className="text-sm font-medium">Last 7 Days Activity</h4>
-                <div className="space-y-1">
-                    {chartData.map((item, i) => (
-                        <div key={i} className="flex items-center space-x-2">
-                            <div className="w-12 text-xs text-muted-foreground">
-                                {item.day}
-                            </div>
-                            <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                <div 
-                                    className="h-2 rounded-full transition-all duration-300"
-                                    style={{ 
-                                        width: `${item.percentage}%`,
-                                        backgroundColor: 'var(--color-chart-1)'
-                                    }}
-                                />
-                            </div>
-                            <div className="w-16 text-xs text-right text-muted-foreground">
-                                {item.value}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            
-            {/* Summary metrics */}
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                <div className="text-center">
-                    <div className="text-lg font-semibold text-green-600">
-                        {formatCurrency(monthlyAmount)}
-                    </div>
-                    <div className="text-xs text-muted-foreground">This Month</div>
-                </div>
-                <div className="text-center">
-                    <div className="text-lg font-semibold text-blue-600">
-                        {monthlyTransactions}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Transactions</div>
-                </div>
-            </div>
-        </div>
-    );
-});
+// Removed unused SimpleChart component
 
 // Ultra-lightweight CSS-based Transaction Trends
 const TransactionTrendsChart = React.memo(({ data }: { data: TransactionTrend[] }) => {
@@ -397,7 +313,7 @@ const AccountDistributionChart = React.memo(({ accountBalances, totalBalance }: 
         <div className="h-[200px] w-full flex flex-col">
             {/* Scrollable account list */}
             <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-                {chartData.map((item, index) => (
+                {chartData.map((item) => (
                     <div key={item.name} className="space-y-2">
                         <div className="flex justify-between text-sm">
                             <div className="flex items-center space-x-2">
@@ -519,7 +435,7 @@ export default function Dashboard({
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                         <p className="text-muted-foreground">
-                            Overview of your eSacco system
+                            Overview of your CoreSacco system
                         </p>
                     </div>
                     <div className="flex space-x-2">

@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "esacco/core",
+    "name": "coresacco/core",
     "type": "project",
-    "description": "eSacco - Digital SACCO Management System with Inertia.js and React.",
+    "description": "CoreSacco - Digital SACCO Management System with Inertia.js and React.",
     "keywords": [
         "laravel",
         "framework"

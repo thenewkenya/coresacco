@@ -5,7 +5,7 @@ import { Building2 } from 'lucide-react';
 export default function Privacy() {
     return (
         <>
-            <Head title="Privacy Policy - eSacco" />
+            <Head title="Privacy Policy - CoreSacco" />
             
             <div className="min-h-screen bg-background">
                 {/* Navigation */}
@@ -13,7 +13,7 @@ export default function Privacy() {
                     <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                             <Building2 className="h-8 w-8 text-primary" />
-                            <span className="text-xl font-bold">eSacco</span>
+                            <span className="text-xl font-bold">CoreSacco</span>
                         </div>
                         <div className="flex items-center space-x-4">
                             <Button variant="ghost" asChild>
@@ -64,7 +64,7 @@ export default function Privacy() {
                             <h2>6. Contact Us</h2>
                             <p>
                                 If you have any questions about this privacy policy, please contact us at 
-                                privacy@esacco.com.
+                                privacy@coresacco.com.
                             </p>
                         </div>
                     </div>

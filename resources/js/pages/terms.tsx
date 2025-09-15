@@ -5,7 +5,7 @@ import { Building2 } from 'lucide-react';
 export default function Terms() {
     return (
         <>
-            <Head title="Terms of Service - eSacco" />
+            <Head title="Terms of Service - CoreSacco" />
             
             <div className="min-h-screen bg-background">
                 {/* Navigation */}
@@ -13,7 +13,7 @@ export default function Terms() {
                     <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                             <Building2 className="h-8 w-8 text-primary" />
-                            <span className="text-xl font-bold">eSacco</span>
+                            <span className="text-xl font-bold">CoreSacco</span>
                         </div>
                         <div className="flex items-center space-x-4">
                             <Button variant="ghost" asChild>
@@ -32,20 +32,20 @@ export default function Terms() {
                         <div className="prose prose-lg max-w-none">
                             <h2>1. Acceptance of Terms</h2>
                             <p>
-                                By accessing and using eSacco, you accept and agree to be bound by the terms and 
+                                By accessing and using CoreSacco, you accept and agree to be bound by the terms and 
                                 provision of this agreement.
                             </p>
 
                             <h2>2. Beta Program</h2>
                             <p>
-                                eSacco is currently in beta. By participating in our beta program, you understand 
+                                CoreSacco is currently in beta. By participating in our beta program, you understand 
                                 that the service may contain bugs, errors, and other issues. We appreciate your 
                                 feedback and patience as we improve the platform.
                             </p>
 
                             <h2>3. Use License</h2>
                             <p>
-                                Permission is granted to temporarily use eSacco for personal, non-commercial 
+                                Permission is granted to temporarily use CoreSacco for personal, non-commercial 
                                 transitory viewing only. This is the grant of a license, not a transfer of title.
                             </p>
 
@@ -70,7 +70,7 @@ export default function Terms() {
 
                             <h2>7. Limitation of Liability</h2>
                             <p>
-                                In no event shall eSacco, nor its directors, employees, partners, agents, suppliers, 
+                                In no event shall CoreSacco, nor its directors, employees, partners, agents, suppliers, 
                                 or affiliates, be liable for any indirect, incidental, special, consequential, or 
                                 punitive damages.
                             </p>
@@ -78,7 +78,7 @@ export default function Terms() {
                             <h2>8. Contact Information</h2>
                             <p>
                                 If you have any questions about these Terms of Service, please contact us at 
-                                legal@esacco.com.
+                                legal@coresacco.com.
                             </p>
                         </div>
                     </div>
