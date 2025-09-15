@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\AccountRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class AccountController extends Controller
 {
@@ -15,10 +16,12 @@ class AccountController extends Controller
     {
         $user = Auth::user();
         
-        if ($user->hasRole('member')) {
+        if ($user->role === 'member') {
             // Members see only their accounts
             $accounts = $user->accounts()->with('member')->latest()->get();
-            return view('accounts.my', compact('accounts'));
+            return Inertia::render('accounts/my', [
+                'accounts' => $accounts
+            ]);
         } else {
             // Staff see all accounts with search and filters
             $query = Account::with('member');
@@ -56,16 +59,19 @@ class AccountController extends Controller
                                       ->whereYear('created_at', now()->year)
                                       ->count();
             
-            return view('accounts.index', compact(
-                'accounts', 
-                'search', 
-                'accountType', 
-                'status',
-                'totalAccounts',
-                'totalBalance', 
-                'activeAccounts',
-                'thisMonthAccounts'
-            ));
+            return Inertia::render('accounts/index', [
+                'accounts' => $accounts,
+                'search' => $search,
+                'accountType' => $accountType,
+                'status' => $status,
+                'stats' => [
+                    'totalAccounts' => $totalAccounts,
+                    'totalBalance' => $totalBalance,
+                    'activeAccounts' => $activeAccounts,
+                    'thisMonthAccounts' => $thisMonthAccounts,
+                ],
+                'filters' => request()->only(['search', 'account_type', 'status'])
+            ]);
         }
     }
 
@@ -73,7 +79,7 @@ class AccountController extends Controller
     {
         $user = Auth::user();
         
-        if ($user->hasRole('member')) {
+        if ($user->role === 'member') {
             // Members can open accounts for themselves
             $members = collect([$user]);
         } else {
@@ -95,14 +101,19 @@ class AccountController extends Controller
         
         // Existing types for current member (if applicable)
         $existingTypes = [];
-        if ($user->hasRole('member')) {
+        if ($user->role === 'member') {
             $existingTypes = $user->accounts()->pluck('account_type')->toArray();
         }
 
         // Types that can be opened multiple times
         $multiAllowed = ['deposits', 'junior', 'goal_based', 'business'];
 
-        return view('accounts.create', compact('members', 'accountTypes', 'existingTypes', 'multiAllowed'));
+        return Inertia::render('accounts/create', [
+            'members' => $members,
+            'accountTypes' => $accountTypes,
+            'existingTypes' => $existingTypes,
+            'multiAllowed' => $multiAllowed
+        ]);
     }
 
     public function store(AccountRequest $request)
@@ -110,14 +121,14 @@ class AccountController extends Controller
         $user = Auth::user();
         
         // Authorization check for non-members (staff/admin)
-        if (!$user->hasRole('member')) {
+        if ($user->role !== 'member') {
             $this->authorize('create', Account::class);
         }
         
         try {
             DB::beginTransaction();
             
-            $memberId = $user->hasRole('member') ? $user->id : $request->member_id;
+            $memberId = $user->role === 'member' ? $user->id : $request->member_id;
             
             // Generate account number
             $accountNumber = $this->generateAccountNumber($request->account_type);
@@ -150,7 +161,7 @@ class AccountController extends Controller
         
         // Authorization check
         $user = Auth::user();
-        if ($user->hasRole('member') && $account->member_id !== $user->id) {
+        if ($user->role === 'member' && $account->member_id !== $user->id) {
             abort(403, 'You can only view your own accounts.');
         }
         
@@ -163,7 +174,10 @@ class AccountController extends Controller
             'color' => $this->getAccountColor($account->account_type)
         ];
         
-        return view('accounts.show', compact('account', 'accountInfo'));
+        return Inertia::render('accounts/show', [
+            'account' => $account,
+            'accountInfo' => $accountInfo
+        ]);
     }
 
     public function updateStatus(Request $request, Account $account)
@@ -199,7 +213,9 @@ class AccountController extends Controller
     {
         $user = Auth::user();
         $accounts = $user->accounts()->with('member')->latest()->get();
-        return view('accounts.my', compact('accounts'));
+        return Inertia::render('accounts/my', [
+            'accounts' => $accounts
+        ]);
     }
 
     public function destroy(Account $account)
@@ -222,7 +238,7 @@ class AccountController extends Controller
     public function statement(Account $account)
     {
         $user = Auth::user();
-        if ($user->hasRole('member') && $account->member_id !== $user->id) {
+        if ($user->role === 'member' && $account->member_id !== $user->id) {
             abort(403, 'You can only view your own account statements.');
         }
         
@@ -250,8 +266,32 @@ class AccountController extends Controller
     private function generateAccountNumber($accountType)
     {
         $prefix = strtoupper(substr($accountType, 0, 2));
-        $nextNumber = Account::where('account_type', $accountType)->count() + 1;
-        return $prefix . str_pad($nextNumber, 8, '0', STR_PAD_LEFT);
+        
+        // Generate a unique account number by checking for existing numbers
+        do {
+            // Get the highest number for this account type
+            $lastAccount = Account::where('account_type', $accountType)
+                ->where('account_number', 'like', $prefix . '%')
+                ->orderBy('account_number', 'desc')
+                ->first();
+            
+            if ($lastAccount) {
+                // Extract the number part and increment
+                $lastNumber = (int) substr($lastAccount->account_number, 2);
+                $nextNumber = $lastNumber + 1;
+            } else {
+                // First account of this type
+                $nextNumber = 1;
+            }
+            
+            $accountNumber = $prefix . str_pad($nextNumber, 8, '0', STR_PAD_LEFT);
+            
+            // Check if this number already exists (safety check)
+            $exists = Account::where('account_number', $accountNumber)->exists();
+            
+        } while ($exists);
+        
+        return $accountNumber;
     }
 
     private function getAccountDescription($type)

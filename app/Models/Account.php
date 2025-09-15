@@ -45,6 +45,7 @@ class Account extends Model
     const TYPE_WELFARE = 'welfare';
     const TYPE_INVESTMENT = 'investment';
     const TYPE_LOAN_GUARANTEE = 'loan_guarantee';
+    const TYPE_LOAN_ACCOUNT = 'loan_account';
     const TYPE_JUNIOR = 'junior';
     const TYPE_GOAL_BASED = 'goal_based';
     const TYPE_BUSINESS = 'business';

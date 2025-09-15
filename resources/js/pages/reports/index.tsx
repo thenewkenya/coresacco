@@ -1,11 +1,13 @@
+import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Download, Calendar, BarChart3 } from 'lucide-react';
+import { FileText, Download, Calendar, BarChart3, CreditCard, Users } from 'lucide-react';
 
 export default function ReportsIndex() {
     return (
         <AppLayout>
+            <Head title="Reports" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}
                 <div className="flex items-center justify-between">
@@ -23,56 +25,62 @@ export default function ReportsIndex() {
 
                 {/* Report Categories */}
                 <div className="grid auto-rows-min gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <Card className="cursor-pointer hover:shadow-md transition-shadow">
-                        <CardHeader>
-                            <CardTitle className="flex items-center">
-                                <BarChart3 className="mr-2 h-5 w-5" />
-                                Financial Reports
-                            </CardTitle>
-                            <CardDescription>
-                                Income statements, balance sheets, and cash flow reports
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Button variant="outline" className="w-full">
-                                View Reports
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    <Link href="/reports/financial">
+                        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                            <CardHeader>
+                                <CardTitle className="flex items-center">
+                                    <BarChart3 className="mr-2 h-5 w-5" />
+                                    Financial Reports
+                                </CardTitle>
+                                <CardDescription>
+                                    Income statements, balance sheets, and cash flow reports
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button variant="outline" className="w-full">
+                                    View Reports
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </Link>
 
-                    <Card className="cursor-pointer hover:shadow-md transition-shadow">
-                        <CardHeader>
-                            <CardTitle className="flex items-center">
-                                <FileText className="mr-2 h-5 w-5" />
-                                Member Reports
-                            </CardTitle>
-                            <CardDescription>
-                                Member statistics, growth, and activity reports
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Button variant="outline" className="w-full">
-                                View Reports
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    <Link href="/reports/members">
+                        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                            <CardHeader>
+                                <CardTitle className="flex items-center">
+                                    <Users className="mr-2 h-5 w-5" />
+                                    Member Reports
+                                </CardTitle>
+                                <CardDescription>
+                                    Member statistics, growth, and activity reports
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button variant="outline" className="w-full">
+                                    View Reports
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </Link>
 
-                    <Card className="cursor-pointer hover:shadow-md transition-shadow">
-                        <CardHeader>
-                            <CardTitle className="flex items-center">
-                                <Calendar className="mr-2 h-5 w-5" />
-                                Loan Reports
-                            </CardTitle>
-                            <CardDescription>
-                                Loan performance, defaults, and portfolio analysis
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Button variant="outline" className="w-full">
-                                View Reports
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    <Link href="/reports/loans">
+                        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                            <CardHeader>
+                                <CardTitle className="flex items-center">
+                                    <CreditCard className="mr-2 h-5 w-5" />
+                                    Loan Reports
+                                </CardTitle>
+                                <CardDescription>
+                                    Loan performance, defaults, and portfolio analysis
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button variant="outline" className="w-full">
+                                    View Reports
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </Link>
                 </div>
 
                 {/* Recent Reports */}

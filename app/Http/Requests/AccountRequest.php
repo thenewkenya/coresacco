@@ -23,7 +23,7 @@ class AccountRequest extends FormRequest
         // Types that allow multiple accounts per member
         $multiAllowed = ['deposits', 'junior', 'goal_based', 'business'];
 
-        if (auth()->user()->hasRole('member')) {
+        if (auth()->user()->role === 'member') {
             // For members, if member_id is provided, it must be their own ID
             if ($this->has('member_id')) {
                 $rules['member_id'] = 'required|in:' . auth()->user()->id;

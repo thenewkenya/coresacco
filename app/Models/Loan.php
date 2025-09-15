@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Loan extends Model
@@ -44,6 +45,14 @@ class Loan extends Model
         'total_guarantee_amount',
         'required_guarantee_amount',
         'meets_guarantor_criteria',
+        'approved_at',
+        'approved_by',
+        'approval_notes',
+        'rejected_at',
+        'rejected_by',
+        'rejection_reason',
+        'disbursed_by',
+        'disbursement_notes',
     ];
 
     protected $casts = [
@@ -68,6 +77,11 @@ class Loan extends Model
         'total_guarantee_amount' => 'decimal:2',
         'required_guarantee_amount' => 'decimal:2',
         'meets_guarantor_criteria' => 'boolean',
+        'approved_at' => 'datetime',
+        'approved_by' => 'integer',
+        'rejected_at' => 'datetime',
+        'rejected_by' => 'integer',
+        'disbursed_by' => 'integer',
     ];
 
     // Loan statuses
@@ -100,6 +114,11 @@ class Loan extends Model
         return $this->belongsToMany(Guarantor::class, 'loan_guarantors')
                     ->withPivot(['guarantee_amount', 'status', 'approved_at', 'rejection_reason'])
                     ->withTimestamps();
+    }
+
+    public function loanAccount(): HasOne
+    {
+        return $this->hasOne(LoanAccount::class);
     }
 
     // Helper methods

@@ -160,6 +160,16 @@ class User extends Authenticatable
         return $this->hasMany(Budget::class);
     }
 
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function loanAccounts(): HasMany
+    {
+        return $this->hasMany(LoanAccount::class, 'member_id');
+    }
+
     /**
      * Boot the model
      */

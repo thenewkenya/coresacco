@@ -1,10 +1,13 @@
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { type HTMLAttributes } from 'react';
 
-export default function InputError({ message, className = '', ...props }: HTMLAttributes<HTMLParagraphElement> & { message?: string }) {
+export default function InputError({ message, className = '', ...props }: HTMLAttributes<HTMLDivElement> & { message?: string }) {
     return message ? (
-        <p {...props} className={cn('text-sm text-red-600 dark:text-red-400', className)}>
-            {message}
-        </p>
+        <Alert variant="destructive" className={cn("mt-1", className)} {...props}>
+            <AlertDescription className="text-sm">
+                {message}
+            </AlertDescription>
+        </Alert>
     ) : null;
 }

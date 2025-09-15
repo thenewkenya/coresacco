@@ -6,13 +6,13 @@ WORKDIR /app
 COPY . .
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress
 
-# 2) Frontend build
+# 2) Frontend build (Inertia.js + React)
 FROM node:20-alpine AS frontend
 WORKDIR /app
 COPY package.json package-lock.json* .npmrc* ./
 RUN npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 COPY . .
-# Ensure vendor is available during Vite build for imports like vendor/livewire/flux/dist/flux.css
+# Copy vendor for any PHP dependencies needed during build
 COPY --from=vendor /app/vendor ./vendor
 RUN npm run build
 
@@ -40,14 +40,11 @@ COPY . .
 COPY --from=vendor /app/vendor ./vendor
 COPY --from=frontend /app/public/build ./public/build
 
-# Copy Flux JavaScript assets
-RUN mkdir -p public/flux \
- && cp vendor/livewire/flux/dist/flux.min.js public/flux/flux.js \
- && cp vendor/livewire/flux/dist/flux-lite.min.js public/flux/flux-lite.js \
- && chown -R www-data:www-data public/flux
+# Ensure Inertia.js assets are properly accessible
+RUN mkdir -p public/build \
+ && chown -R www-data:www-data public/build
 
-# Ensure build directory exists and has correct permissions
-RUN mkdir -p public/build && chown -R www-data:www-data public/build
+# Remove duplicate build directory creation (already done above)
 
 # Ensure writable dirs
 RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} storage/logs bootstrap/cache \
@@ -57,10 +54,9 @@ RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} storage/logs 
  && chown www-data:www-data storage/logs/laravel.log \
  && chmod 664 storage/logs/laravel.log
 
-# Copy Flux assets to public directory
-RUN mkdir -p public/vendor/livewire/flux/dist \
- && cp vendor/livewire/flux/dist/flux.css public/vendor/livewire/flux/dist/ \
- && cp vendor/livewire/flux/dist/flux*.js public/vendor/livewire/flux/dist/ 2>/dev/null || true
+# Ensure proper permissions for all public assets
+RUN chown -R www-data:www-data public \
+ && chmod -R 755 public
 
 # Optimize Laravel (config/routes/views)
 RUN php artisan config:cache \

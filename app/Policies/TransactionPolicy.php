@@ -81,7 +81,16 @@ class TransactionPolicy
         }
 
         // Can only approve pending transactions
-        return $transaction->status === Transaction::STATUS_PENDING;
+        if ($transaction->status !== Transaction::STATUS_PENDING) {
+            return false;
+        }
+
+        // Cannot approve M-Pesa transactions (they are auto-confirmed via webhooks)
+        if ($transaction->payment_method === 'mpesa') {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -89,7 +98,27 @@ class TransactionPolicy
      */
     public function reject(User $user, Transaction $transaction): bool
     {
-        return $this->approve($user, $transaction);
+        // Only staff can reject transactions
+        if (!$user->hasAnyRole(['admin', 'manager', 'staff'])) {
+            return false;
+        }
+
+        // Cannot reject own transactions
+        if ($user->id === $transaction->member_id) {
+            return false;
+        }
+
+        // Can only reject pending transactions
+        if ($transaction->status !== Transaction::STATUS_PENDING) {
+            return false;
+        }
+
+        // Cannot reject M-Pesa transactions (they are auto-confirmed via webhooks)
+        if ($transaction->payment_method === 'mpesa') {
+            return false;
+        }
+
+        return true;
     }
 
     /**

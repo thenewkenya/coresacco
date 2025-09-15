@@ -5,41 +5,37 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\User;
 use App\Models\Transaction;
-use App\Services\TransactionService;
+use App\Models\Goal;
+use App\Models\Budget;
+use App\Models\BudgetItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class SavingsController extends Controller
 {
-    protected TransactionService $transactionService;
-
-    public function __construct(TransactionService $transactionService)
-    {
-        $this->transactionService = $transactionService;
-    }
-
     /**
-     * Display savings account management dashboard
+     * Display savings dashboard (staff view)
      */
     public function index(Request $request)
     {
         $user = Auth::user();
         
         // Authorization check
-        if (!in_array($user->role, ['admin', 'manager', 'staff'])) {
-            abort(403, 'Unauthorized access to savings management.');
+        if ($user->role === 'member') {
+            return redirect()->route('savings.my');
         }
 
         // Get filter parameters
         $search = $request->get('search');
         $status = $request->get('status');
         $accountType = $request->get('account_type');
-        $branch = $request->get('branch');
 
-        // Build query
+        // Build query for savings accounts
         $query = Account::with(['member'])
+            ->whereIn('account_type', ['savings', 'shares'])
             ->when($search, function ($q) use ($search) {
                 $q->where(function($query) use ($search) {
                     $query->where('account_number', 'like', "%{$search}%")
@@ -59,55 +55,76 @@ class SavingsController extends Controller
         $accounts = $query->latest()->paginate(20);
 
         // Get summary statistics
-        $totalAccounts = Account::count();
-        $activeAccounts = Account::where('status', Account::STATUS_ACTIVE)->count();
-        $totalBalance = Account::where('status', Account::STATUS_ACTIVE)->sum('balance');
-        $thisMonthDeposits = Transaction::where('type', Transaction::TYPE_DEPOSIT)
-            ->where('status', Transaction::STATUS_COMPLETED)
+        $totalAccounts = Account::whereIn('account_type', ['savings', 'shares'])->count();
+        $activeAccounts = Account::whereIn('account_type', ['savings', 'shares'])
+            ->where('status', 'active')->count();
+        $totalBalance = Account::whereIn('account_type', ['savings', 'shares'])
+            ->where('status', 'active')->sum('balance');
+        $thisMonthDeposits = Transaction::where('type', 'deposit')
+            ->where('status', 'completed')
             ->whereMonth('created_at', now()->month)
             ->sum('amount');
 
-        // Get account types and branches for filters
-        $accountTypes = Account::select('account_type')->distinct()->pluck('account_type');
-        $branches = \App\Models\Branch::all();
+        // Get goals statistics
+        $totalGoals = Goal::count();
+        $activeGoals = Goal::where('status', Goal::STATUS_ACTIVE)->count();
+        $completedGoals = Goal::where('status', Goal::STATUS_COMPLETED)->count();
+        $totalGoalAmount = Goal::where('status', Goal::STATUS_ACTIVE)->sum('target_amount');
+        $totalGoalProgress = Goal::where('status', Goal::STATUS_ACTIVE)->sum('current_amount');
 
-        return view('savings.index', compact(
-            'accounts',
-            'totalAccounts',
-            'activeAccounts', 
-            'totalBalance',
-            'thisMonthDeposits',
-            'accountTypes',
-            'search',
-            'status',
-            'accountType'
-        ));
+        return Inertia::render('savings/index', [
+            'accounts' => $accounts,
+            'stats' => [
+                'totalAccounts' => $totalAccounts,
+                'activeAccounts' => $activeAccounts,
+                'totalBalance' => $totalBalance,
+                'thisMonthDeposits' => $thisMonthDeposits,
+                'totalGoals' => $totalGoals,
+                'activeGoals' => $activeGoals,
+                'completedGoals' => $completedGoals,
+                'totalGoalAmount' => $totalGoalAmount,
+                'totalGoalProgress' => $totalGoalProgress,
+            ],
+            'filters' => $request->only(['search', 'status', 'account_type']),
+            'accountTypes' => ['savings', 'shares'],
+            'statusOptions' => [
+                'active' => 'Active',
+                'inactive' => 'Inactive',
+                'frozen' => 'Frozen',
+                'closed' => 'Closed',
+            ],
+        ]);
     }
 
     /**
-     * Display member's own savings accounts
+     * Display member's own savings dashboard
      */
-    public function my(Request $request)
+    public function my(Request $request): Response
     {
         $user = Auth::user();
         
-        // Get member's accounts with recent transactions
+        // Get member's savings accounts
         $accounts = $user->accounts()
+            ->whereIn('account_type', ['savings', 'shares'])
             ->with(['transactions' => function($query) {
                 $query->latest()->limit(5);
             }])
             ->get();
 
-        // Calculate summary for each account
-        $accountSummaries = [];
-        foreach ($accounts as $account) {
-            $accountSummaries[$account->id] = $this->transactionService->getAccountTransactionSummary($account, 30);
-        }
+        // Get member's goals
+        $goals = $user->goals()
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        // Get savings goals (if implemented)
-        $savingsGoals = []; // Placeholder for future implementation
+        // Get member's budgets
+        $budgets = $user->budgets()
+            ->with('items')
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->limit(3)
+            ->get();
 
-        // Calculate total savings and growth
+        // Calculate summary statistics
         $totalSavings = $accounts->sum('balance');
         $lastMonthBalance = $accounts->sum(function($account) {
             return $account->transactions()
@@ -119,292 +136,538 @@ class SavingsController extends Controller
         $growthAmount = $totalSavings - $lastMonthBalance;
         $growthPercentage = $lastMonthBalance > 0 ? ($growthAmount / $lastMonthBalance) * 100 : 0;
 
-        return view('savings.my', compact(
-            'accounts',
-            'accountSummaries',
-            'savingsGoals',
-            'totalSavings',
-            'growthAmount',
-            'growthPercentage'
-        ));
+        // Goals statistics
+        $activeGoals = $goals->where('status', Goal::STATUS_ACTIVE);
+        $completedGoals = $goals->where('status', Goal::STATUS_COMPLETED);
+        $totalGoalProgress = $activeGoals->sum('current_amount');
+        $totalGoalTarget = $activeGoals->sum('target_amount');
+
+        return Inertia::render('savings/my', [
+            'accounts' => $accounts,
+            'goals' => $goals,
+            'budgets' => $budgets,
+            'stats' => [
+                'totalSavings' => $totalSavings,
+                'growthAmount' => $growthAmount,
+                'growthPercentage' => $growthPercentage,
+                'activeGoals' => $activeGoals->count(),
+                'completedGoals' => $completedGoals->count(),
+                'totalGoalProgress' => $totalGoalProgress,
+                'totalGoalTarget' => $totalGoalTarget,
+                'goalProgressPercentage' => $totalGoalTarget > 0 ? ($totalGoalProgress / $totalGoalTarget) * 100 : 0,
+            ],
+        ]);
     }
 
     /**
-     * Show account details
+     * Display savings goals
      */
-    public function show(Account $account)
+    public function goals(Request $request): Response
     {
         $user = Auth::user();
         
-        // Authorization check
-        if ($user->role === 'member' && $account->member_id !== $user->id) {
-            abort(403, 'Unauthorized access to this account.');
+        $query = Goal::with(['member'])
+            ->when($user->role === 'member', function ($query) use ($user) {
+                return $query->where('member_id', $user->id);
+            });
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('member', function($memberQuery) use ($request) {
+                      $memberQuery->where('name', 'like', '%' . $request->search . '%');
+                  });
+            });
         }
 
-        $account->load(['member']);
-        
-        // Get transactions with pagination
-        $transactions = $account->transactions()
-            ->with('member')
-            ->latest()
-            ->paginate(20);
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
-        // Get account summary
-        $summary = $this->transactionService->getAccountTransactionSummary($account, 90);
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
 
-        // Calculate interest earned (if applicable)
-        $interestEarned = $account->transactions()
-            ->where('type', Transaction::TYPE_INTEREST)
-            ->where('status', Transaction::STATUS_COMPLETED)
-            ->sum('amount');
+        $goals = $query->orderBy('created_at', 'desc')->paginate(15);
 
-        return view('savings.show', compact('account', 'transactions', 'summary', 'interestEarned'));
+        // Calculate statistics
+        $totalGoals = Goal::when($user->role === 'member', function ($query) use ($user) {
+            return $query->where('member_id', $user->id);
+        })->count();
+
+        $activeGoals = Goal::when($user->role === 'member', function ($query) use ($user) {
+            return $query->where('member_id', $user->id);
+        })->where('status', Goal::STATUS_ACTIVE)->count();
+
+        $completedGoals = Goal::when($user->role === 'member', function ($query) use ($user) {
+            return $query->where('member_id', $user->id);
+        })->where('status', Goal::STATUS_COMPLETED)->count();
+
+        $totalTargetAmount = Goal::when($user->role === 'member', function ($query) use ($user) {
+            return $query->where('member_id', $user->id);
+        })->where('status', Goal::STATUS_ACTIVE)->sum('target_amount');
+
+        $totalCurrentAmount = Goal::when($user->role === 'member', function ($query) use ($user) {
+            return $query->where('member_id', $user->id);
+        })->where('status', Goal::STATUS_ACTIVE)->sum('current_amount');
+
+        return Inertia::render('savings/goals/index', [
+            'goals' => $goals,
+            'stats' => [
+                'totalGoals' => $totalGoals,
+                'activeGoals' => $activeGoals,
+                'completedGoals' => $completedGoals,
+                'totalTargetAmount' => $totalTargetAmount,
+                'totalCurrentAmount' => $totalCurrentAmount,
+            ],
+            'filters' => $request->only(['search', 'status', 'type']),
+            'statusOptions' => [
+                'active' => 'Active',
+                'completed' => 'Completed',
+                'paused' => 'Paused',
+                'cancelled' => 'Cancelled',
+            ],
+            'typeOptions' => [
+                'emergency_fund' => 'Emergency Fund',
+                'home_purchase' => 'Home Purchase',
+                'education' => 'Education',
+                'retirement' => 'Retirement',
+                'custom' => 'Custom',
+            ],
+        ]);
     }
 
     /**
-     * Show create account form
+     * Display budget planning
      */
-    public function create()
+    public function budget(Request $request): Response
     {
         $user = Auth::user();
         
-        // Authorization check
-        if (!in_array($user->role, ['admin', 'manager', 'staff'])) {
-            abort(403, 'Unauthorized to create accounts.');
+        $query = Budget::with(['items'])
+            ->when($user->role === 'member', function ($query) use ($user) {
+                return $query->where('user_id', $user->id);
+            });
+
+        // Apply filters
+        if ($request->filled('year')) {
+            $query->where('year', $request->year);
         }
 
-        $members = User::where('role', 'member')->get();
-        $accountTypes = Account::getAccountTypes();
+        if ($request->filled('month')) {
+            $query->where('month', $request->month);
+        }
 
-        return view('savings.create', compact('members', 'accountTypes'));
+        $budgets = $query->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->paginate(12);
+
+        // Get current budget
+        $currentBudget = Budget::where('user_id', $user->id)
+            ->where('year', now()->year)
+            ->where('month', now()->month)
+            ->with('items')
+            ->first();
+
+        // Calculate statistics
+        $totalBudgets = Budget::when($user->role === 'member', function ($query) use ($user) {
+            return $query->where('user_id', $user->id);
+        })->count();
+
+        $activeBudgets = Budget::when($user->role === 'member', function ($query) use ($user) {
+            return $query->where('user_id', $user->id);
+        })->where('status', Budget::STATUS_ACTIVE)->count();
+
+        return Inertia::render('savings/budget/index', [
+            'budgets' => $budgets,
+            'currentBudget' => $currentBudget,
+            'stats' => [
+                'totalBudgets' => $totalBudgets,
+                'activeBudgets' => $activeBudgets,
+            ],
+            'filters' => $request->only(['year', 'month']),
+            'categories' => Budget::CATEGORIES,
+            'years' => range(now()->year - 2, now()->year + 1),
+            'months' => [
+                1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
+                5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+                9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+            ],
+        ]);
     }
 
     /**
-     * Store new account
+     * Show create goal form
      */
-    public function store(Request $request)
+    public function createGoal(): Response
     {
         $user = Auth::user();
         
-        // Authorization check
-        if (!in_array($user->role, ['admin', 'manager', 'staff'])) {
-            abort(403, 'Unauthorized to create accounts.');
+        $accounts = $user->accounts()
+            ->whereIn('account_type', ['savings', 'shares'])
+            ->where('status', 'active')
+            ->get();
+
+        return Inertia::render('savings/goals/create', [
+            'accounts' => $accounts,
+            'typeOptions' => [
+                'emergency_fund' => 'Emergency Fund',
+                'home_purchase' => 'Home Purchase',
+                'education' => 'Education',
+                'retirement' => 'Retirement',
+                'custom' => 'Custom',
+            ],
+            'frequencyOptions' => [
+                'weekly' => 'Weekly',
+                'monthly' => 'Monthly',
+                'quarterly' => 'Quarterly',
+                'yearly' => 'Yearly',
+            ],
+        ]);
+    }
+
+    /**
+     * Store new goal
+     */
+    public function storeGoal(Request $request)
+    {
+        // Debug: Log the incoming request data
+        \Log::info('=== GOAL CREATION REQUEST START ===');
+        \Log::info('Goal creation request:', $request->all());
+        \Log::info('Request method:', ['method' => $request->method()]);
+        \Log::info('Request URL:', ['url' => $request->url()]);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'target_amount' => 'required|numeric|min:1000',
+            'target_date' => 'required|date|after_or_equal:tomorrow',
+            'type' => 'required|in:emergency_fund,home_purchase,education,retirement,custom',
+            'auto_save_amount' => 'nullable|numeric|min:100',
+            'auto_save_frequency' => 'nullable|in:weekly,monthly,quarterly,yearly',
+        ]);
+
+        $user = Auth::user();
+
+        try {
+            DB::beginTransaction();
+
+            $goal = Goal::create([
+                'member_id' => $user->id,
+                'title' => $request->title,
+                'description' => $request->description,
+                'target_amount' => $request->target_amount,
+                'current_amount' => 0,
+                'target_date' => $request->target_date,
+                'type' => $request->type,
+                'status' => Goal::STATUS_ACTIVE,
+                'auto_save_amount' => $request->auto_save_amount,
+                'auto_save_frequency' => $request->auto_save_frequency,
+            ]);
+
+            DB::commit();
+
+            \Log::info('Goal created successfully:', ['goal_id' => $goal->id]);
+
+            return redirect()->route('savings.goals')
+                           ->with('success', 'Savings goal created successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Goal creation failed:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return back()->withErrors(['error' => 'Failed to create goal: ' . $e->getMessage()])
+                        ->withInput();
+        }
+    }
+
+    /**
+     * Show goal details
+     */
+    public function showGoal(Goal $goal): Response
+    {
+        $user = Auth::user();
+        
+        // Check permissions
+        if ($user->role === 'member' && $goal->member_id !== $user->id) {
+            abort(403, 'You can only view your own goals.');
         }
 
-        $validated = $request->validate([
-            'member_id' => 'required|exists:users,id',
-            'account_type' => ['required', Rule::in(Account::getAccountTypes())],
-            'initial_deposit' => 'required|numeric|min:1000',
+        $goal->load(['member']);
+
+        // Calculate progress
+        $progressPercentage = $goal->target_amount > 0 ? ($goal->current_amount / $goal->target_amount) * 100 : 0;
+        $daysRemaining = now()->diffInDays($goal->target_date, false);
+        $daysRemaining = $daysRemaining > 0 ? $daysRemaining : 0;
+
+        return Inertia::render('savings/goals/show', [
+            'goal' => $goal,
+            'progressPercentage' => $progressPercentage,
+            'daysRemaining' => $daysRemaining,
+        ]);
+    }
+
+    /**
+     * Update goal
+     */
+    public function updateGoal(Request $request, Goal $goal)
+    {
+        $user = Auth::user();
+        
+        // Check permissions
+        if ($user->role === 'member' && $goal->member_id !== $user->id) {
+            abort(403, 'You can only update your own goals.');
+        }
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'target_amount' => 'required|numeric|min:1000',
+            'target_date' => 'required|date|after:today',
+            'status' => 'required|in:active,completed,paused,cancelled',
+            'auto_save_amount' => 'nullable|numeric|min:100',
+            'auto_save_frequency' => 'nullable|in:weekly,monthly,quarterly,yearly',
+        ]);
+
+        $goal->update($request->only([
+            'title', 'description', 'target_amount', 'target_date', 
+            'status', 'auto_save_amount', 'auto_save_frequency'
+        ]));
+
+        return back()->with('success', 'Goal updated successfully!');
+    }
+
+    /**
+     * Delete goal
+     */
+    public function destroyGoal(Goal $goal)
+    {
+        $user = Auth::user();
+        
+        // Check permissions
+        if ($user->role === 'member' && $goal->member_id !== $user->id) {
+            abort(403, 'You can only delete your own goals.');
+        }
+
+        $goal->delete();
+
+        return redirect()->route('savings.goals')
+                       ->with('success', 'Goal deleted successfully!');
+    }
+
+    /**
+     * Contribute to goal
+     */
+    public function contributeToGoal(Request $request, Goal $goal)
+    {
+        $user = Auth::user();
+        
+        // Check permissions
+        if ($user->role === 'member' && $goal->member_id !== $user->id) {
+            abort(403, 'You can only contribute to your own goals.');
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:100',
+            'account_id' => 'required|exists:accounts,id',
             'description' => 'nullable|string|max:255',
         ]);
 
         try {
             DB::beginTransaction();
 
-            // Create account
-            $account = Account::create([
-                'member_id' => $validated['member_id'],
-                'account_number' => Account::generateAccountNumber(),
-                'account_type' => $validated['account_type'],
-                'balance' => 0,
-                'status' => Account::STATUS_ACTIVE,
-                'currency' => 'KES',
+            $account = Account::findOrFail($request->account_id);
+            
+            // Check if account belongs to user
+            if ($user->role === 'member' && $account->member_id !== $user->id) {
+                throw new \Exception('Account does not belong to you.');
+            }
+
+            // Check if account has sufficient balance
+            if ($account->balance < $request->amount) {
+                throw new \Exception('Insufficient account balance.');
+            }
+
+            // Create transaction
+            $transaction = Transaction::create([
+                'member_id' => $user->id,
+                'account_id' => $account->id,
+                'type' => 'goal_contribution',
+                'amount' => $request->amount,
+                'description' => $request->description ?? "Contribution to goal: {$goal->title}",
+                'reference_number' => $this->generateReferenceNumber(),
+                'status' => 'completed',
+                'balance_before' => $account->balance,
+                'balance_after' => $account->balance - $request->amount,
             ]);
 
-            // Process initial deposit if provided
-            if ($validated['initial_deposit'] > 0) {
-                $this->transactionService->processDeposit(
-                    $account,
-                    $validated['initial_deposit'],
-                    'Initial deposit for new account',
-                    ['account_opening' => true, 'processed_by' => $user->id]
-                );
+            // Update account balance
+            $account->update(['balance' => $account->balance - $request->amount]);
+
+            // Update goal progress
+            $goal->update(['current_amount' => $goal->current_amount + $request->amount]);
+
+            // Check if goal is completed
+            if ($goal->current_amount >= $goal->target_amount) {
+                $goal->update(['status' => Goal::STATUS_COMPLETED]);
             }
 
             DB::commit();
 
-            return redirect()->route('savings.show', $account)
-                ->with('success', 'Account created successfully with initial deposit of KES ' . number_format($validated['initial_deposit']));
+            return back()->with('success', 'Contribution of KSh ' . number_format($request->amount) . ' added to goal successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Failed to create account: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to contribute to goal: ' . $e->getMessage()]);
         }
     }
 
     /**
-     * Process deposit
+     * Show create budget form
      */
-    public function deposit(Request $request, Account $account)
+    public function createBudget(): Response
     {
         $user = Auth::user();
         
-        // Authorization check
-        if ($user->role === 'member' && $account->member_id !== $user->id) {
-            abort(403, 'Unauthorized access to this account.');
-        }
+        \Log::info('CreateBudget - User authenticated:', ['user_id' => $user?->id, 'user_name' => $user?->name]);
+        
+        return Inertia::render('savings/budget/create', [
+            'categories' => Budget::CATEGORIES,
+            'months' => [
+                1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
+                5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+                9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+            ],
+            'years' => range(now()->year, now()->year + 1),
+        ]);
+    }
 
-        $validated = $request->validate([
-            'amount' => 'required|numeric|min:1|max:500000',
-            'description' => 'nullable|string|max:255',
+    /**
+     * Store new budget
+     */
+    public function storeBudget(Request $request)
+    {
+        // Debug: Log the incoming request data
+        \Log::info('Budget creation request:', $request->all());
+        
+        $request->validate([
+            'month' => 'required|integer|between:1,12',
+            'year' => 'required|integer|min:' . now()->year,
+            'total_income' => 'required|numeric|min:0',
+            'savings_target' => 'required|numeric|min:0',
+            'notes' => 'nullable|string|max:1000',
+            'items' => 'required|array|min:1',
+            'items.*.category' => 'required|string',
+            'items.*.amount' => 'required|numeric|min:0',
+            'items.*.description' => 'nullable|string|max:255',
         ]);
 
-        try {
-            $transaction = $this->transactionService->processDeposit(
-                $account,
-                $validated['amount'],
-                $validated['description'] ?? 'Deposit',
-                ['processed_by' => $user->id]
-            );
-
-            return redirect()->route('transactions.receipt', $transaction)
-                ->with('success', 'Deposit of KES ' . number_format($validated['amount']) . ' processed successfully.');
-
-        } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Deposit failed: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Process withdrawal
-     */
-    public function withdraw(Request $request, Account $account)
-    {
         $user = Auth::user();
-        
-        // Authorization check
-        if ($user->role === 'member' && $account->member_id !== $user->id) {
-            abort(403, 'Unauthorized access to this account.');
-        }
-
-        $validated = $request->validate([
-            'amount' => 'required|numeric|min:1|max:100000',
-            'description' => 'nullable|string|max:255',
-        ]);
 
         try {
-            $transaction = $this->transactionService->processWithdrawal(
-                $account,
-                $validated['amount'],
-                $validated['description'] ?? 'Withdrawal',
-                ['processed_by' => $user->id]
-            );
+            DB::beginTransaction();
 
-            $message = $transaction->status === Transaction::STATUS_PENDING 
-                ? 'Withdrawal request submitted for approval (amount exceeds limit).'
-                : 'Withdrawal of KES ' . number_format($validated['amount']) . ' processed successfully.';
+            // Calculate total expenses
+            $totalExpenses = collect($request->items)->sum('amount');
 
-            return redirect()->route('transactions.receipt', $transaction)
-                ->with('success', $message);
+            // Create budget
+            $budget = Budget::create([
+                'user_id' => $user->id,
+                'month' => $request->month,
+                'year' => $request->year,
+                'total_income' => $request->total_income,
+                'total_expenses' => $totalExpenses,
+                'savings_target' => $request->savings_target,
+                'notes' => $request->notes,
+                'status' => Budget::STATUS_ACTIVE,
+            ]);
 
-        } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Withdrawal failed: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Calculate and apply interest
-     */
-    public function calculateInterest(Account $account)
-    {
-        $user = Auth::user();
-        
-        // Authorization check
-        if (!in_array($user->role, ['admin', 'manager'])) {
-            abort(403, 'Unauthorized to calculate interest.');
-        }
-
-        try {
-            // Get interest rate (8.5% annually as per system settings)
-            $annualRate = 8.5;
-            $monthlyRate = $annualRate / 12 / 100;
-            
-            // Calculate interest on current balance
-            $interestAmount = $account->balance * $monthlyRate;
-            
-            if ($interestAmount > 0) {
-                $transaction = $this->transactionService->processDeposit(
-                    $account,
-                    $interestAmount,
-                    'Monthly interest payment',
-                    [
-                        'transaction_type' => Transaction::TYPE_INTEREST,
-                        'interest_rate' => $annualRate,
-                        'calculated_by' => $user->id
-                    ]
-                );
-
-                return back()->with('success', 'Interest of KES ' . number_format($interestAmount, 2) . ' calculated and applied.');
-            } else {
-                return back()->with('info', 'No interest calculated (zero balance).');
+            // Create budget items
+            foreach ($request->items as $item) {
+                BudgetItem::create([
+                    'budget_id' => $budget->id,
+                    'category' => $item['category'],
+                    'amount' => $item['amount'],
+                ]);
             }
 
+            DB::commit();
+
+            \Log::info('Budget created successfully:', ['budget_id' => $budget->id]);
+
+            return redirect()->route('savings.budget')
+                           ->with('success', 'Budget created successfully!');
+
         } catch (\Exception $e) {
-            return back()->with('error', 'Interest calculation failed: ' . $e->getMessage());
+            DB::rollBack();
+            \Log::error('Budget creation failed:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return back()->withErrors(['error' => 'Failed to create budget: ' . $e->getMessage()])
+                        ->withInput();
         }
     }
 
     /**
-     * Update account status
+     * Show budget details
      */
-    public function updateStatus(Request $request, Account $account)
+    public function showBudget(Budget $budget): Response
     {
         $user = Auth::user();
         
-        // Authorization check
-        if (!in_array($user->role, ['admin', 'manager'])) {
-            abort(403, 'Unauthorized to update account status.');
+        // Check permissions
+        if ($user->role === 'member' && $budget->user_id !== $user->id) {
+            abort(403, 'You can only view your own budgets.');
         }
 
-        $validated = $request->validate([
-            'status' => ['required', Rule::in([Account::STATUS_ACTIVE, Account::STATUS_INACTIVE, Account::STATUS_FROZEN, Account::STATUS_CLOSED])],
-            'reason' => 'nullable|string|max:255',
-        ]);
+        $budget->load(['items']);
 
-        $oldStatus = $account->status;
-        $account->update([
-            'status' => $validated['status'],
-        ]);
+        // Calculate budget analysis
+        $totalExpenses = $budget->items->sum('amount');
+        $remainingIncome = $budget->total_income - $totalExpenses;
+        $savingsAchieved = $remainingIncome - $budget->savings_target;
+        $savingsPercentage = $budget->total_income > 0 ? ($budget->savings_target / $budget->total_income) * 100 : 0;
 
-        return back()->with('success', "Account status updated from {$oldStatus} to {$validated['status']}.");
+        return Inertia::render('savings/budget/show', [
+            'budget' => $budget,
+            'analysis' => [
+                'totalExpenses' => $totalExpenses,
+                'remainingIncome' => $remainingIncome,
+                'savingsAchieved' => $savingsAchieved,
+                'savingsPercentage' => $savingsPercentage,
+            ],
+        ]);
     }
 
     /**
-     * Generate savings report
+     * Update budget
      */
-    public function report(Request $request)
+    public function updateBudget(Request $request, Budget $budget)
     {
         $user = Auth::user();
         
-        // Authorization check
-        if (!in_array($user->role, ['admin', 'manager'])) {
-            abort(403, 'Unauthorized to generate reports.');
+        // Check permissions
+        if ($user->role === 'member' && $budget->user_id !== $user->id) {
+            abort(403, 'You can only update your own budgets.');
         }
 
-        $startDate = $request->get('start_date', now()->startOfMonth());
-        $endDate = $request->get('end_date', now()->endOfMonth());
+        $request->validate([
+            'total_income' => 'required|numeric|min:0',
+            'savings_target' => 'required|numeric|min:0',
+            'notes' => 'nullable|string|max:1000',
+            'status' => 'required|in:active,completed',
+        ]);
 
-        // Build query
-        $query = Account::with(['member']);
+        $budget->update($request->only(['total_income', 'savings_target', 'notes', 'status']));
 
-        $accounts = $query->get();
-
-        // Calculate statistics
-        $stats = [
-            'total_accounts' => $accounts->count(),
-            'active_accounts' => $accounts->where('status', Account::STATUS_ACTIVE)->count(),
-            'total_balance' => $accounts->sum('balance'),
-            'average_balance' => $accounts->avg('balance'),
-            'deposits_this_period' => Transaction::where('type', Transaction::TYPE_DEPOSIT)
-                ->where('status', Transaction::STATUS_COMPLETED)
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->sum('amount'),
-            'withdrawals_this_period' => Transaction::where('type', Transaction::TYPE_WITHDRAWAL)
-                ->where('status', Transaction::STATUS_COMPLETED)
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->sum('amount'),
-        ];
-
-        return view('savings.report', compact('accounts', 'stats', 'startDate', 'endDate'));
+        return back()->with('success', 'Budget updated successfully!');
     }
-} 
+
+    private function generateReferenceNumber(): string
+    {
+        do {
+            $referenceNumber = 'TXN' . date('Ymd') . str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
+            $exists = Transaction::where('reference_number', $referenceNumber)->exists();
+        } while ($exists);
+
+        return $referenceNumber;
+    }
+}

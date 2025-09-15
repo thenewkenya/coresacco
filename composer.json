@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/livewire-starter-kit",
+    "name": "esacco/core",
     "type": "project",
-    "description": "The official Laravel starter kit for Livewire.",
+    "description": "eSacco - Digital SACCO Management System with Inertia.js and React.",
     "keywords": [
         "laravel",
         "framework"

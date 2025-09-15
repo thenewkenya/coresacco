@@ -1,6 +1,7 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
-* @see routes/web.php:47
+* @see \App\Http\Controllers\LoanController::index
+* @see app/Http/Controllers/LoanController.php:20
 * @route '/loans'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +15,8 @@ index.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:47
+* @see \App\Http\Controllers\LoanController::index
+* @see app/Http/Controllers/LoanController.php:20
 * @route '/loans'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -22,7 +24,8 @@ index.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:47
+* @see \App\Http\Controllers\LoanController::index
+* @see app/Http/Controllers/LoanController.php:20
 * @route '/loans'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -31,7 +34,8 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:47
+* @see \App\Http\Controllers\LoanController::index
+* @see app/Http/Controllers/LoanController.php:20
 * @route '/loans'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -40,7 +44,8 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:47
+* @see \App\Http\Controllers\LoanController::index
+* @see app/Http/Controllers/LoanController.php:20
 * @route '/loans'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -49,7 +54,8 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 })
 
 /**
-* @see routes/web.php:47
+* @see \App\Http\Controllers\LoanController::index
+* @see app/Http/Controllers/LoanController.php:20
 * @route '/loans'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -58,7 +64,8 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:47
+* @see \App\Http\Controllers\LoanController::index
+* @see app/Http/Controllers/LoanController.php:20
 * @route '/loans'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -74,7 +81,8 @@ indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 index.form = indexForm
 
 /**
-* @see routes/web.php:51
+* @see \App\Http\Controllers\LoanController::create
+* @see app/Http/Controllers/LoanController.php:91
 * @route '/loans/create'
 */
 export const create = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -88,7 +96,8 @@ create.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:51
+* @see \App\Http\Controllers\LoanController::create
+* @see app/Http/Controllers/LoanController.php:91
 * @route '/loans/create'
 */
 create.url = (options?: RouteQueryOptions) => {
@@ -96,7 +105,8 @@ create.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:51
+* @see \App\Http\Controllers\LoanController::create
+* @see app/Http/Controllers/LoanController.php:91
 * @route '/loans/create'
 */
 create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -105,7 +115,8 @@ create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:51
+* @see \App\Http\Controllers\LoanController::create
+* @see app/Http/Controllers/LoanController.php:91
 * @route '/loans/create'
 */
 create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -114,7 +125,8 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:51
+* @see \App\Http\Controllers\LoanController::create
+* @see app/Http/Controllers/LoanController.php:91
 * @route '/loans/create'
 */
 const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -123,7 +135,8 @@ const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 })
 
 /**
-* @see routes/web.php:51
+* @see \App\Http\Controllers\LoanController::create
+* @see app/Http/Controllers/LoanController.php:91
 * @route '/loans/create'
 */
 createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +145,8 @@ createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:51
+* @see \App\Http\Controllers\LoanController::create
+* @see app/Http/Controllers/LoanController.php:91
 * @route '/loans/create'
 */
 createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -148,69 +162,156 @@ createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 create.form = createForm
 
 /**
-* @see routes/web.php:55
-* @route '/loans/applications'
+* @see \App\Http\Controllers\LoanController::store
+* @see app/Http/Controllers/LoanController.php:111
+* @route '/loans'
 */
-export const applications = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: applications.url(options),
-    method: 'get',
+export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: store.url(options),
+    method: 'post',
 })
 
-applications.definition = {
-    methods: ["get","head"],
-    url: '/loans/applications',
-} satisfies RouteDefinition<["get","head"]>
+store.definition = {
+    methods: ["post"],
+    url: '/loans',
+} satisfies RouteDefinition<["post"]>
 
 /**
-* @see routes/web.php:55
-* @route '/loans/applications'
+* @see \App\Http\Controllers\LoanController::store
+* @see app/Http/Controllers/LoanController.php:111
+* @route '/loans'
 */
-applications.url = (options?: RouteQueryOptions) => {
-    return applications.definition.url + queryParams(options)
+store.url = (options?: RouteQueryOptions) => {
+    return store.definition.url + queryParams(options)
 }
 
 /**
-* @see routes/web.php:55
-* @route '/loans/applications'
+* @see \App\Http\Controllers\LoanController::store
+* @see app/Http/Controllers/LoanController.php:111
+* @route '/loans'
 */
-applications.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: applications.url(options),
+store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: store.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::store
+* @see app/Http/Controllers/LoanController.php:111
+* @route '/loans'
+*/
+const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: store.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::store
+* @see app/Http/Controllers/LoanController.php:111
+* @route '/loans'
+*/
+storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: store.url(options),
+    method: 'post',
+})
+
+store.form = storeForm
+
+/**
+* @see \App\Http\Controllers\LoanController::show
+* @see app/Http/Controllers/LoanController.php:242
+* @route '/loans/{loan}'
+*/
+export const show = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: show.url(args, options),
+    method: 'get',
+})
+
+show.definition = {
+    methods: ["get","head"],
+    url: '/loans/{loan}',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\LoanController::show
+* @see app/Http/Controllers/LoanController.php:242
+* @route '/loans/{loan}'
+*/
+show.url = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { loan: args }
+    }
+
+    if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+        args = { loan: args.id }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            loan: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        loan: typeof args.loan === 'object'
+        ? args.loan.id
+        : args.loan,
+    }
+
+    return show.definition.url
+            .replace('{loan}', parsedArgs.loan.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\LoanController::show
+* @see app/Http/Controllers/LoanController.php:242
+* @route '/loans/{loan}'
+*/
+show.get = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: show.url(args, options),
     method: 'get',
 })
 
 /**
-* @see routes/web.php:55
-* @route '/loans/applications'
+* @see \App\Http\Controllers\LoanController::show
+* @see app/Http/Controllers/LoanController.php:242
+* @route '/loans/{loan}'
 */
-applications.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: applications.url(options),
+show.head = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: show.url(args, options),
     method: 'head',
 })
 
 /**
-* @see routes/web.php:55
-* @route '/loans/applications'
+* @see \App\Http\Controllers\LoanController::show
+* @see app/Http/Controllers/LoanController.php:242
+* @route '/loans/{loan}'
 */
-const applicationsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: applications.url(options),
+const showForm = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: show.url(args, options),
     method: 'get',
 })
 
 /**
-* @see routes/web.php:55
-* @route '/loans/applications'
+* @see \App\Http\Controllers\LoanController::show
+* @see app/Http/Controllers/LoanController.php:242
+* @route '/loans/{loan}'
 */
-applicationsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: applications.url(options),
+showForm.get = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: show.url(args, options),
     method: 'get',
 })
 
 /**
-* @see routes/web.php:55
-* @route '/loans/applications'
+* @see \App\Http\Controllers\LoanController::show
+* @see app/Http/Controllers/LoanController.php:242
+* @route '/loans/{loan}'
 */
-applicationsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: applications.url({
+showForm.head = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: show.url(args, {
         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
             _method: 'HEAD',
             ...(options?.query ?? options?.mergeQuery ?? {}),
@@ -219,12 +320,441 @@ applicationsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'
     method: 'get',
 })
 
-applications.form = applicationsForm
+show.form = showForm
+
+/**
+* @see \App\Http\Controllers\LoanController::edit
+* @see app/Http/Controllers/LoanController.php:0
+* @route '/loans/{loan}/edit'
+*/
+export const edit = (args: { loan: string | number } | [loan: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: edit.url(args, options),
+    method: 'get',
+})
+
+edit.definition = {
+    methods: ["get","head"],
+    url: '/loans/{loan}/edit',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\LoanController::edit
+* @see app/Http/Controllers/LoanController.php:0
+* @route '/loans/{loan}/edit'
+*/
+edit.url = (args: { loan: string | number } | [loan: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { loan: args }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            loan: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        loan: args.loan,
+    }
+
+    return edit.definition.url
+            .replace('{loan}', parsedArgs.loan.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\LoanController::edit
+* @see app/Http/Controllers/LoanController.php:0
+* @route '/loans/{loan}/edit'
+*/
+edit.get = (args: { loan: string | number } | [loan: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: edit.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::edit
+* @see app/Http/Controllers/LoanController.php:0
+* @route '/loans/{loan}/edit'
+*/
+edit.head = (args: { loan: string | number } | [loan: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: edit.url(args, options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::edit
+* @see app/Http/Controllers/LoanController.php:0
+* @route '/loans/{loan}/edit'
+*/
+const editForm = (args: { loan: string | number } | [loan: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: edit.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::edit
+* @see app/Http/Controllers/LoanController.php:0
+* @route '/loans/{loan}/edit'
+*/
+editForm.get = (args: { loan: string | number } | [loan: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: edit.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::edit
+* @see app/Http/Controllers/LoanController.php:0
+* @route '/loans/{loan}/edit'
+*/
+editForm.head = (args: { loan: string | number } | [loan: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: edit.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+edit.form = editForm
+
+/**
+* @see \App\Http\Controllers\LoanController::update
+* @see app/Http/Controllers/LoanController.php:0
+* @route '/loans/{loan}'
+*/
+export const update = (args: { loan: string | number } | [loan: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: update.url(args, options),
+    method: 'put',
+})
+
+update.definition = {
+    methods: ["put"],
+    url: '/loans/{loan}',
+} satisfies RouteDefinition<["put"]>
+
+/**
+* @see \App\Http\Controllers\LoanController::update
+* @see app/Http/Controllers/LoanController.php:0
+* @route '/loans/{loan}'
+*/
+update.url = (args: { loan: string | number } | [loan: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { loan: args }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            loan: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        loan: args.loan,
+    }
+
+    return update.definition.url
+            .replace('{loan}', parsedArgs.loan.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\LoanController::update
+* @see app/Http/Controllers/LoanController.php:0
+* @route '/loans/{loan}'
+*/
+update.put = (args: { loan: string | number } | [loan: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: update.url(args, options),
+    method: 'put',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::update
+* @see app/Http/Controllers/LoanController.php:0
+* @route '/loans/{loan}'
+*/
+const updateForm = (args: { loan: string | number } | [loan: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: update.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PUT',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::update
+* @see app/Http/Controllers/LoanController.php:0
+* @route '/loans/{loan}'
+*/
+updateForm.put = (args: { loan: string | number } | [loan: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: update.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PUT',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+update.form = updateForm
+
+/**
+* @see \App\Http\Controllers\LoanController::approve
+* @see app/Http/Controllers/LoanController.php:258
+* @route '/loans/{loan}/approve'
+*/
+export const approve = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: approve.url(args, options),
+    method: 'post',
+})
+
+approve.definition = {
+    methods: ["post"],
+    url: '/loans/{loan}/approve',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\LoanController::approve
+* @see app/Http/Controllers/LoanController.php:258
+* @route '/loans/{loan}/approve'
+*/
+approve.url = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { loan: args }
+    }
+
+    if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+        args = { loan: args.id }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            loan: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        loan: typeof args.loan === 'object'
+        ? args.loan.id
+        : args.loan,
+    }
+
+    return approve.definition.url
+            .replace('{loan}', parsedArgs.loan.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\LoanController::approve
+* @see app/Http/Controllers/LoanController.php:258
+* @route '/loans/{loan}/approve'
+*/
+approve.post = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: approve.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::approve
+* @see app/Http/Controllers/LoanController.php:258
+* @route '/loans/{loan}/approve'
+*/
+const approveForm = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: approve.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::approve
+* @see app/Http/Controllers/LoanController.php:258
+* @route '/loans/{loan}/approve'
+*/
+approveForm.post = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: approve.url(args, options),
+    method: 'post',
+})
+
+approve.form = approveForm
+
+/**
+* @see \App\Http\Controllers\LoanController::reject
+* @see app/Http/Controllers/LoanController.php:299
+* @route '/loans/{loan}/reject'
+*/
+export const reject = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: reject.url(args, options),
+    method: 'post',
+})
+
+reject.definition = {
+    methods: ["post"],
+    url: '/loans/{loan}/reject',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\LoanController::reject
+* @see app/Http/Controllers/LoanController.php:299
+* @route '/loans/{loan}/reject'
+*/
+reject.url = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { loan: args }
+    }
+
+    if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+        args = { loan: args.id }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            loan: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        loan: typeof args.loan === 'object'
+        ? args.loan.id
+        : args.loan,
+    }
+
+    return reject.definition.url
+            .replace('{loan}', parsedArgs.loan.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\LoanController::reject
+* @see app/Http/Controllers/LoanController.php:299
+* @route '/loans/{loan}/reject'
+*/
+reject.post = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: reject.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::reject
+* @see app/Http/Controllers/LoanController.php:299
+* @route '/loans/{loan}/reject'
+*/
+const rejectForm = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: reject.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::reject
+* @see app/Http/Controllers/LoanController.php:299
+* @route '/loans/{loan}/reject'
+*/
+rejectForm.post = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: reject.url(args, options),
+    method: 'post',
+})
+
+reject.form = rejectForm
+
+/**
+* @see \App\Http\Controllers\LoanController::disburse
+* @see app/Http/Controllers/LoanController.php:340
+* @route '/loans/{loan}/disburse'
+*/
+export const disburse = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: disburse.url(args, options),
+    method: 'post',
+})
+
+disburse.definition = {
+    methods: ["post"],
+    url: '/loans/{loan}/disburse',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\LoanController::disburse
+* @see app/Http/Controllers/LoanController.php:340
+* @route '/loans/{loan}/disburse'
+*/
+disburse.url = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { loan: args }
+    }
+
+    if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+        args = { loan: args.id }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            loan: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        loan: typeof args.loan === 'object'
+        ? args.loan.id
+        : args.loan,
+    }
+
+    return disburse.definition.url
+            .replace('{loan}', parsedArgs.loan.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\LoanController::disburse
+* @see app/Http/Controllers/LoanController.php:340
+* @route '/loans/{loan}/disburse'
+*/
+disburse.post = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: disburse.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::disburse
+* @see app/Http/Controllers/LoanController.php:340
+* @route '/loans/{loan}/disburse'
+*/
+const disburseForm = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: disburse.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\LoanController::disburse
+* @see app/Http/Controllers/LoanController.php:340
+* @route '/loans/{loan}/disburse'
+*/
+disburseForm.post = (args: { loan: number | { id: number } } | [loan: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: disburse.url(args, options),
+    method: 'post',
+})
+
+disburse.form = disburseForm
 
 const loans = {
     index: Object.assign(index, index),
     create: Object.assign(create, create),
-    applications: Object.assign(applications, applications),
+    store: Object.assign(store, store),
+    show: Object.assign(show, show),
+    edit: Object.assign(edit, edit),
+    update: Object.assign(update, update),
+    approve: Object.assign(approve, approve),
+    reject: Object.assign(reject, reject),
+    disburse: Object.assign(disburse, disburse),
 }
 
 export default loans
