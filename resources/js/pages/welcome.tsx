@@ -50,20 +50,20 @@ export default function Welcome() {
                     <div className="container mx-auto text-center max-w-4xl">
                         <Badge variant="secondary" className="mb-4">
                             <Zap className="w-3 h-3 mr-1" />
-                            Modern SACCO Management
+                            Beta - Modern SACCO Management
                         </Badge>
                         <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
                             Digital SACCO Management
                             <span className="text-primary block">Made Simple</span>
                         </h1>
                         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                            Transform your SACCO operations with our comprehensive digital platform. 
-                            Manage members, loans, savings, and transactions with ease.
+                            Experience the future of SACCO management with our innovative digital platform. 
+                            Currently in beta - help us build the perfect solution for your cooperative.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Button size="lg" asChild>
                                 <a href="/register">
-                                    Start Free Trial
+                                    Join Beta Program
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </a>
                             </Button>
@@ -212,23 +212,23 @@ export default function Welcome() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="bg-background/80 backdrop-blur rounded-lg p-4 text-center">
                                             <TrendingUp className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                                            <div className="text-2xl font-bold">98%</div>
-                                            <div className="text-sm text-muted-foreground">Member Satisfaction</div>
+                                            <div className="text-2xl font-bold">Modern</div>
+                                            <div className="text-sm text-muted-foreground">Technology Stack</div>
                                         </div>
                                         <div className="bg-background/80 backdrop-blur rounded-lg p-4 text-center">
                                             <Clock className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                                            <div className="text-2xl font-bold">50%</div>
-                                            <div className="text-sm text-muted-foreground">Time Saved</div>
+                                            <div className="text-2xl font-bold">24/7</div>
+                                            <div className="text-sm text-muted-foreground">Access</div>
                                         </div>
                                         <div className="bg-background/80 backdrop-blur rounded-lg p-4 text-center">
                                             <Globe className="h-8 w-8 text-purple-500 mx-auto mb-2" />
-                                            <div className="text-2xl font-bold">100+</div>
-                                            <div className="text-sm text-muted-foreground">SACCOs Served</div>
+                                            <div className="text-2xl font-bold">Cloud</div>
+                                            <div className="text-sm text-muted-foreground">Based</div>
                                         </div>
                                         <div className="bg-background/80 backdrop-blur rounded-lg p-4 text-center">
                                             <Star className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-                                            <div className="text-2xl font-bold">4.9</div>
-                                            <div className="text-sm text-muted-foreground">Rating</div>
+                                            <div className="text-2xl font-bold">Beta</div>
+                                            <div className="text-sm text-muted-foreground">Early Access</div>
                                         </div>
                                     </div>
                                 </div>
@@ -244,18 +244,18 @@ export default function Welcome() {
                             Ready to Transform Your SACCO?
                         </h2>
                         <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
-                            Join hundreds of SACCOs already using eSacco to streamline 
-                            their operations and better serve their members.
+                            Be among the first to experience the future of SACCO management. 
+                            Join our beta program and help shape the next generation of digital cooperatives.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Button size="lg" variant="secondary" asChild>
                                 <a href="/register">
-                                    Start Your Free Trial
+                                    Join Beta Program
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </a>
                             </Button>
                             <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary" asChild>
-                                <a href="/contact">Contact Sales</a>
+                                <a href="/contact">Get Early Access</a>
                             </Button>
                         </div>
                     </div>
