@@ -28,6 +28,12 @@ class DatabaseSeeder extends Seeder
             // Then seed loans (depends on members and loan types)
             LoanSeeder::class,
             
+            // Then seed loan accounts (depends on loans)
+            LoanAccountSeeder::class,
+            
+            // Then seed goals (depends on members)
+            GoalSeeder::class,
+            
             // Finally seed transactions (depends on accounts and loans)
             TransactionSeeder::class,
         ]);
