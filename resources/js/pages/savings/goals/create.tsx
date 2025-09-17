@@ -11,6 +11,9 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { ArrowLeft, Target, DollarSign, FileText } from 'lucide-react'
 import { create as createGoalUrl, store as storeGoalUrl } from '@/routes/savings/goals'
 import { goals as goalsIndexUrl } from '@/routes/savings'
+import { type BreadcrumbItem } from '@/types'
+import { dashboard } from '@/routes'
+import { index as savingsIndex } from '@/routes/savings'
 
 interface CreateGoalProps {
   auth: {
@@ -19,6 +22,25 @@ interface CreateGoalProps {
 }
 
 export default function CreateGoal({ auth }: CreateGoalProps) {
+  const breadcrumbs: BreadcrumbItem[] = [
+    {
+      title: 'Dashboard',
+      href: dashboard().url,
+    },
+    {
+      title: 'Savings',
+      href: savingsIndex().url,
+    },
+    {
+      title: 'Goals',
+      href: goalsIndexUrl().url,
+    },
+    {
+      title: 'Create Goal',
+      href: '#',
+    },
+  ];
+
   const { data, setData, post, processing, errors, reset } = useForm({
     name: '',
     description: '',
@@ -98,7 +120,7 @@ export default function CreateGoal({ auth }: CreateGoalProps) {
   ]
 
   return (
-    <AppLayout>
+    <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Create Savings Goal" />
       <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
         {/* Header */}

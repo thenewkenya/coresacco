@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -28,6 +30,21 @@ interface Manager {
 }
 
 export default function BranchCreate() {
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard().url,
+        },
+        {
+            title: 'Branches',
+            href: '#',
+        },
+        {
+            title: 'Create Branch',
+            href: '#',
+        },
+    ];
+
     const [workingHours, setWorkingHours] = useState({
         monday: { open: '08:00', close: '17:00' },
         tuesday: { open: '08:00', close: '17:00' },
@@ -105,7 +122,7 @@ export default function BranchCreate() {
     ];
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create Branch" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

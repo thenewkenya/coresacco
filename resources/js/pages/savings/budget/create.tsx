@@ -10,6 +10,9 @@ import { DateRangePicker } from '@/components/ui/date-range-picker'
 import { ArrowLeft, Calculator, DollarSign, FileText, PieChart } from 'lucide-react'
 import { create as createBudgetUrl, store as storeBudgetUrl } from '@/routes/savings/budget'
 import { budget as budgetIndexUrl } from '@/routes/savings'
+import { type BreadcrumbItem } from '@/types'
+import { dashboard } from '@/routes'
+import { index as savingsIndex } from '@/routes/savings'
 
 interface CreateBudgetProps {
   auth: {
@@ -18,6 +21,25 @@ interface CreateBudgetProps {
 }
 
 export default function CreateBudget({ auth }: CreateBudgetProps) {
+  const breadcrumbs: BreadcrumbItem[] = [
+    {
+      title: 'Dashboard',
+      href: dashboard().url,
+    },
+    {
+      title: 'Savings',
+      href: savingsIndex().url,
+    },
+    {
+      title: 'Budget Planning',
+      href: budgetIndexUrl().url,
+    },
+    {
+      title: 'Create Budget',
+      href: '#',
+    },
+  ];
+
   console.log('CreateBudget - Auth data received:', auth)
   console.log('CreateBudget - User data:', auth?.user)
   const { data, setData, post, processing, errors, reset } = useForm({
@@ -149,7 +171,7 @@ export default function CreateBudget({ auth }: CreateBudgetProps) {
   const remainingPercentage = 100 - totalAllocated
 
   return (
-    <AppLayout>
+    <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Create Budget Plan" />
       <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
         {/* Header */}

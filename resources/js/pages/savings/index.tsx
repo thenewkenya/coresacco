@@ -27,6 +27,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { index as savingsIndex, my as savingsMy, goals as savingsGoals, budget as savingsBudget } from '@/routes/savings';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface Account {
     id: number;
@@ -72,6 +74,17 @@ interface Props {
     accountTypes: string[];
     statusOptions: Record<string, string>;
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
+        title: 'Savings',
+        href: savingsIndex().url,
+    },
+];
 
 export default function SavingsIndex({ accounts, stats, filters, accountTypes, statusOptions }: Props) {
     const [search, setSearch] = useState(filters.search || '');
@@ -133,7 +146,7 @@ export default function SavingsIndex({ accounts, stats, filters, accountTypes, s
     const goalProgressPercentage = stats.totalGoalAmount > 0 ? (stats.totalGoalProgress / stats.totalGoalAmount) * 100 : 0;
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Savings Management" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

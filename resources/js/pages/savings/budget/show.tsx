@@ -7,6 +7,9 @@ import { Progress } from '@/components/ui/progress'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ArrowLeft, Calendar, DollarSign, PieChart, Target, TrendingUp } from 'lucide-react'
 import { budget as budgetIndexUrl } from '@/routes/savings'
+import { type BreadcrumbItem } from '@/types'
+import { dashboard } from '@/routes'
+import { index as savingsIndex } from '@/routes/savings'
 
 interface BudgetItem {
   id: number
@@ -50,6 +53,25 @@ export default function ShowBudget({ budget, analysis }: ShowBudgetProps) {
     return months[month - 1] || 'Unknown'
   }
 
+  const breadcrumbs: BreadcrumbItem[] = [
+    {
+      title: 'Dashboard',
+      href: dashboard().url,
+    },
+    {
+      title: 'Savings',
+      href: savingsIndex().url,
+    },
+    {
+      title: 'Budget Planning',
+      href: budgetIndexUrl().url,
+    },
+    {
+      title: `${getMonthName(budget.month)} ${budget.year}`,
+      href: '#',
+    },
+  ];
+
   const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case 'active':
@@ -68,7 +90,7 @@ export default function ShowBudget({ budget, analysis }: ShowBudgetProps) {
   }
 
   return (
-    <AppLayout>
+    <AppLayout breadcrumbs={breadcrumbs}>
       <Head title={`Budget - ${getMonthName(budget.month)} ${budget.year}`} />
       
       <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">

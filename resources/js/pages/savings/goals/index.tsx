@@ -1,6 +1,9 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
+import { index as savingsIndex } from '@/routes/savings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -79,6 +82,21 @@ interface Props {
 }
 
 export default function GoalsIndex({ goals, stats, filters }: Props) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard().url,
+        },
+        {
+            title: 'Savings',
+            href: savingsIndex().url,
+        },
+        {
+            title: 'Goals',
+            href: '#',
+        },
+    ];
+
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
     const [type, setType] = useState(filters.type || 'all');
@@ -114,7 +132,7 @@ export default function GoalsIndex({ goals, stats, filters }: Props) {
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Savings Goals" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

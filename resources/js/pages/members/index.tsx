@@ -18,6 +18,8 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import MemberDeleteDialog from '@/components/member-delete-dialog';
 import { index as membersIndex, create as membersCreate, show as membersShow, edit as membersEdit, destroy as membersDestroy } from '@/routes/members';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -82,6 +84,17 @@ interface Props {
     filters: Filters;
 }
 
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
+        title: 'Members',
+        href: membersIndex().url,
+    },
+];
+
 export default function MembersIndex({ members, branches, stats, filters }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
@@ -143,7 +156,7 @@ export default function MembersIndex({ members, branches, stats, filters }: Prop
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Members" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

@@ -7,6 +7,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import { ArrowLeft, Target, DollarSign, Calendar, TrendingUp, User, FileText } from 'lucide-react'
 import { goals as goalsIndexUrl } from '@/routes/savings'
+import { type BreadcrumbItem } from '@/types'
+import { dashboard } from '@/routes'
+import { index as savingsIndex } from '@/routes/savings'
 
 interface Goal {
   id: number
@@ -36,6 +39,25 @@ interface Props {
 }
 
 export default function GoalShow({ goal, progressPercentage, daysRemaining }: Props) {
+  const breadcrumbs: BreadcrumbItem[] = [
+    {
+      title: 'Dashboard',
+      href: dashboard().url,
+    },
+    {
+      title: 'Savings',
+      href: savingsIndex().url,
+    },
+    {
+      title: 'Goals',
+      href: goalsIndexUrl().url,
+    },
+    {
+      title: goal.title,
+      href: '#',
+    },
+  ];
+
   const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case 'active': return 'default'
@@ -84,7 +106,7 @@ export default function GoalShow({ goal, progressPercentage, daysRemaining }: Pr
   const isOverdue = new Date(goal.target_date) < new Date() && !isCompleted
 
   return (
-    <AppLayout>
+    <AppLayout breadcrumbs={breadcrumbs}>
       <Head title={`Goal - ${goal.title}`} />
       
       <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">

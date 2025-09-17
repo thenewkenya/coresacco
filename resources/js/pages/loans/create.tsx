@@ -27,6 +27,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { index as loansIndex, store as loansStore } from '@/routes/loans';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface LoanType {
     id: number;
@@ -50,6 +52,21 @@ interface Props {
     loanTypes: LoanType[];
     members: Member[];
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
+        title: 'Loans',
+        href: loansIndex().url,
+    },
+    {
+        title: 'Apply for Loan',
+        href: '#',
+    },
+];
 
 export default function CreateLoan({ loanTypes, members }: Props) {
     const { auth } = usePage().props as { auth: { user: any } };
@@ -135,7 +152,7 @@ export default function CreateLoan({ loanTypes, members }: Props) {
     const totalInterest = totalPayment - (parseFloat(amount) || 0);
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Apply for Loan" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

@@ -13,7 +13,9 @@ import {
     Printer
 } from 'lucide-react';
 import { Head, Link } from '@inertiajs/react';
-import { index as transactionsIndex } from '@/routes/transactions';
+import { index as transactionsIndex, show as transactionsShow } from '@/routes/transactions';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface Transaction {
     id: number;
@@ -44,6 +46,25 @@ interface Props {
 }
 
 export default function TransactionReceipt({ transaction }: Props) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard().url,
+        },
+        {
+            title: 'Transactions',
+            href: transactionsIndex().url,
+        },
+        {
+            title: transaction.reference_number,
+            href: transactionsShow({ transaction: transaction.id }).url,
+        },
+        {
+            title: 'Receipt',
+            href: '#',
+        },
+    ];
+
     const getTransactionTypeBadge = (type: string) => {
         switch (type) {
             case 'deposit':
@@ -83,7 +104,7 @@ export default function TransactionReceipt({ transaction }: Props) {
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Receipt - ${transaction.reference_number}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

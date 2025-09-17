@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -56,6 +58,25 @@ export default function BranchEdit() {
     };
 
     const [workingHours, setWorkingHours] = useState(branch.working_hours);
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard().url,
+        },
+        {
+            title: 'Branches',
+            href: '#',
+        },
+        {
+            title: branch.name,
+            href: '#',
+        },
+        {
+            title: 'Edit',
+            href: '#',
+        },
+    ];
 
     const { data, setData, put, processing, errors } = useForm({
         name: branch.name,
@@ -118,7 +139,7 @@ export default function BranchEdit() {
     ];
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Edit ${branch.name}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

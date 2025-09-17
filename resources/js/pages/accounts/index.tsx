@@ -34,6 +34,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { index as accountsIndex, create as accountsCreate, show as accountsShow, destroy as accountsDestroy } from '@/routes/accounts';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface Account {
     id: number;
@@ -77,6 +79,17 @@ interface Props {
     stats: Stats;
     filters: Filters;
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
+        title: 'Accounts',
+        href: accountsIndex().url,
+    },
+];
 
 export default function AccountsIndex({ accounts, stats, filters }: Props) {
     const [search, setSearch] = useState(filters.search || '');
@@ -173,7 +186,7 @@ export default function AccountsIndex({ accounts, stats, filters }: Props) {
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Accounts" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

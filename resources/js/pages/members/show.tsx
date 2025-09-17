@@ -19,6 +19,8 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { index as membersIndex, edit as membersEdit, destroy as membersDestroy } from '@/routes/members';
 import MemberDeleteDialog from '@/components/member-delete-dialog';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface Member {
     id: number;
@@ -63,6 +65,20 @@ interface Props {
 }
 
 export default function MembersShow({ member, stats }: Props) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard().url,
+        },
+        {
+            title: 'Members',
+            href: membersIndex().url,
+        },
+        {
+            title: member.name,
+            href: '#',
+        },
+    ];
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -118,7 +134,7 @@ export default function MembersShow({ member, stats }: Props) {
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Member: ${member.name}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

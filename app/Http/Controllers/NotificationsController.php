@@ -122,7 +122,7 @@ class NotificationsController extends Controller
         
         $notification->markAsRead();
         
-        return response()->json(['success' => true]);
+        return redirect()->back();
     }
 
     /**
@@ -134,7 +134,7 @@ class NotificationsController extends Controller
         
         $notification->markAsUnread();
         
-        return response()->json(['success' => true]);
+        return redirect()->back();
     }
 
     /**
@@ -152,7 +152,7 @@ class NotificationsController extends Controller
                 'read_at' => now()
             ]);
         
-        return response()->json(['success' => true]);
+        return redirect()->back();
     }
 
     /**
@@ -164,7 +164,7 @@ class NotificationsController extends Controller
         
         $notification->delete();
         
-        return response()->json(['success' => true]);
+        return redirect()->back();
     }
 
     /**

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -85,6 +87,21 @@ interface FinancialData {
 }
 
 export default function FinancialReports() {
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard().url,
+        },
+        {
+            title: 'Reports',
+            href: '#',
+        },
+        {
+            title: 'Financial Reports',
+            href: '#',
+        },
+    ];
+
     const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
         from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
         to: new Date()
@@ -189,7 +206,7 @@ export default function FinancialReports() {
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Financial Reports" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

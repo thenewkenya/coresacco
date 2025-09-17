@@ -14,6 +14,8 @@ import {
 import { ArrowLeft, Save } from 'lucide-react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { index as membersIndex, store as membersStore } from '@/routes/members';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface Branch {
     id: number;
@@ -23,6 +25,21 @@ interface Branch {
 interface Props {
     branches: Branch[];
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
+        title: 'Members',
+        href: membersIndex().url,
+    },
+    {
+        title: 'Create Member',
+        href: '#',
+    },
+];
 
 export default function MembersCreate({ branches }: Props) {
     const { data, setData, post, processing, errors } = useForm({
@@ -42,7 +59,7 @@ export default function MembersCreate({ branches }: Props) {
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Add New Member" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

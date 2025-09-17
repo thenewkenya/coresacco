@@ -26,6 +26,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { index as loansIndex, create as loansCreate, show as loansShow } from '@/routes/loans';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface LoanAccount {
     id: number;
@@ -93,6 +95,17 @@ interface Props {
     statusOptions: Record<string, string>;
 }
 
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
+        title: 'Loans',
+        href: loansIndex().url,
+    },
+];
+
 export default function LoansIndex({ loans, loanTypes, stats, filters, statusOptions }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
@@ -153,7 +166,7 @@ export default function LoansIndex({ loans, loanTypes, stats, filters, statusOpt
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Loans" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

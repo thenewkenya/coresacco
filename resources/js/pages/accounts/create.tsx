@@ -26,6 +26,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { index as accountsIndex, store as accountsStore } from '@/routes/accounts';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface AccountType {
     value: string;
@@ -51,6 +53,21 @@ interface Props {
     existingTypes: string[];
     multiAllowed: string[];
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
+        title: 'Accounts',
+        href: accountsIndex().url,
+    },
+    {
+        title: 'Create Account',
+        href: '#',
+    },
+];
 
 export default function CreateAccount({ members, accountTypes, existingTypes, multiAllowed }: Props) {
     const { auth } = usePage().props as { auth: { user: any } };
@@ -130,7 +147,7 @@ export default function CreateAccount({ members, accountTypes, existingTypes, mu
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Open New Account" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

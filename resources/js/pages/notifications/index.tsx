@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -73,6 +75,17 @@ export default function NotificationsIndex({
     filters, 
     filterOptions 
 }: Props) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard().url,
+        },
+        {
+            title: 'Notifications',
+            href: '#',
+        },
+    ];
+
     const [isLoading, setIsLoading] = useState(false);
 
     const formatDate = (dateString: string) => {
@@ -203,7 +216,7 @@ export default function NotificationsIndex({
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Notifications" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

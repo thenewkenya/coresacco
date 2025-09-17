@@ -14,6 +14,8 @@ import {
 import { ArrowLeft, Save } from 'lucide-react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { index as membersIndex, show as membersShow, update as membersUpdate } from '@/routes/members';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface Member {
     id: number;
@@ -37,6 +39,24 @@ interface Props {
 }
 
 export default function MembersEdit({ member, branches }: Props) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard().url,
+        },
+        {
+            title: 'Members',
+            href: membersIndex().url,
+        },
+        {
+            title: member.name,
+            href: membersShow({ member: member.id }).url,
+        },
+        {
+            title: 'Edit',
+            href: '#',
+        },
+    ];
     const { data, setData, put, processing, errors } = useForm({
         name: member.name,
         email: member.email,
@@ -53,7 +73,7 @@ export default function MembersEdit({ member, branches }: Props) {
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Edit Member: ${member.name}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

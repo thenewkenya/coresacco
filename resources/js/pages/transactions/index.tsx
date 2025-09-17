@@ -29,6 +29,8 @@ import {
 } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from '@/components/ui/pagination';
 import { index as transactionsIndex, create as transactionsCreate, show as transactionsShow } from '@/routes/transactions';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface Transaction {
     id: number;
@@ -72,6 +74,17 @@ interface Props {
     statusOptions: Record<string, string>;
     typeOptions: Record<string, string>;
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
+        title: 'Transactions',
+        href: transactionsIndex().url,
+    },
+];
 
 export default function TransactionsIndex({ transactions, filters, statusOptions, typeOptions }: Props) {
     const [search, setSearch] = useState(filters.search || '');
@@ -224,7 +237,7 @@ export default function TransactionsIndex({ transactions, filters, statusOptions
     const netFlow = totalDeposits - totalWithdrawals;
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Transactions" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

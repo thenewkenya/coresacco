@@ -27,6 +27,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { index as transactionsIndex, store as transactionsStore } from '@/routes/transactions';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface Account {
     id: number;
@@ -45,6 +47,21 @@ interface Props {
     transactionTypes: Record<string, string>;
     paymentMethods: Record<string, string>;
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
+        title: 'Transactions',
+        href: transactionsIndex().url,
+    },
+    {
+        title: 'New Transaction',
+        href: '#',
+    },
+];
 
 export default function CreateTransaction({ accounts, transactionTypes, paymentMethods }: Props) {
     const { auth } = usePage().props as { auth: { user: any } };
@@ -149,7 +166,7 @@ export default function CreateTransaction({ accounts, transactionTypes, paymentM
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create Transaction" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

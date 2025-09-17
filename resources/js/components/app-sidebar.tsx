@@ -75,7 +75,7 @@ const allMainNavItems: (NavItem & { roles?: string[] })[] = [
 const allFooterNavItems: (NavItem & { roles?: string[] })[] = [
     {
         title: 'Help & Support',
-        href: '#',
+        href: '/help',
         icon: HelpCircle,
         roles: ['admin', 'staff', 'manager', 'member'], // Everyone can access help
     },

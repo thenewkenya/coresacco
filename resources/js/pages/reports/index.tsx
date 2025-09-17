@@ -3,10 +3,23 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Download, Calendar, BarChart3, CreditCard, Users } from 'lucide-react';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
+        title: 'Reports',
+        href: '#',
+    },
+];
 
 export default function ReportsIndex() {
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Reports" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

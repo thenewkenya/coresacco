@@ -24,6 +24,8 @@ import {
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { index as loansIndex, edit as loansEdit } from '@/routes/loans';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface Transaction {
     id: number;
@@ -129,6 +131,20 @@ interface Props {
 }
 
 export default function ShowLoan({ loan }: Props) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard().url,
+        },
+        {
+            title: 'Loans',
+            href: loansIndex().url,
+        },
+        {
+            title: loan.loan_type.name,
+            href: '#',
+        },
+    ];
     const { auth } = usePage().props as { auth: { user: any } };
     const user = auth.user;
     
@@ -274,7 +290,7 @@ export default function ShowLoan({ loan }: Props) {
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Loan #${loan.id}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

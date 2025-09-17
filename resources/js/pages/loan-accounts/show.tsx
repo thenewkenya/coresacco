@@ -1,4 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -95,6 +97,21 @@ interface Props {
 }
 
 export default function ShowLoanAccount({ loanAccount, arrears }: Props) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard().url,
+        },
+        {
+            title: 'Loan Accounts',
+            href: '#',
+        },
+        {
+            title: `Account ${loanAccount.account_number}`,
+            href: '#',
+        },
+    ];
+
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-KE', {
             style: 'currency',
@@ -143,7 +160,7 @@ export default function ShowLoanAccount({ loanAccount, arrears }: Props) {
     const paymentProgress = (loanAccount.amount_paid / loanAccount.total_payable) * 100;
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Loan Account ${loanAccount.account_number}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

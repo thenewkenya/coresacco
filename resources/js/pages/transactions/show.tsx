@@ -19,6 +19,8 @@ import {
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { index as transactionsIndex, receipt as transactionsReceipt, approve as transactionsApprove, reject as transactionsReject } from '@/routes/transactions';
 import { useState, useEffect } from 'react';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface Transaction {
     id: number;
@@ -51,6 +53,20 @@ interface Props {
 }
 
 export default function ShowTransaction({ transaction }: Props) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard().url,
+        },
+        {
+            title: 'Transactions',
+            href: transactionsIndex().url,
+        },
+        {
+            title: transaction.reference_number,
+            href: '#',
+        },
+    ];
     const { auth } = usePage().props as { auth: { user: any } };
     const user = auth.user;
     
@@ -193,7 +209,7 @@ export default function ShowTransaction({ transaction }: Props) {
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Transaction ${transaction.reference_number}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}

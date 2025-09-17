@@ -30,6 +30,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { index as accountsIndex, destroy as accountsDestroy } from '@/routes/accounts';
 import AccountDeleteDialog from '@/components/account-delete-dialog';
+import { type BreadcrumbItem } from '@/types';
+import { dashboard } from '@/routes';
 
 interface Transaction {
     id: number;
@@ -78,6 +80,20 @@ interface Props {
 }
 
 export default function ShowAccount({ account, accountInfo }: Props) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard().url,
+        },
+        {
+            title: 'Accounts',
+            href: accountsIndex().url,
+        },
+        {
+            title: account.account_number,
+            href: '#',
+        },
+    ];
     const { auth } = usePage().props as { auth: { user: any } };
     const user = auth.user;
 
@@ -181,7 +197,7 @@ export default function ShowAccount({ account, accountInfo }: Props) {
     const IconComponent = getAccountIcon(accountInfo.icon);
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Account ${account.account_number}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}
