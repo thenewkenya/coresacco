@@ -16,7 +16,8 @@ import {
     Building2, 
     Bell,
     Settings,
-    HelpCircle
+    HelpCircle,
+    Cog
 } from 'lucide-react';
 import AppLogo from './app-logo';
 
@@ -69,6 +70,12 @@ const allMainNavItems: (NavItem & { roles?: string[] })[] = [
         href: '/branches',
         icon: Building2,
         roles: ['admin', 'staff', 'manager'], // Only admin/staff/manager can manage branches
+    },
+    {
+        title: 'System Settings',
+        href: '/system-settings',
+        icon: Cog,
+        roles: ['admin'], // Only admin can access system settings
     },
 ];
 

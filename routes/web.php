@@ -160,6 +160,12 @@ Route::middleware(['auth', 'verified', 'account.suspension'])->group(function ()
     // API routes for notifications
     Route::get('api/notifications/unread-count', [App\Http\Controllers\NotificationsController::class, 'unreadCount'])->name('api.notifications.unread-count');
     Route::get('api/notifications/recent', [App\Http\Controllers\NotificationsController::class, 'recent'])->name('api.notifications.recent');
+    
+    // System Settings (Admin only)
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('system-settings', [App\Http\Controllers\SystemSettingsController::class, 'index'])->name('system-settings.index');
+        Route::put('system-settings', [App\Http\Controllers\SystemSettingsController::class, 'update'])->name('system-settings.update');
+    });
 });
 
 // API routes
