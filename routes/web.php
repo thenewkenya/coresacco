@@ -94,6 +94,7 @@ Route::middleware(['auth', 'verified', 'account.suspension'])->group(function ()
     Route::post('loans/{loan}/approve', [App\Http\Controllers\LoanController::class, 'approve'])->name('loans.approve');
     Route::post('loans/{loan}/reject', [App\Http\Controllers\LoanController::class, 'reject'])->name('loans.reject');
     Route::post('loans/{loan}/disburse', [App\Http\Controllers\LoanController::class, 'disburse'])->name('loans.disburse');
+    Route::post('loans/{loan}/payment', [App\Http\Controllers\LoanController::class, 'payment'])->name('loans.payment');
     
     // Loan Accounts
     Route::get('loan-accounts', [App\Http\Controllers\LoanAccountController::class, 'index'])->name('loan-accounts.index');

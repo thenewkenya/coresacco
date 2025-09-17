@@ -34,8 +34,8 @@ class DashboardController extends Controller
             ->where('account_type', '!=', Account::TYPE_LOAN_ACCOUNT)
             ->get();
         
-        // Get member's loan accounts
-        $memberLoanAccounts = LoanAccount::where('member_id', $user->id)->get();
+        // Get member's loan accounts with loan relationship
+        $memberLoanAccounts = LoanAccount::where('member_id', $user->id)->with('loan')->get();
         
         // Calculate detailed balances by account type
         $totalBalance = $memberAccounts->sum('balance');
@@ -68,12 +68,11 @@ class DashboardController extends Controller
         $totalLoanOutstanding = $memberLoanAccounts->where('status', 'active')->sum('outstanding_principal');
         $totalLoanDisbursed = $memberLoanAccounts->sum('amount_disbursed');
         
-        // Get member's transactions (last 30 days)
+        // Get member's transactions with pagination
         $recentTransactions = Transaction::where('member_id', $user->id)
             ->with(['account.member'])
             ->latest()
-            ->limit(10)
-            ->get();
+            ->paginate(10, ['*'], 'page', $request->get('page', 1));
         
         // Monthly transaction summary
         $monthlyTransactions = Transaction::where('member_id', $user->id)

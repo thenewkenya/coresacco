@@ -73,6 +73,7 @@ interface RecentTransaction {
 
 interface LoanAccount {
     id: number;
+    loan_id: number;
     account_number: string;
     loan_type: string;
     outstanding_principal: number;
@@ -577,43 +578,92 @@ export default function Dashboard({
                                 <CardContent>
                                     {stats.active_loans > 0 ? (
                                         <>
-                                            <div className="text-2xl font-bold mb-3">{stats.active_loans || 0}</div>
+                                            {loan_accounts.length > 0 && (() => {
+                                                // Find loan with closest next payment date
+                                                const sortedLoans = [...loan_accounts].sort((a, b) => {
+                                                    const dateA = new Date(a.next_payment_date);
+                                                    const dateB = new Date(b.next_payment_date);
+                                                    return dateA.getTime() - dateB.getTime();
+                                                });
+                                                const nextLoan = sortedLoans[0];
+                                                
+                                                return (
+                                                    <div className="mb-3 p-3 bg-muted/50 rounded-lg">
+                                                        <div className="text-lg font-semibold mb-1">
+                                                            {nextLoan.loan_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                        </div>
+                                                        <div className="text-sm text-muted-foreground">
+                                                            Account: {nextLoan.account_number}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                            
+                                            {stats.active_loans > 1 && (
+                                                <div className="text-xs text-muted-foreground mb-3">
+                                                    Showing most urgent payment
+                                                </div>
+                                            )}
                                             <div className="space-y-2 text-xs text-muted-foreground mb-4">
                                                 <div className="flex justify-between">
-                                                    <span>Outstanding:</span>
+                                                    <span>Total Outstanding:</span>
                                                     <span className="font-medium">{formatCurrency(stats.total_loan_outstanding || 0)}</span>
                                                 </div>
-                                                {loan_accounts.length > 0 && (
-                                                    <>
-                                                        <div className="flex justify-between">
-                                                            <span>Next Payment:</span>
-                                                            <span className="font-medium">
-                                                                {formatDate(loan_accounts[0]?.next_payment_date || '')}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex justify-between">
-                                                            <span>Monthly Payment:</span>
-                                                            <span className="font-medium">
-                                                                {formatCurrency(loan_accounts[0]?.monthly_payment || 0)}
-                                                            </span>
-                                                        </div>
-                                                        {loan_accounts[0]?.arrears_amount > 0 && (
-                                                            <div className="flex justify-between text-red-600">
-                                                                <span>Overdue:</span>
+                                                {loan_accounts.length > 0 && (() => {
+                                                    // Find loan with closest next payment date
+                                                    const sortedLoans = [...loan_accounts].sort((a, b) => {
+                                                        const dateA = new Date(a.next_payment_date);
+                                                        const dateB = new Date(b.next_payment_date);
+                                                        return dateA.getTime() - dateB.getTime();
+                                                    });
+                                                    const nextLoan = sortedLoans[0];
+                                                    
+                                                    return (
+                                                        <>
+                                                            <div className="flex justify-between">
+                                                                <span>Next Payment:</span>
                                                                 <span className="font-medium">
-                                                                    {formatCurrency(loan_accounts[0].arrears_amount)}
+                                                                    {formatDate(nextLoan?.next_payment_date || '')}
                                                                 </span>
                                                             </div>
-                                                        )}
-                                                    </>
-                                                )}
+                                                            <div className="flex justify-between">
+                                                                <span>Monthly Payment:</span>
+                                                                <span className="font-medium">
+                                                                    {formatCurrency(nextLoan?.monthly_payment || 0)}
+                                                                </span>
+                                                            </div>
+                                                            {nextLoan?.arrears_amount > 0 && (
+                                                                <div className="flex justify-between text-red-600">
+                                                                    <span>Overdue:</span>
+                                                                    <span className="font-medium">
+                                                                        {formatCurrency(nextLoan.arrears_amount)}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    );
+                                                })()}
                                             </div>
-                                            <Link href={`/loans/${loan_accounts[0]?.id || ''}`}>
-                                                <Button className="w-full">
-                                                    <DollarSign className="mr-2 h-4 w-4" />
-                                                    View Loan Details
-                                                </Button>
-                                            </Link>
+                                            {loan_accounts.length > 0 && (() => {
+                                                // Find loan with closest next payment date
+                                                const sortedLoans = [...loan_accounts].sort((a, b) => {
+                                                    const dateA = new Date(a.next_payment_date);
+                                                    const dateB = new Date(b.next_payment_date);
+                                                    return dateA.getTime() - dateB.getTime();
+                                                });
+                                                const nextLoan = sortedLoans[0];
+                                                const isOverdue = nextLoan?.arrears_amount > 0;
+                                                const buttonText = isOverdue ? 'Make Overdue Payment' : 'Make Payment';
+                                                
+                                                return (
+                                                    <Link href={`/loans/${nextLoan?.loan_id || ''}`}>
+                                                        <Button className="w-full" variant={isOverdue ? "destructive" : "default"}>
+                                                            <DollarSign className="mr-2 h-4 w-4" />
+                                                            {buttonText}
+                                                        </Button>
+                                                    </Link>
+                                                );
+                                            })()}
                                         </>
                                     ) : (
                                         <div className="space-y-4">
@@ -728,13 +778,27 @@ export default function Dashboard({
                         {/* Recent Transactions Table */}
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center space-x-2">
-                                    <FileText className="h-5 w-5" />
-                                    <span>Recent Transactions</span>
-                                </CardTitle>
-                                <CardDescription>
-                                    Your latest transaction activity
-                                </CardDescription>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle className="flex items-center space-x-2">
+                                            <FileText className="h-5 w-5" />
+                                            <span>Recent Transactions</span>
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Your latest transaction activity
+                                        </CardDescription>
+                                    </div>
+                                    {/* Reset order button */}
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={resetTransactionOrder}
+                                        className="flex items-center space-x-2"
+                                    >
+                                        <RotateCcw className="h-4 w-4" />
+                                        <span>Reset Order</span>
+                                    </Button>
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 {recentTransactionsData.length > 0 ? (
@@ -742,15 +806,40 @@ export default function Dashboard({
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
+                                                    <TableHead className="w-8"></TableHead>
                                                     <TableHead>Description</TableHead>
                                                     <TableHead>Type</TableHead>
                                                     <TableHead className="text-right">Amount</TableHead>
                                                     <TableHead className="text-right">Date</TableHead>
+                                                    <TableHead className="w-8"></TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {recentTransactionsData.map((transaction) => (
-                                                    <TableRow key={transaction.id}>
+                                                {reorderedTransactions.map((transaction) => (
+                                                    <TableRow 
+                                                        key={transaction.id}
+                                                        draggable={true}
+                                                        onDragStart={(e) => handleDragStart(e, transaction.id)}
+                                                        onDragOver={(e) => handleDragOver(e, transaction.id)}
+                                                        onDragLeave={handleDragLeave}
+                                                        onDrop={(e) => handleDrop(e, transaction.id)}
+                                                        onDragEnd={handleDragEnd}
+                                                        className={`cursor-grab active:cursor-grabbing hover:cursor-grabbing ${draggedItem === transaction.id ? 'opacity-50' : ''} ${dragOverItem === transaction.id ? 'bg-muted' : ''}`}
+                                                    >
+                                                        <TableCell>
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <div>
+                                                                            <GripVertical className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+                                                                        </div>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <p>Drag to reorder</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        </TableCell>
                                                         <TableCell className="font-medium">
                                                             {transaction.description}
                                                         </TableCell>
@@ -769,10 +858,153 @@ export default function Dashboard({
                                                         <TableCell className="text-right text-muted-foreground">
                                                             {formatDate(transaction.created_at)}
                                                         </TableCell>
+                                                        <TableCell>
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            onClick={() => router.get(`/transactions/${transaction.id}`)}
+                                                                            className="h-8 w-8 p-0"
+                                                                        >
+                                                                            <Eye className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <p>View receipt</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        </TableCell>
                                                     </TableRow>
                                                 ))}
                                             </TableBody>
                                         </Table>
+                                        
+                                        {/* Pagination */}
+                                        {isPaginated && recent_transactions && (
+                                            <div className="pt-4 border-t">
+                                                <Pagination>
+                                                    <PaginationContent>
+                                                        {/* First button */}
+                                                        {recent_transactions.current_page > 2 && (
+                                                            <PaginationItem>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => router.get('/dashboard', { page: 1 })}
+                                                                    className="h-8 w-8 p-0"
+                                                                >
+                                                                    <ChevronsLeft className="h-4 w-4" />
+                                                                </Button>
+                                                            </PaginationItem>
+                                                        )}
+                                                        
+                                                        {/* Previous button */}
+                                                        {recent_transactions.current_page > 1 && (
+                                                            <PaginationItem>
+                                                                <PaginationPrevious 
+                                                                    onClick={() => {
+                                                                        router.get('/dashboard', { page: recent_transactions.current_page - 1 });
+                                                                    }}
+                                                                />
+                                                            </PaginationItem>
+                                                        )}
+                                                        
+                                                        {/* Page numbers */}
+                                                        {(() => {
+                                                            const current = recent_transactions.current_page;
+                                                            const last = recent_transactions.last_page;
+                                                            const pages = [];
+                                                            
+                                                            // Show first page if not already shown
+                                                            if (current > 3) {
+                                                                pages.push(
+                                                                    <PaginationItem key={1}>
+                                                                        <PaginationLink 
+                                                                            onClick={() => router.get('/dashboard', { page: 1 })}
+                                                                            isActive={current === 1}
+                                                                        >
+                                                                            1
+                                                                        </PaginationLink>
+                                                                    </PaginationItem>
+                                                                );
+                                                                if (current > 4) {
+                                                                    pages.push(
+                                                                        <PaginationItem key="ellipsis1">
+                                                                            <PaginationEllipsis />
+                                                                        </PaginationItem>
+                                                                    );
+                                                                }
+                                                            }
+                                                            
+                                                            // Show current page and surrounding pages
+                                                            for (let i = Math.max(1, current - 1); i <= Math.min(last, current + 1); i++) {
+                                                                pages.push(
+                                                                    <PaginationItem key={i}>
+                                                                        <PaginationLink 
+                                                                            onClick={() => router.get('/dashboard', { page: i })}
+                                                                            isActive={current === i}
+                                                                        >
+                                                                            {i}
+                                                                        </PaginationLink>
+                                                                    </PaginationItem>
+                                                                );
+                                                            }
+                                                            
+                                                            // Show last page if not already shown
+                                                            if (current < last - 2) {
+                                                                if (current < last - 3) {
+                                                                    pages.push(
+                                                                        <PaginationItem key="ellipsis2">
+                                                                            <PaginationEllipsis />
+                                                                        </PaginationItem>
+                                                                    );
+                                                                }
+                                                                pages.push(
+                                                                    <PaginationItem key={last}>
+                                                                        <PaginationLink 
+                                                                            onClick={() => router.get('/dashboard', { page: last })}
+                                                                            isActive={current === last}
+                                                                        >
+                                                                            {last}
+                                                                        </PaginationLink>
+                                                                    </PaginationItem>
+                                                                );
+                                                            }
+                                                            
+                                                            return pages;
+                                                        })()}
+                                                        
+                                                        {/* Next button */}
+                                                        {recent_transactions.current_page < recent_transactions.last_page && (
+                                                            <PaginationItem>
+                                                                <PaginationNext 
+                                                                    onClick={() => {
+                                                                        router.get('/dashboard', { page: recent_transactions.current_page + 1 });
+                                                                    }}
+                                                                />
+                                                            </PaginationItem>
+                                                        )}
+                                                        
+                                                        {/* Last button */}
+                                                        {recent_transactions.current_page < recent_transactions.last_page - 1 && (
+                                                            <PaginationItem>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => router.get('/dashboard', { page: recent_transactions.last_page })}
+                                                                    className="h-8 w-8 p-0"
+                                                                >
+                                                                    <ChevronsRight className="h-4 w-4" />
+                                                                </Button>
+                                                            </PaginationItem>
+                                                        )}
+                                                    </PaginationContent>
+                                                </Pagination>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="text-center py-6 text-muted-foreground">
@@ -922,7 +1154,7 @@ export default function Dashboard({
                                                     return (
                                                         <TableRow 
                                                             key={transaction.id} 
-                                                            className={`group ${isDragging ? 'opacity-50' : ''} ${isDragOver ? 'bg-muted/50' : ''}`}
+                                                            className={`group cursor-grab active:cursor-grabbing hover:cursor-grabbing ${isDragging ? 'opacity-50' : ''} ${isDragOver ? 'bg-muted/50' : ''}`}
                                                             draggable
                                                             onDragStart={(e) => handleDragStart(e, transaction.id)}
                                                             onDragOver={(e) => handleDragOver(e, transaction.id)}
@@ -930,11 +1162,13 @@ export default function Dashboard({
                                                             onDrop={(e) => handleDrop(e, transaction.id)}
                                                             onDragEnd={handleDragEnd}
                                                         >
-                                                            <TableCell className="cursor-grab active:cursor-grabbing">
+                                                            <TableCell>
                                                                 <TooltipProvider>
                                                                     <Tooltip>
                                                                         <TooltipTrigger asChild>
-                                                                            <GripVertical className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                                                                            <div>
+                                                                                <GripVertical className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+                                                                            </div>
                                                                         </TooltipTrigger>
                                                                         <TooltipContent>
                                                                             <p>Drag to reorder transaction</p>
@@ -994,7 +1228,7 @@ export default function Dashboard({
                                             </TableBody>
                                         </Table>
                                         
-                                        {/* Pagination - Only for admin view */}
+                                        {/* Pagination */}
                                         {isPaginated && recent_transactions && (
                                             <div className="pt-4 border-t">
                                                 <Pagination>

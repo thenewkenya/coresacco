@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import PaymentSuccessDialog from '@/components/payment-success-dialog';
 import { 
     ArrowLeft,
     DollarSign,
@@ -134,6 +135,16 @@ export default function ShowLoan({ loan }: Props) {
     const [notes, setNotes] = useState('');
     const [rejectionReason, setRejectionReason] = useState('');
     const [isUpdating, setIsUpdating] = useState(false);
+    
+    // Payment form state
+    const [paymentAmount, setPaymentAmount] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('mpesa');
+    const [paymentNotes, setPaymentNotes] = useState('');
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+    
+    // Payment success dialog state
+    const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(false);
+    const [paymentSuccessData, setPaymentSuccessData] = useState(null);
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -181,15 +192,10 @@ export default function ShowLoan({ loan }: Props) {
         });
     };
 
-    const calculateMonthlyPayment = (principal: number, rate: number, months: number) => {
-        if (rate === 0) return principal / months;
-        const monthlyRate = rate / 100 / 12;
-        return principal * (monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);
-    };
-
-    const monthlyPayment = calculateMonthlyPayment(loan.amount, loan.interest_rate, loan.term_period);
-    const totalPayment = monthlyPayment * loan.term_period;
-    const totalInterest = totalPayment - loan.amount;
+    // Use loan account data if available, otherwise calculate from loan data
+    const monthlyPayment = loan.loan_account?.monthly_payment || 0;
+    const totalPayment = loan.loan_account?.total_payable || (loan.amount * 1.15); // Fallback calculation
+    const totalInterest = loan.loan_account?.total_interest || (totalPayment - loan.amount);
 
     const handleApprove = () => {
         setIsUpdating(true);
@@ -213,6 +219,57 @@ export default function ShowLoan({ loan }: Props) {
         setIsUpdating(true);
         router.post(`/loans/${loan.id}/disburse`, {}, {
             onFinish: () => setIsUpdating(false),
+        });
+    };
+
+    const handlePayment = () => {
+        if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
+            alert('Please enter a valid payment amount');
+            return;
+        }
+        
+        if (parseFloat(paymentAmount) < loan.loan_account?.monthly_payment) {
+            if (!confirm(`The payment amount (${formatCurrency(parseFloat(paymentAmount))}) is less than the minimum monthly payment (${formatCurrency(loan.loan_account?.monthly_payment)}). Do you want to proceed?`)) {
+                return;
+            }
+        }
+        
+        setIsProcessingPayment(true);
+        router.post(`/loans/${loan.id}/payment`, {
+            amount: parseFloat(paymentAmount),
+            payment_method: paymentMethod,
+            notes: paymentNotes,
+        }, {
+            onSuccess: () => {
+                // Calculate outstanding balance safely
+                const currentOutstanding = (loan.loan_account?.outstanding_principal || 0) + 
+                                        (loan.loan_account?.outstanding_interest || 0) + 
+                                        (loan.loan_account?.outstanding_fees || 0);
+                const paymentAmountNum = parseFloat(paymentAmount) || 0;
+                const newOutstanding = Math.max(0, currentOutstanding - paymentAmountNum);
+                
+                // Prepare payment success data
+                const successData = {
+                    amount: paymentAmountNum,
+                    paymentMethod: paymentMethod,
+                    loanType: loan.loan_type.name,
+                    accountNumber: loan.loan_account?.account_number || '',
+                    outstandingBalance: newOutstanding,
+                    nextPaymentDate: loan.loan_account?.next_payment_date || '',
+                };
+                
+                setPaymentSuccessData(successData);
+                setPaymentSuccessOpen(true);
+                
+                // Reset form
+                setPaymentAmount('');
+                setPaymentNotes('');
+            },
+            onError: (errors) => {
+                console.error('Payment error:', errors);
+                alert('Payment failed. Please try again.');
+            },
+            onFinish: () => setIsProcessingPayment(false),
         });
     };
 
@@ -334,15 +391,15 @@ export default function ShowLoan({ loan }: Props) {
                                         <div className="space-y-3">
                                             <div className="flex justify-between">
                                                 <span className="text-sm text-muted-foreground">Outstanding Principal:</span>
-                                                <span className="font-medium">{formatCurrency(loan.loan_account.outstanding_principal)}</span>
+                                                <span className="font-medium">{formatCurrency(loan.loan_account?.outstanding_principal || 0)}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-sm text-muted-foreground">Outstanding Interest:</span>
-                                                <span className="font-medium">{formatCurrency(loan.loan_account.outstanding_interest)}</span>
+                                                <span className="font-medium">{formatCurrency(loan.loan_account?.outstanding_interest || 0)}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-sm text-muted-foreground">Total Outstanding:</span>
-                                                <span className="font-medium">{formatCurrency(loan.loan_account.outstanding_principal + loan.loan_account.outstanding_interest + loan.loan_account.outstanding_fees)}</span>
+                                                <span className="font-medium">{formatCurrency((loan.loan_account?.outstanding_principal || 0) + (loan.loan_account?.outstanding_interest || 0) + (loan.loan_account?.outstanding_fees || 0))}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-sm text-muted-foreground">Next Payment Due:</span>
@@ -377,6 +434,88 @@ export default function ShowLoan({ loan }: Props) {
                                             </AlertDescription>
                                         </Alert>
                                     )}
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Loan Repayment Section */}
+                        {loan.loan_account && ['active', 'disbursed'].includes(loan.status) && (
+                            <Card id="payment-section">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center space-x-2">
+                                        <DollarSign className="h-5 w-5" />
+                                        <span>Make Loan Repayment</span>
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Make a payment towards your loan balance
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        <div className="grid gap-4 md:grid-cols-2">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="payment-amount">Payment Amount</Label>
+                                                <div className="relative">
+                                                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                                    <input
+                                                        id="payment-amount"
+                                                        type="number"
+                                                        placeholder="0.00"
+                                                        value={paymentAmount}
+                                                        onChange={(e) => setPaymentAmount(e.target.value)}
+                                                        className="pl-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                                                        min="0"
+                                                        step="0.01"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="payment-method">Payment Method</Label>
+                                                <select
+                                                    id="payment-method"
+                                                    value={paymentMethod}
+                                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                                                >
+                                                    <option value="mpesa">M-Pesa</option>
+                                                    <option value="bank_transfer">Bank Transfer</option>
+                                                    <option value="cash">Cash</option>
+                                                    <option value="cheque">Cheque</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                            <Label htmlFor="payment-notes">Payment Notes (Optional)</Label>
+                                            <Textarea
+                                                id="payment-notes"
+                                                placeholder="Add any notes about this payment..."
+                                                value={paymentNotes}
+                                                onChange={(e) => setPaymentNotes(e.target.value)}
+                                                rows={3}
+                                            />
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <Button 
+                                                onClick={handlePayment}
+                                                disabled={isProcessingPayment || !paymentAmount}
+                                                className="flex-1"
+                                            >
+                                                <DollarSign className="mr-2 h-4 w-4" />
+                                                {isProcessingPayment ? 'Processing...' : 'Process Payment'}
+                                            </Button>
+                                            <Button variant="outline" className="flex-1">
+                                                <FileText className="mr-2 h-4 w-4" />
+                                                Generate Payment Slip
+                                            </Button>
+                                        </div>
+
+                                        <div className="text-sm text-muted-foreground">
+                                            <p>• Minimum payment: {formatCurrency(loan.loan_account.monthly_payment)}</p>
+                                            <p>• Outstanding balance: {formatCurrency(loan.loan_account.outstanding_principal + loan.loan_account.outstanding_interest + loan.loan_account.outstanding_fees)}</p>
+                                        </div>
+                                    </div>
                                 </CardContent>
                             </Card>
                         )}
@@ -731,6 +870,13 @@ export default function ShowLoan({ loan }: Props) {
                     </div>
                 </div>
             </div>
+
+            {/* Payment Success Dialog */}
+            <PaymentSuccessDialog
+                isOpen={paymentSuccessOpen}
+                onClose={() => setPaymentSuccessOpen(false)}
+                paymentData={paymentSuccessData}
+            />
         </AppLayout>
     );
 }

@@ -512,4 +512,129 @@ class LoanController extends Controller
         // Default to salary backed
         return LoanAccount::TYPE_SALARY_BACKED;
     }
+
+    public function payment(Request $request, Loan $loan)
+    {
+        $user = Auth::user();
+        
+        // Check permissions
+        if ($user->role === 'member' && $loan->member_id !== $user->id) {
+            abort(403, 'You can only make payments for your own loans.');
+        }
+
+        // Validate that loan has a loan account and is active/disbursed
+        if (!$loan->loanAccount) {
+            return back()->withErrors(['error' => 'This loan does not have an active loan account.']);
+        }
+
+        if (!in_array($loan->status, [Loan::STATUS_ACTIVE, Loan::STATUS_DISBURSED])) {
+            return back()->withErrors(['error' => 'Payments can only be made for active or disbursed loans.']);
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'payment_method' => 'required|string|in:mpesa,bank_transfer,cash,cheque',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $loanAccount = $loan->loanAccount;
+            $paymentAmount = $request->amount;
+            $paymentMethod = $request->payment_method;
+            $notes = $request->input('notes', '');
+
+            // Calculate payment allocation (principal, interest, fees)
+            $outstandingPrincipal = $loanAccount->outstanding_principal;
+            $outstandingInterest = $loanAccount->outstanding_interest;
+            $outstandingFees = $loanAccount->outstanding_fees;
+            $totalOutstanding = $outstandingPrincipal + $outstandingInterest + $outstandingFees;
+
+            // Allocate payment: first to fees, then interest, then principal
+            $feesPaid = min($paymentAmount, $outstandingFees);
+            $remainingAfterFees = $paymentAmount - $feesPaid;
+            
+            $interestPaid = min($remainingAfterFees, $outstandingInterest);
+            $remainingAfterInterest = $remainingAfterFees - $interestPaid;
+            
+            $principalPaid = min($remainingAfterInterest, $outstandingPrincipal);
+
+            // Update loan account balances
+            $loanAccount->update([
+                'amount_paid' => $loanAccount->amount_paid + $paymentAmount,
+                'principal_paid' => $loanAccount->principal_paid + $principalPaid,
+                'interest_paid' => $loanAccount->interest_paid + $interestPaid,
+                'fees_paid' => $loanAccount->fees_paid + $feesPaid,
+                'outstanding_principal' => $outstandingPrincipal - $principalPaid,
+                'outstanding_interest' => $outstandingInterest - $interestPaid,
+                'outstanding_fees' => $outstandingFees - $feesPaid,
+                'last_payment_date' => now()->toDateString(),
+                'next_payment_date' => now()->addMonth()->toDateString(),
+            ]);
+
+            // Create ledger entry - use principal_payment as the main type since it's the primary component
+            LedgerEntry::create([
+                'loan_account_id' => $loanAccount->id,
+                'transaction_type' => LedgerEntry::TYPE_PRINCIPAL_PAYMENT,
+                'amount' => $paymentAmount,
+                'principal_amount' => $principalPaid,
+                'interest_amount' => $interestPaid,
+                'fee_amount' => $feesPaid,
+                'balance_before' => $totalOutstanding,
+                'balance_after' => $totalOutstanding - $paymentAmount,
+                'reference_number' => 'PAY-' . $loanAccount->account_number . '-' . time(),
+                'description' => "Loan payment via {$paymentMethod}" . ($notes ? " - {$notes}" : ''),
+                'transaction_date' => now()->toDateString(),
+                'processed_by' => $user->id,
+                'metadata' => [
+                    'payment_method' => $paymentMethod,
+                    'notes' => $notes,
+                ],
+            ]);
+
+            // Create general transaction record
+            $member = $loan->member;
+            $member->transactions()->create([
+                'type' => 'loan_repayment',
+                'amount' => $paymentAmount,
+                'description' => "Loan payment - {$loan->loanType->name} (Account: {$loanAccount->account_number})",
+                'reference_number' => 'PAY-' . $loanAccount->account_number . '-' . time(),
+                'status' => 'completed',
+                'account_id' => $member->accounts()->where('account_type', 'loan_account')->where('account_number', $loanAccount->account_number)->first()?->id,
+                'loan_id' => $loan->id,
+                'loan_account_id' => $loanAccount->id,
+                'processed_by' => $user->id,
+                'balance_before' => $totalOutstanding,
+                'balance_after' => $totalOutstanding - $paymentAmount,
+            ]);
+
+            // Check if loan is fully paid
+            $newOutstanding = $loanAccount->outstanding_principal + $loanAccount->outstanding_interest + $loanAccount->outstanding_fees;
+            if ($newOutstanding <= 0) {
+                $loanAccount->update(['status' => LoanAccount::STATUS_COMPLETED]);
+                $loan->update(['status' => Loan::STATUS_COMPLETED]);
+            }
+
+            DB::commit();
+
+            // Send notification to member
+            Notification::create([
+                'user_id' => $loan->member_id,
+                'type' => Notification::TYPE_INFO,
+                'title' => 'Loan Payment Received',
+                'message' => "Your loan payment of KES " . number_format($paymentAmount) . " has been processed successfully.",
+                'action_url' => "/loans/{$loan->id}",
+                'action_text' => 'View Loan Details',
+                'priority' => Notification::PRIORITY_NORMAL,
+                'category' => Notification::CATEGORY_LOAN,
+            ]);
+
+            return back()->with('success', 'Payment processed successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Failed to process payment: ' . $e->getMessage()]);
+        }
+    }
 }

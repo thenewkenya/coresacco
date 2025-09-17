@@ -14,7 +14,9 @@ import {
     Filter,
     Calendar,
     User,
-    CreditCard
+    CreditCard,
+    ChevronsLeft,
+    ChevronsRight
 } from 'lucide-react';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
@@ -25,6 +27,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from '@/components/ui/pagination';
 import { index as transactionsIndex, create as transactionsCreate, show as transactionsShow } from '@/routes/transactions';
 
 interface Transaction {
@@ -76,6 +79,11 @@ export default function TransactionsIndex({ transactions, filters, statusOptions
     const [type, setType] = useState(filters.type || 'all');
     const [currentTransactions, setCurrentTransactions] = useState(transactions);
     const [isPolling, setIsPolling] = useState(false);
+
+    // Debug current state
+    console.log('Current state:', { search, status, type });
+    console.log('Current page:', transactions.current_page);
+    console.log('Total pages:', transactions.last_page);
 
     const handleSearch = () => {
         router.get(transactionsIndex.url(), {
@@ -416,6 +424,165 @@ export default function TransactionsIndex({ transactions, filters, statusOptions
                             </div>
                         )}
                     </CardContent>
+                    
+                    {/* Pagination */}
+                    {transactions.data.length > 0 && (
+                        <div className="px-6 py-4 border-t">
+                            <Pagination>
+                                <PaginationContent>
+                                    {/* First button */}
+                                    {transactions.current_page > 2 && (
+                                        <PaginationItem>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    const url = transactionsIndex.url({ 
+                                                        query: {
+                                                            page: 1,
+                                                            ...(search && { search }),
+                                                            ...(status !== 'all' && { status }),
+                                                            ...(type !== 'all' && { type })
+                                                        }
+                                                    });
+                                                    console.log('First button URL:', url);
+                                                    router.get(url);
+                                                }}
+                                                className="h-8 w-8 p-0"
+                                            >
+                                                <ChevronsLeft className="h-4 w-4" />
+                                            </Button>
+                                        </PaginationItem>
+                                    )}
+                                    
+                                    {/* Previous button */}
+                                    {transactions.current_page > 1 && (
+                                        <PaginationItem>
+                                            <PaginationPrevious 
+                                                href="#"
+                                                size="default"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    router.get(transactionsIndex.url({ 
+                                                        query: {
+                                                            page: transactions.current_page - 1,
+                                                            ...(search && { search }),
+                                                            ...(status !== 'all' && { status }),
+                                                            ...(type !== 'all' && { type })
+                                                        }
+                                                    }));
+                                                }}
+                                            />
+                                        </PaginationItem>
+                                    )}
+                                    
+                                    {/* Page numbers - Smart pagination */}
+                                    {(() => {
+                                        const current = transactions.current_page;
+                                        const last = transactions.last_page;
+                                        const pages = [];
+                                        
+                                        // Always show first page
+                                        if (current > 3) {
+                                            pages.push(1);
+                                            if (current > 4) {
+                                                pages.push('ellipsis');
+                                            }
+                                        }
+                                        
+                                        // Show pages around current page
+                                        const start = Math.max(1, current - 1);
+                                        const end = Math.min(last, current + 1);
+                                        
+                                        for (let i = start; i <= end; i++) {
+                                            if (i !== 1 || current <= 3) {
+                                                pages.push(i);
+                                            }
+                                        }
+                                        
+                                        // Always show last page
+                                        if (current < last - 2) {
+                                            if (current < last - 3) {
+                                                pages.push('ellipsis');
+                                            }
+                                            pages.push(last);
+                                        }
+                                        
+                                        return pages.map((page, index) => (
+                                            <PaginationItem key={index}>
+                                                {page === 'ellipsis' ? (
+                                                    <PaginationEllipsis />
+                                                ) : (
+                                                    <PaginationLink
+                                                        href="#"
+                                                        size="icon"
+                                                        isActive={page === current}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            const url = transactionsIndex.url({ 
+                                                                query: {
+                                                                    page,
+                                                                    ...(search && { search }),
+                                                                    ...(status !== 'all' && { status }),
+                                                                    ...(type !== 'all' && { type })
+                                                                }
+                                                            });
+                                                            console.log('Page button URL:', url, 'Page:', page);
+                                                            router.get(url);
+                                                        }}
+                                                    >
+                                                        {page}
+                                                    </PaginationLink>
+                                                )}
+                                            </PaginationItem>
+                                        ));
+                                    })()}
+                                    
+                                    {/* Next button */}
+                                    {transactions.current_page < transactions.last_page && (
+                                        <PaginationItem>
+                                            <PaginationNext 
+                                                href="#"
+                                                size="default"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    router.get(transactionsIndex.url({ 
+                                                        query: {
+                                                            page: transactions.current_page + 1,
+                                                            ...(search && { search }),
+                                                            ...(status !== 'all' && { status }),
+                                                            ...(type !== 'all' && { type })
+                                                        }
+                                                    }));
+                                                }}
+                                            />
+                                        </PaginationItem>
+                                    )}
+                                    
+                                    {/* Last button */}
+                                    {transactions.current_page < transactions.last_page - 1 && (
+                                        <PaginationItem>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => router.get(transactionsIndex.url({ 
+                                                    query: {
+                                                        page: transactions.last_page,
+                                                        ...(search && { search }),
+                                                        ...(status !== 'all' && { status }),
+                                                        ...(type !== 'all' && { type })
+                                                    }
+                                                }))}
+                                                className="h-8 w-8 p-0"
+                                            >
+                                                <ChevronsRight className="h-4 w-4" />
+                                            </Button>
+                                        </PaginationItem>
+                                    )}
+                                </PaginationContent>
+                            </Pagination>
+                        </div>
+                    )}
                 </Card>
             </div>
         </AppLayout>
