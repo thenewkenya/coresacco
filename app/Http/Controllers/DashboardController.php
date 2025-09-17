@@ -115,6 +115,11 @@ class DashboardController extends Controller
 
         return Inertia::render('dashboard', [
             'userRole' => 'member',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
             'stats' => [
                 'total_balance' => $totalBalance,
                 'total_savings' => $totalSavings,
@@ -176,6 +181,11 @@ class DashboardController extends Controller
 
         return Inertia::render('dashboard', [
             'userRole' => 'admin',
+            'user' => [
+                'id' => auth()->user()->id,
+                'name' => auth()->user()->name,
+                'email' => auth()->user()->email,
+            ],
             'stats' => [
                 'total_members' => $totalMembers,
                 'total_accounts' => $totalAccounts,

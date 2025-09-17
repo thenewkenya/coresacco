@@ -120,6 +120,11 @@ interface Budget {
 
 interface Props {
     userRole: 'member' | 'admin';
+    user: {
+        id: number;
+        name: string;
+        email: string;
+    };
     stats: Stats;
     transaction_trends: TransactionTrend[];
     recent_transactions: RecentTransaction[] | {
@@ -377,6 +382,7 @@ const SimpleChartWrapper = React.memo(({ children }: { children: React.ReactNode
 
 export default function Dashboard({ 
     userRole,
+    user,
     stats, 
     transaction_trends, 
     recent_transactions,
@@ -524,9 +530,14 @@ export default function Dashboard({
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                        <h1 className="text-3xl font-bold tracking-tight">
+                            Welcome back, {user.name}!
+                        </h1>
                         <p className="text-muted-foreground">
-                            Overview of your CoreSacco system
+                            {userRole === 'admin' 
+                                ? 'Overview of your CoreSacco system' 
+                                : 'Here\'s your financial overview'
+                            }
                         </p>
                     </div>
                     <div className="flex space-x-2">
