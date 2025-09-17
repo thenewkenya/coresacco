@@ -21,6 +21,7 @@ import {
     Plus
 } from 'lucide-react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -28,6 +29,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { index as accountsIndex, destroy as accountsDestroy } from '@/routes/accounts';
+import AccountDeleteDialog from '@/components/account-delete-dialog';
 
 interface Transaction {
     id: number;
@@ -138,10 +140,30 @@ export default function ShowAccount({ account, accountInfo }: Props) {
         });
     };
 
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const handleDelete = () => {
-        if (confirm(`Are you sure you want to close account ${account.account_number}?`)) {
-            router.delete(accountsDestroy.url(account.id));
-        }
+        setDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = (reason: string) => {
+        setIsDeleting(true);
+        router.delete(accountsDestroy.url(account.id), {
+            data: { reason },
+            onSuccess: () => {
+                setDeleteDialogOpen(false);
+                setIsDeleting(false);
+            },
+            onError: () => {
+                setIsDeleting(false);
+            }
+        });
+    };
+
+    const handleCloseDialog = () => {
+        setDeleteDialogOpen(false);
+        setIsDeleting(false);
     };
 
     const getAccountIcon = (iconName: string) => {
@@ -402,6 +424,15 @@ export default function ShowAccount({ account, accountInfo }: Props) {
                     </div>
                 </div>
             </div>
+
+            {/* Account Delete Dialog */}
+            <AccountDeleteDialog
+                isOpen={deleteDialogOpen}
+                onClose={handleCloseDialog}
+                onConfirm={handleConfirmDelete}
+                account={account}
+                isLoading={isDeleting}
+            />
         </AppLayout>
     );
 }

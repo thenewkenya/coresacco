@@ -218,21 +218,44 @@ class AccountController extends Controller
         ]);
     }
 
-    public function destroy(Account $account)
+    public function destroy(Request $request, Account $account)
     {
         $this->authorize('manage', $account);
         
-        // Verify account has zero balance
-        if ($account->balance > 0) {
-            return back()->withErrors(['balance' => 'Cannot close account with positive balance. Please withdraw all funds first.']);
-        }
-        
-        $account->update([
-            'status' => Account::STATUS_CLOSED,
-            'status_reason' => 'Account closure requested'
+        $request->validate([
+            'reason' => 'required|string|max:500'
         ]);
         
-        return redirect()->route('accounts.index')->with('success', 'Account closed successfully.');
+        $member = $account->member;
+        
+        // Check if member can be deleted (no active accounts or debts)
+        if (!$member->canBeDeleted()) {
+            return back()->withErrors([
+                'deletion' => 'Cannot delete account. Member has active balances or outstanding debts.'
+            ]);
+        }
+        
+        try {
+            // Close the account
+            $account->update([
+                'status' => Account::STATUS_CLOSED,
+                'status_reason' => 'Account closure requested: ' . $request->reason
+            ]);
+            
+            // Suspend the member account
+            $member->suspend('Account deletion requested: ' . $request->reason);
+            
+            // Schedule for deletion
+            $member->scheduleForDeletion();
+            
+            return redirect()->route('accounts.index')
+                ->with('success', 'Account has been suspended and scheduled for deletion in 3 months.');
+                
+        } catch (\Exception $e) {
+            return back()->withErrors([
+                'deletion' => 'Failed to process account deletion: ' . $e->getMessage()
+            ]);
+        }
     }
 
     public function statement(Account $account)

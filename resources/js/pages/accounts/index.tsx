@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import AccountDeleteDialog from '@/components/account-delete-dialog';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -81,6 +82,9 @@ export default function AccountsIndex({ accounts, stats, filters }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [accountType, setAccountType] = useState(filters.account_type || 'all');
     const [status, setStatus] = useState(filters.status || 'all');
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleSearch = () => {
         router.get(accountsIndex.url(), {
@@ -94,9 +98,31 @@ export default function AccountsIndex({ accounts, stats, filters }: Props) {
     };
 
     const handleDelete = (account: Account) => {
-        if (confirm(`Are you sure you want to close account ${account.account_number}?`)) {
-            router.delete(accountsDestroy.url(account.id));
-        }
+        setSelectedAccount(account);
+        setDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = (reason: string) => {
+        if (!selectedAccount) return;
+        
+        setIsDeleting(true);
+        router.delete(accountsDestroy.url(selectedAccount.id), {
+            data: { reason },
+            onSuccess: () => {
+                setDeleteDialogOpen(false);
+                setSelectedAccount(null);
+                setIsDeleting(false);
+            },
+            onError: () => {
+                setIsDeleting(false);
+            }
+        });
+    };
+
+    const handleCloseDialog = () => {
+        setDeleteDialogOpen(false);
+        setSelectedAccount(null);
+        setIsDeleting(false);
     };
 
     const getStatusBadge = (status: string) => {
@@ -343,6 +369,17 @@ export default function AccountsIndex({ accounts, stats, filters }: Props) {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Account Delete Dialog */}
+            {selectedAccount && (
+                <AccountDeleteDialog
+                    isOpen={deleteDialogOpen}
+                    onClose={handleCloseDialog}
+                    onConfirm={handleConfirmDelete}
+                    account={selectedAccount}
+                    isLoading={isDeleting}
+                />
+            )}
         </AppLayout>
     );
 }

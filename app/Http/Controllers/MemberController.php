@@ -48,7 +48,7 @@ class MemberController extends Controller
             $query->where('branch_id', $request->branch);
         }
 
-        $members = $query->latest()->paginate(15);
+        $members = $query->with(['accounts', 'loans'])->latest()->paginate(15);
         $branches = Branch::all();
 
         // Statistics
@@ -220,27 +220,35 @@ class MemberController extends Controller
     /**
      * Remove the specified member
      */
-    public function destroy(User $member)
+    public function destroy(Request $request, User $member)
     {
         $this->authorize('delete', $member);
 
+        $request->validate([
+            'reason' => 'required|string|max:500'
+        ]);
+
         try {
-            // Check if member has active accounts or loans
-            if ($member->accounts()->where('balance', '>', 0)->exists()) {
-                return back()->with('error', 'Cannot delete member with active account balances.');
+            // Check if member can be deleted (no active accounts or debts)
+            if (!$member->canBeDeleted()) {
+                return back()->withErrors([
+                    'deletion' => 'Cannot delete member. Member has active balances or outstanding debts.'
+                ]);
             }
 
-            if ($member->loans()->where('status', 'active')->exists()) {
-                return back()->with('error', 'Cannot delete member with active loans.');
-            }
-
-            $member->delete();
+            // Suspend the member account
+            $member->suspend('Member deletion requested: ' . $request->reason);
+            
+            // Schedule for deletion
+            $member->scheduleForDeletion();
 
             return redirect()->route('members.index')
-                ->with('success', 'Member deleted successfully!');
+                ->with('success', 'Member has been suspended and scheduled for deletion in 3 months.');
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to delete member: ' . $e->getMessage());
+            return back()->withErrors([
+                'deletion' => 'Failed to process member deletion: ' . $e->getMessage()
+            ]);
         }
     }
 

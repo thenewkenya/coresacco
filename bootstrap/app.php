@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\CheckPermission::class,
             'optimize.queries' => \App\Http\Middleware\OptimizeQueries::class,
             'cache.response' => \App\Http\Middleware\CacheResponse::class,
+            'account.suspension' => \App\Http\Middleware\CheckAccountSuspension::class,
         ]);
         
         // Trust proxies for HTTPS detection

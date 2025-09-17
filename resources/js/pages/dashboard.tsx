@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from '@/components/ui/pagination';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
     Users, 
     PiggyBank, 
@@ -18,7 +19,12 @@ import {
     CreditCard,
     FileText,
     Clock,
-    Wallet
+    Wallet,
+    ChevronsLeft,
+    ChevronsRight,
+    GripVertical,
+    Eye,
+    RotateCcw
 } from 'lucide-react';
 // Removed heavy chart imports - using CSS-based visualizations instead
 
@@ -425,6 +431,90 @@ export default function Dashboard({
     // Handle pagination for admin view
     const isPaginated = !Array.isArray(recent_transactions);
 
+    // Drag and drop state
+    const [draggedItem, setDraggedItem] = React.useState<number | null>(null);
+    const [dragOverItem, setDragOverItem] = React.useState<number | null>(null);
+    const [reorderedTransactions, setReorderedTransactions] = React.useState<RecentTransaction[]>([]);
+
+    // Load user's custom ordering from localStorage
+    React.useEffect(() => {
+        const savedOrder = localStorage.getItem('dashboard-transactions-order');
+        if (savedOrder && recentTransactionsData.length > 0) {
+            try {
+                const orderMap = JSON.parse(savedOrder);
+                const orderedTransactions = recentTransactionsData.sort((a, b) => {
+                    const orderA = orderMap[a.id] || 999999;
+                    const orderB = orderMap[b.id] || 999999;
+                    return orderA - orderB;
+                });
+                setReorderedTransactions(orderedTransactions);
+            } catch (error) {
+                console.error('Error loading saved transaction order:', error);
+                setReorderedTransactions(recentTransactionsData);
+            }
+        } else {
+            setReorderedTransactions(recentTransactionsData);
+        }
+    }, [recentTransactionsData]);
+
+    // Save user's custom ordering to localStorage
+    const saveTransactionOrder = (transactions: RecentTransaction[]) => {
+        const orderMap: Record<number, number> = {};
+        transactions.forEach((transaction, index) => {
+            orderMap[transaction.id] = index;
+        });
+        localStorage.setItem('dashboard-transactions-order', JSON.stringify(orderMap));
+    };
+
+    // Drag and drop handlers
+    const handleDragStart = (e: React.DragEvent, transactionId: number) => {
+        setDraggedItem(transactionId);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', e.currentTarget.outerHTML);
+    };
+
+    const handleDragOver = (e: React.DragEvent, transactionId: number) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setDragOverItem(transactionId);
+    };
+
+    const handleDragLeave = () => {
+        setDragOverItem(null);
+    };
+
+    const handleDrop = (e: React.DragEvent, targetTransactionId: number) => {
+        e.preventDefault();
+        
+        if (draggedItem && draggedItem !== targetTransactionId) {
+            const draggedIndex = reorderedTransactions.findIndex(t => t.id === draggedItem);
+            const targetIndex = reorderedTransactions.findIndex(t => t.id === targetTransactionId);
+            
+            if (draggedIndex !== -1 && targetIndex !== -1) {
+                const newOrder = [...reorderedTransactions];
+                const [draggedTransaction] = newOrder.splice(draggedIndex, 1);
+                newOrder.splice(targetIndex, 0, draggedTransaction);
+                
+                setReorderedTransactions(newOrder);
+                saveTransactionOrder(newOrder);
+            }
+        }
+        
+        setDraggedItem(null);
+        setDragOverItem(null);
+    };
+
+    const handleDragEnd = () => {
+        setDraggedItem(null);
+        setDragOverItem(null);
+    };
+
+    // Reset to default ordering
+    const resetTransactionOrder = () => {
+        localStorage.removeItem('dashboard-transactions-order');
+        setReorderedTransactions(recentTransactionsData);
+    };
+
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -780,13 +870,34 @@ export default function Dashboard({
                         {/* Recent Transactions */}
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center space-x-2">
-                                    <FileText className="h-5 w-5" />
-                                    <span>Recent Transactions</span>
-                                </CardTitle>
-                                <CardDescription>
-                                    Latest transaction activity across the system
-                                </CardDescription>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle className="flex items-center space-x-2">
+                                            <FileText className="h-5 w-5" />
+                                            <span>Recent Transactions</span>
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Latest transaction activity across the system
+                                        </CardDescription>
+                                    </div>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={resetTransactionOrder}
+                                                    className="h-8 w-8 p-0"
+                                                >
+                                                    <RotateCcw className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Reset to default order</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 {recentTransactionsData.length > 0 ? (
@@ -794,42 +905,92 @@ export default function Dashboard({
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
+                                                    <TableHead className="w-8"></TableHead>
                                                     <TableHead>Description</TableHead>
                                                     <TableHead>Member</TableHead>
                                                     <TableHead>Type</TableHead>
                                                     <TableHead className="text-right">Amount</TableHead>
                                                     <TableHead className="text-right">Date</TableHead>
+                                                    <TableHead className="w-12">Receipt</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {recentTransactionsData.map((transaction) => (
-                                                    <TableRow key={transaction.id}>
-                                                        <TableCell className="font-medium">
-                                                            {transaction.description}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <div>
-                                                                <div className="font-medium">
-                                                                    {transaction.account?.member?.name || 'Unknown Member'}
+                                                {reorderedTransactions.map((transaction, index) => {
+                                                    const isDragging = draggedItem === transaction.id;
+                                                    const isDragOver = dragOverItem === transaction.id;
+                                                    
+                                                    return (
+                                                        <TableRow 
+                                                            key={transaction.id} 
+                                                            className={`group ${isDragging ? 'opacity-50' : ''} ${isDragOver ? 'bg-muted/50' : ''}`}
+                                                            draggable
+                                                            onDragStart={(e) => handleDragStart(e, transaction.id)}
+                                                            onDragOver={(e) => handleDragOver(e, transaction.id)}
+                                                            onDragLeave={handleDragLeave}
+                                                            onDrop={(e) => handleDrop(e, transaction.id)}
+                                                            onDragEnd={handleDragEnd}
+                                                        >
+                                                            <TableCell className="cursor-grab active:cursor-grabbing">
+                                                                <TooltipProvider>
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                            <GripVertical className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent>
+                                                                            <p>Drag to reorder transaction</p>
+                                                                        </TooltipContent>
+                                                                    </Tooltip>
+                                                                </TooltipProvider>
+                                                            </TableCell>
+                                                            <TableCell className="font-medium">
+                                                                {transaction.description}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <div>
+                                                                    <div className="font-medium">
+                                                                        {transaction.account?.member?.name || 'No Member'}
+                                                                    </div>
+                                                                    <div className="text-sm text-muted-foreground">
+                                                                        {transaction.account?.account_number || 'No Account'}
+                                                                    </div>
                                                                 </div>
-                                                                <div className="text-sm text-muted-foreground">
-                                                                    {transaction.account?.account_number || 'N/A'}
-                                                                </div>
-                                                            </div>
-                                                        </TableCell>
+                                                            </TableCell>
                                                         <TableCell>
                                                             <Badge variant={getTransactionTypeVariant(transaction.type)}>
                                                                 {transaction.type}
                                                             </Badge>
                                                         </TableCell>
-                                                        <TableCell className="text-right font-medium">
-                                                            {formatCurrency(transaction.amount)}
-                                                        </TableCell>
-                                                        <TableCell className="text-right text-muted-foreground">
-                                                            {formatDate(transaction.created_at)}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
+                                                            <TableCell className="text-right font-medium">
+                                                                {formatCurrency(transaction.amount)}
+                                                            </TableCell>
+                                                            <TableCell className="text-right text-muted-foreground">
+                                                                {formatDate(transaction.created_at)}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <TooltipProvider>
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="sm"
+                                                                                className="h-8 w-8 p-0"
+                                                                                onClick={() => {
+                                                                                    // Navigate to transaction receipt page
+                                                                                    router.get(`/transactions/${transaction.id}`);
+                                                                                }}
+                                                                            >
+                                                                                <Eye className="h-4 w-4" />
+                                                                            </Button>
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent>
+                                                                            <p>View transaction receipt</p>
+                                                                        </TooltipContent>
+                                                                    </Tooltip>
+                                                                </TooltipProvider>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })}
                                             </TableBody>
                                         </Table>
                                         
@@ -838,6 +999,20 @@ export default function Dashboard({
                                             <div className="pt-4 border-t">
                                                 <Pagination>
                                                     <PaginationContent>
+                                                        {/* First button */}
+                                                        {recent_transactions.current_page > 2 && (
+                                                            <PaginationItem>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => router.get('/dashboard', { page: 1 })}
+                                                                    className="h-8 w-8 p-0"
+                                                                >
+                                                                    <ChevronsLeft className="h-4 w-4" />
+                                                                </Button>
+                                                            </PaginationItem>
+                                                        )}
+                                                        
                                                         {/* Previous button */}
                                                         {recent_transactions.current_page > 1 && (
                                                             <PaginationItem>
@@ -846,28 +1021,64 @@ export default function Dashboard({
                                                                     size="default"
                                                                     onClick={(e) => {
                                                                         e.preventDefault();
-                                                                        router.get('/', { page: recent_transactions.current_page - 1 });
+                                                                        router.get('/dashboard', { page: recent_transactions.current_page - 1 });
                                                                     }}
                                                                 />
                                                             </PaginationItem>
                                                         )}
                                                         
-                                                        {/* Page numbers */}
-                                                        {Array.from({ length: recent_transactions.last_page }, (_, i) => i + 1).map((page) => (
-                                                            <PaginationItem key={page}>
-                                                                <PaginationLink
-                                                                    href="#"
-                                                                    size="icon"
-                                                                    isActive={page === recent_transactions.current_page}
-                                                                    onClick={(e) => {
-                                                                        e.preventDefault();
-                                                                        router.get('/', { page });
-                                                                    }}
-                                                                >
-                                                                    {page}
-                                                                </PaginationLink>
-                                                            </PaginationItem>
-                                                        ))}
+                                                        {/* Page numbers - Smart pagination */}
+                                                        {(() => {
+                                                            const current = recent_transactions.current_page;
+                                                            const last = recent_transactions.last_page;
+                                                            const pages = [];
+                                                            
+                                                            // Always show first page
+                                                            if (current > 3) {
+                                                                pages.push(1);
+                                                                if (current > 4) {
+                                                                    pages.push('ellipsis');
+                                                                }
+                                                            }
+                                                            
+                                                            // Show pages around current page
+                                                            const start = Math.max(1, current - 1);
+                                                            const end = Math.min(last, current + 1);
+                                                            
+                                                            for (let i = start; i <= end; i++) {
+                                                                if (i !== 1 || current <= 3) {
+                                                                    pages.push(i);
+                                                                }
+                                                            }
+                                                            
+                                                            // Always show last page
+                                                            if (current < last - 2) {
+                                                                if (current < last - 3) {
+                                                                    pages.push('ellipsis');
+                                                                }
+                                                                pages.push(last);
+                                                            }
+                                                            
+                                                            return pages.map((page, index) => (
+                                                                <PaginationItem key={index}>
+                                                                    {page === 'ellipsis' ? (
+                                                                        <PaginationEllipsis />
+                                                                    ) : (
+                                                                        <PaginationLink
+                                                                            href="#"
+                                                                            size="icon"
+                                                                            isActive={page === current}
+                                                                            onClick={(e) => {
+                                                                                e.preventDefault();
+                                                                                router.get('/dashboard', { page });
+                                                                            }}
+                                                                        >
+                                                                            {page}
+                                                                        </PaginationLink>
+                                                                    )}
+                                                                </PaginationItem>
+                                                            ));
+                                                        })()}
                                                         
                                                         {/* Next button */}
                                                         {recent_transactions.current_page < recent_transactions.last_page && (
@@ -877,9 +1088,23 @@ export default function Dashboard({
                                                                     size="default"
                                                                     onClick={(e) => {
                                                                         e.preventDefault();
-                                                                        router.get('/', { page: recent_transactions.current_page + 1 });
+                                                                        router.get('/dashboard', { page: recent_transactions.current_page + 1 });
                                                                     }}
                                                                 />
+                                                            </PaginationItem>
+                                                        )}
+                                                        
+                                                        {/* Last button */}
+                                                        {recent_transactions.current_page < recent_transactions.last_page - 1 && (
+                                                            <PaginationItem>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => router.get('/dashboard', { page: recent_transactions.last_page })}
+                                                                    className="h-8 w-8 p-0"
+                                                                >
+                                                                    <ChevronsRight className="h-4 w-4" />
+                                                                </Button>
                                                             </PaginationItem>
                                                         )}
                                                     </PaginationContent>

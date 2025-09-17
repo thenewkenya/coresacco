@@ -46,6 +46,13 @@ Route::get('/terms', function () {
 })->name('terms');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Account suspension page (excluded from suspension check)
+    Route::get('account/suspended', function () {
+        return Inertia::render('account-suspended');
+    })->name('account.suspended');
+});
+
+Route::middleware(['auth', 'verified', 'account.suspension'])->group(function () {
     Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     
             // Members

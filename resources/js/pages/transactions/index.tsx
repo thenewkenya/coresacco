@@ -209,10 +209,10 @@ export default function TransactionsIndex({ transactions, filters, statusOptions
     const totalTransactions = transactions.total;
     const totalDeposits = transactions.data
         .filter(t => t.type === 'deposit')
-        .reduce((sum, t) => sum + t.amount, 0);
+        .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
     const totalWithdrawals = transactions.data
         .filter(t => t.type === 'withdrawal')
-        .reduce((sum, t) => sum + t.amount, 0);
+        .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
     const netFlow = totalDeposits - totalWithdrawals;
 
     return (

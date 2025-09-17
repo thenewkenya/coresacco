@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import MemberDeleteDialog from '@/components/member-delete-dialog';
 import { index as membersIndex, create as membersCreate, show as membersShow, edit as membersEdit, destroy as membersDestroy } from '@/routes/members';
 import {
     DropdownMenu,
@@ -85,6 +86,9 @@ export default function MembersIndex({ members, branches, stats, filters }: Prop
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
     const [branch, setBranch] = useState(filters.branch || 'all');
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleSearch = () => {
         router.get(membersIndex.url(), {
@@ -98,9 +102,31 @@ export default function MembersIndex({ members, branches, stats, filters }: Prop
     };
 
     const handleDelete = (member: Member) => {
-        if (confirm(`Are you sure you want to delete ${member.name}?`)) {
-            router.delete(membersDestroy.url(member.id));
-        }
+        setSelectedMember(member);
+        setDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = (reason: string) => {
+        if (!selectedMember) return;
+        
+        setIsDeleting(true);
+        router.delete(membersDestroy.url(selectedMember.id), {
+            data: { reason },
+            onSuccess: () => {
+                setDeleteDialogOpen(false);
+                setSelectedMember(null);
+                setIsDeleting(false);
+            },
+            onError: () => {
+                setIsDeleting(false);
+            }
+        });
+    };
+
+    const handleCloseDialog = () => {
+        setDeleteDialogOpen(false);
+        setSelectedMember(null);
+        setIsDeleting(false);
     };
 
     const getStatusBadge = (status: string) => {
@@ -310,6 +336,17 @@ export default function MembersIndex({ members, branches, stats, filters }: Prop
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Member Delete Dialog */}
+            {selectedMember && (
+                <MemberDeleteDialog
+                    isOpen={deleteDialogOpen}
+                    onClose={handleCloseDialog}
+                    onConfirm={handleConfirmDelete}
+                    member={selectedMember}
+                    isLoading={isDeleting}
+                />
+            )}
         </AppLayout>
     );
 }

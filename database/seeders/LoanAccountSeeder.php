@@ -15,8 +15,15 @@ class LoanAccountSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get all active and disbursed loans that don't have loan accounts yet
-        $loans = Loan::whereIn('status', [Loan::STATUS_ACTIVE, Loan::STATUS_DISBURSED])
+        // Get all loans that should have loan accounts (approved, disbursed, active, completed, defaulted)
+        // Note: Pending loans don't get loan accounts until approved
+        $loans = Loan::whereIn('status', [
+            Loan::STATUS_APPROVED,
+            Loan::STATUS_DISBURSED, 
+            Loan::STATUS_ACTIVE,
+            Loan::STATUS_COMPLETED,
+            Loan::STATUS_DEFAULTED
+        ])
             ->whereDoesntHave('loanAccount')
             ->with(['member', 'loanType'])
             ->get();
@@ -62,20 +69,28 @@ class LoanAccountSeeder extends Seeder
         $firstPaymentDate = $disbursementDate->copy()->addMonth();
         $maturityDate = $disbursementDate->copy()->addMonths($termMonths);
         
-        // Calculate payments made (for active loans)
+        // Calculate payments made based on loan status
         $amountPaid = 0;
         $principalPaid = 0;
         $interestPaid = 0;
         $feesPaid = $processingFee + $insuranceFee + $otherFees;
         
-        if ($loan->status === Loan::STATUS_ACTIVE) {
+        if (in_array($loan->status, [Loan::STATUS_ACTIVE, Loan::STATUS_COMPLETED, Loan::STATUS_DEFAULTED])) {
             // Calculate how many payments have been made
             $monthsElapsed = $disbursementDate->diffInMonths(now());
             $monthsElapsed = min($monthsElapsed, $termMonths);
             
-            $amountPaid = $monthlyPayment * $monthsElapsed;
-            $principalPaid = $monthlyPrincipal * $monthsElapsed;
-            $interestPaid = $monthlyInterest * $monthsElapsed;
+            if ($loan->status === Loan::STATUS_COMPLETED) {
+                // Completed loans - fully paid
+                $amountPaid = $totalPayable;
+                $principalPaid = $principalAmount;
+                $interestPaid = $totalInterest;
+            } else {
+                // Active or defaulted loans - partial payments
+                $amountPaid = $monthlyPayment * $monthsElapsed;
+                $principalPaid = $monthlyPrincipal * $monthsElapsed;
+                $interestPaid = $monthlyInterest * $monthsElapsed;
+            }
         }
         
         // Calculate outstanding amounts
@@ -105,6 +120,9 @@ class LoanAccountSeeder extends Seeder
             $status = LoanAccount::STATUS_COMPLETED;
         } elseif ($loan->status === Loan::STATUS_DEFAULTED) {
             $status = LoanAccount::STATUS_DEFAULTED;
+        } elseif ($loan->status === Loan::STATUS_APPROVED) {
+            // Approved loans are active but may not be disbursed yet
+            $status = LoanAccount::STATUS_ACTIVE;
         }
         
         LoanAccount::create([

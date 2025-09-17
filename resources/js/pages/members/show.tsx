@@ -16,7 +16,9 @@ import {
     Building2
 } from 'lucide-react';
 import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 import { index as membersIndex, edit as membersEdit, destroy as membersDestroy } from '@/routes/members';
+import MemberDeleteDialog from '@/components/member-delete-dialog';
 
 interface Member {
     id: number;
@@ -61,10 +63,30 @@ interface Props {
 }
 
 export default function MembersShow({ member, stats }: Props) {
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const handleDelete = () => {
-        if (confirm(`Are you sure you want to delete ${member.name}?`)) {
-            router.delete(membersDestroy.url(member.id));
-        }
+        setDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = (reason: string) => {
+        setIsDeleting(true);
+        router.delete(membersDestroy.url(member.id), {
+            data: { reason },
+            onSuccess: () => {
+                setDeleteDialogOpen(false);
+                setIsDeleting(false);
+            },
+            onError: () => {
+                setIsDeleting(false);
+            }
+        });
+    };
+
+    const handleCloseDialog = () => {
+        setDeleteDialogOpen(false);
+        setIsDeleting(false);
     };
 
     const getStatusBadge = (status: string) => {
@@ -310,6 +332,15 @@ export default function MembersShow({ member, stats }: Props) {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Member Delete Dialog */}
+            <MemberDeleteDialog
+                isOpen={deleteDialogOpen}
+                onClose={handleCloseDialog}
+                onConfirm={handleConfirmDelete}
+                member={member}
+                isLoading={isDeleting}
+            />
         </AppLayout>
     );
 }
